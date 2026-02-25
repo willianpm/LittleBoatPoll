@@ -5,9 +5,8 @@ Um bot Discord completo para realizar votações no Clube do Livro com sistema i
 ## ✨ Recursos Principais
 
 - 🗳️ **Criação de Enquetes** - Crie votações customizáveis
-- 👑 **Sistema de Peso** - Mensalistas têm votos com peso 2
+- 👑 **Sistema de Peso** - Mensalistas têm votos com peso 2x
 - 📊 **Resultados Automáticos** - Cálculo inteligente com ranking
-- 🖱️ **Encerramento Simples** - Clique direito na mensagem para encerrar
 - 📋 **Histórico Completo** - Todas as votações são registradas
 
 ## 📋 Requisitos
@@ -82,22 +81,6 @@ Você verá a mensagem: `✅ LittleBoatPoll está ONLINE!`
 ```
 /enquete nome-da-enquete:"Qual livro ler em fevereiro?" opcoes:"Nada de Novo" max-votos:1 peso_mensalista:Sim
 ```
-
----
-
-### `/iniciar`
-
-**Inicia o período de votação da enquete (opcional)**
-
-**Opções:**
-
-- `mensagem_id` (obrigatório) - ID da mensagem da enquete
-
-**Para obter o ID da mensagem:**
-
-1. Ative o modo de desenvolvedor no Discord (User Settings → Advanced → Developer Mode)
-2. Clique com botão direito na mensagem da enquete
-3. Selecione "Copiar ID da Mensagem"
 
 ---
 
@@ -189,9 +172,9 @@ O bot criará uma mensagem com:
 
 ### Passo 3: Encerrar e Ver Resultados
 
-**Opção A (Recomendado):** Clique direito na mensagem → Aplicativos → Encerrar Votação
+Clique direito na mensagem → Aplicativos → Encerrar Votação
 
-**Opção B:** Use o comando `/iniciar` antes de encerrar (opcional - ativa a votação)
+O bot exibirá o resultado com ranking das opções
 
 ## 📁 Estrutura do Projeto
 
@@ -210,7 +193,6 @@ LittleBoatPoll/
 │
 ├── commands/                     # Pasta com todos os comandos
 │   ├── poll.js                   # Comando /enquete
-│   ├── iniciar.js                # Comando /iniciar
 │   ├── encerrar-context.js       # Comando de contexto: Encerrar Votação
 │   ├── criadores.js              # Comando /criadores
 │   └── mensalista.js             # Comando /mensalista
@@ -263,7 +245,6 @@ npm run dev    # Inicia em modo desenvolvimento
 ## 🔐 Permissões
 
 - **`/enquete`**: Apenas administradores ou cargos autorizados
-- **`/iniciar`**: Apenas administradores ou cargos autorizados
 - **`Encerrar Votação`**: Apenas administradores ou cargos autorizados
 - **`/mensalista`**: Apenas administradores ou cargos autorizados (adicionar/remover); Todos (listar)
 - **`/criadores`**: Apenas administradores

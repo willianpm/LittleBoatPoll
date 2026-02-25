@@ -66,7 +66,7 @@ const commandFiles = fs.readdirSync(commandsPath)
   .filter((file) => file.endsWith('.js'));
 
 Lê todos os arquivos da pasta commands/ que terminam em .js
-Exemplo: poll.js, iniciar.js, encerrar-context.js, mensalista.js
+Exemplo: poll.js, encerrar-context.js, criadores.js, mensalista.js
 */
 
 /*
