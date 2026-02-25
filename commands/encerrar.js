@@ -81,7 +81,7 @@ module.exports = {
       const empate = resultados.filter((r) => r.pontos === vencedor.pontos).length > 1;
 
       let cor = empate ? '#FFFF00' : '#00FF00'; // Amarelo para empate, verde para vencedor único
-      let tituloResultado = empate ? '🤝 RESULTADO: EMPATE!' : '🏆 VENCEDOR!';
+      let tituloResultado = empate ? 'RESULTADO: EMPATE! 🤝' : 'VENCEDOR! 🏆';
 
       // ====================================
       // CRIAÇÃO DO EMBED DE RESULTADO
@@ -137,8 +137,8 @@ module.exports = {
       }
 
       resultEmbed.addFields({
-        name: '👑 Mensalistas que votaram',
-        value: `Mensalistas: ${mensmentalList}`,
+        name: '👑 Mensalistas que votaram:',
+        value: `${mensmentalList}`,
         inline: false,
       });
 
@@ -147,7 +147,7 @@ module.exports = {
           { name: '\u200B', value: '\u200B', inline: false },
           {
             name: 'ℹ️ Informações',
-            value: `📊 Total de participantes: ${Object.keys(poll.votos).length}\n⚖️ Limite de votos: ${poll.maxVotos} por pessoa\n${poll.usarPesoMensalista ? '👑 Mensalistas contam como peso 2' : '⚖️ Peso igual para todos'}\n\n💡 *Mostrando apenas o TOP 3*`,
+            value: `Total de participantes: ${Object.keys(poll.votos).length}\nLimite de votos: ${poll.maxVotos} por pessoa\n${poll.usarPesoMensalista ? 'Mensalistas contam como peso 2' : 'Peso igual para todos'}\n\n *Mostrando apenas o TOP 3*`,
             inline: false,
           },
         )
