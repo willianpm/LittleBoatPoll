@@ -182,12 +182,13 @@ EmbedBuilder: Classe para criar mensagens formatadas
 /*
 const msg = await interaction.reply({
   embeds: [pollEmbed],
-  fetchReply: true,
+  withResponse: true,
 });
 
-fetchReply: true é IMPORTANTE
+withResponse: true é IMPORTANTE
 Retorna a mensagem criada para que possamos usar seu ID
 Sem isso, não conseguiríamos adicionar reações
+(Atualizado de fetchReply para withResponse - nova API do Discord.js)
 */
 
 /*

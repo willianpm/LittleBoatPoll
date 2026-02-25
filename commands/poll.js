@@ -105,15 +105,17 @@ module.exports = {
         .setTimestamp();
 
       // Envia a mensagem com o embed
-      const msg = await interaction.reply({
+      await interaction.reply({
         embeds: [pollEmbed],
-        fetchReply: true,
       });
+
+      // Busca a mensagem para obter o ID e poder adicionar reações
+      const msg = await interaction.fetchReply();
 
       // Atualiza o embed para incluir o ID
       const updatedEmbed = EmbedBuilder.from(pollEmbed).addFields({ name: 'ID', value: `${msg.id}`, inline: false });
 
-      await msg.edit({ embeds: [updatedEmbed] });
+      await interaction.editReply({ embeds: [updatedEmbed] });
 
       // Adiciona as reações (apenas os emojis necessários)
       for (let i = 0; i < opcoes.length; i++) {
