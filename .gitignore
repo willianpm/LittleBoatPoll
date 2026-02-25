@@ -1,0 +1,41 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Variáveis de ambiente (NUNCA commit isso!)
+.env
+.env.local
+.env.*.local
+
+# Dados persistentes (backup manual recomendado)
+vips.json
+votos.json
+historico-votacoes.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+dist/
+build/
+out/
+
+# Temporários
+*.tmp
+*.temp
+.cache/

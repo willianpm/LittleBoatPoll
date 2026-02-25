@@ -1,0 +1,26 @@
+{
+  "name": "littleboatpoll",
+  "version": "1.0.0",
+  "description": "Bot Discord para gerenciar votações de Clube do Livro com sistema de peso de votos",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js",
+    "dev": "node index.js",
+    "test": "node deploy-commands.js && node index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "votacao",
+    "clube-do-livro",
+    "discord.js"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1"
+  }
+}
