@@ -101,7 +101,7 @@ client.once('clientReady', () => {
   client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 });
 
-// Evento: Interação criada (Slash Commands, Buttons, etc)
+// Evento: Interação criada (Slash Commands, Context Menu, Buttons, etc)
 client.on('interactionCreate', async (interaction) => {
   // Processa comandos slash
   if (interaction.isChatInputCommand()) {
@@ -117,6 +117,29 @@ client.on('interactionCreate', async (interaction) => {
       await command.execute(interaction, client);
     } catch (error) {
       console.error('❌ Erro ao executar o comando:', error);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ Erro ao executar o comando!',
+          ephemeral: true,
+        });
+      }
+    }
+  }
+
+  // Processa comandos de contexto (clique direito)
+  if (interaction.isContextMenuCommand()) {
+    const command = client.commands.get(interaction.commandName);
+
+    if (!command) {
+      console.error(`⚠️ Comando de contexto não encontrado: ${interaction.commandName}`);
+      return;
+    }
+
+    try {
+      console.log(`🖱️ Executando comando de contexto: ${interaction.commandName} - Usuário: ${interaction.user.tag}`);
+      await command.execute(interaction, client);
+    } catch (error) {
+      console.error('❌ Erro ao executar o comando de contexto:', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao executar o comando!',

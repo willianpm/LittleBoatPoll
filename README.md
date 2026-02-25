@@ -115,14 +115,6 @@ Inicia o período de votação para uma enquete.
 1. Ative o modo de desenvolvedor no Discord (User Settings → Advanced)
 2. Clique com botão direito na mensagem e selecione "Copiar ID da Mensagem"
 
-### `/encerrar`
-
-Finaliza a votação e exibe os resultados.
-
-**Opções:**
-
-- `mensagem_id` (obrigatório) - ID da mensagem da enquete
-
 ### `/criadores`
 
 Gerencia cargos autorizados para criar enquetes.
@@ -186,7 +178,7 @@ LittleBoatPoll/
 ├── commands/                     # Pasta com todos os comandos
 │   ├── poll.js                   # Comando /enquete
 │   ├── iniciar.js                # Comando /iniciar
-│   ├── encerrar.js               # Comando /encerrar
+│   ├── encerrar-context.js       # Comando de contexto: Encerrar Votação
 │   ├── criadores.js              # Comando /criadores
 │   └── mensalista.js             # Comando /mensalista
 ├── active-polls.json             # Votações ativas (auto-gerado)
@@ -216,8 +208,9 @@ LittleBoatPoll/
 
 ### Passo 4: Encerrar e Ver Resultados
 
-1. Use `/encerrar mensagem_id:123456789`
-2. O bot exibirá os resultados com contagem de votos
+1. Clique com botão direito na mensagem da enquete
+2. Selecione "Aplicativos" → "Encerrar Votação"
+3. O bot exibirá os resultados com contagem de votos
 
 ## 🐛 Solução de Problemas
 

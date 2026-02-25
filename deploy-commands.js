@@ -5,10 +5,10 @@ const path = require('path');
 
 /**
  * =====================================
- * DEPLOY DE COMANDOS SLASH
+ * DEPLOY DE COMANDOS DISCORD
  * =====================================
  *
- * Este script registra todos os comandos slash (/) no Discord
+ * Este script registra todos os comandos (slash e contexto) no Discord
  * Deve ser executado sempre que adicionar ou modificar comandos
  *
  * Como usar:
@@ -20,7 +20,10 @@ const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
 
-console.log(`📂 Carregando ${commandFiles.length} comandos...`);
+console.log(`📂 Carregando ${commandFiles.length} comando(s)...`);
+
+let slashCount = 0;
+let contextCount = 0;
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
@@ -28,7 +31,16 @@ for (const file of commandFiles) {
 
   if (command.data && command.execute) {
     commands.push(command.data.toJSON());
-    console.log(`  ✅ ${command.data.name}`);
+
+    // Identifica o tipo de comando
+    if (command.data.type === 3) {
+      // ApplicationCommandType.Message = 3
+      console.log(`  ✅ ${command.data.name} (contexto)`);
+      contextCount++;
+    } else {
+      console.log(`  ✅ ${command.data.name} (slash)`);
+      slashCount++;
+    }
   }
 }
 
@@ -40,7 +52,8 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
  */
 (async () => {
   try {
-    console.log('\n🔄 Registrando comandos slash no Discord...\n');
+    console.log(`\n🔄 Registrando comandos no Discord...`);
+    console.log(`   ${slashCount} slash command(s) + ${contextCount} context menu command(s)\n`);
 
     // Verifica se CLIENT_ID está definido
     const clientId = process.env.CLIENT_ID;
@@ -59,7 +72,9 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     console.log(`✅ ${data.length} comando(s) registrado(s) com sucesso!`);
     console.log('\n📋 Comandos disponíveis:');
     data.forEach((cmd) => {
-      console.log(`  • /${cmd.name} - ${cmd.description}`);
+      const tipo = cmd.type === 3 ? '🖱️ (contexto)' : '💬 (slash)';
+      const descricao = cmd.description ? ` - ${cmd.description}` : '';
+      console.log(`  ${tipo} ${cmd.name}${descricao}`);
     });
   } catch (error) {
     console.error('❌ Erro ao registrar comandos:', error);

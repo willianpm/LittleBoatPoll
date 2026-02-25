@@ -66,7 +66,7 @@ const commandFiles = fs.readdirSync(commandsPath)
   .filter((file) => file.endsWith('.js'));
 
 Lê todos os arquivos da pasta commands/ que terminam em .js
-Exemplo: poll.js, iniciar.js, encerrar.js, mensalista.js
+Exemplo: poll.js, iniciar.js, encerrar-context.js, mensalista.js
 */
 
 /*
@@ -199,15 +199,13 @@ As reações aparecem como botões que os usuários podem clicar
 */
 
 // ============================================
-// 5. COMANDO: /ENCERRAR (Lógica de Cálculo)
+// 5. COMANDO DE CONTEXTO: ENCERRAR VOTAÇÃO
 // ============================================
 
 /*
-let votosPositivos = 0;
-let votosNegativos = 0;
-
-Inicializa contadores com 0
-Isso é importante para acumular os pesos
+Comando executado via clique direito na mensagem
+Mantém a mesma lógica de cálculo de votos
+Mas é muito mais intuitivo para o usuário
 */
 
 /*

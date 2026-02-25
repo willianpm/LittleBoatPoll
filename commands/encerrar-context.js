@@ -1,31 +1,36 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const fs = require('fs');
 
 /**
- * COMANDO: /encerrar
- * Encerra a votação e calcula o resultado final
- *
- * LÓGICA DE PESO:
- * - Usuários mensalistas: peso 2
- * - Usuários comuns: peso 1
- *
- * PERMISSÃO: Apenas administradores podem usar este comando
+ * COMANDO DE CONTEXTO: Encerrar Votação
+ * Aparece ao clicar com botão direito em uma mensagem
+ * Encerra a votação se for uma enquete ativa
  */
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('encerrar')
-    .setDescription('Encerra a votação e anuncia o resultado final')
-    .addStringOption((option) => option.setName('mensagem_id').setDescription('ID da mensagem da enquete').setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // ✅ Apenas admins
+  data: new ContextMenuCommandBuilder().setName('Encerrar Votação').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction, client) {
-    const messageId = interaction.options.getString('mensagem_id');
+    const message = interaction.targetMessage;
+    const messageId = message.id;
 
     try {
-      // ✅ VERIFICAÇÃO EXTRA DE PERMISSÕES (redundância de segurança)
-      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      // ✅ VERIFICAÇÃO DE PERMISSÕES
+      const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+
+      // Carrega os cargos permitidos
+      let cargosPermitidos = [];
+      if (fs.existsSync('./cargos-criadores.json')) {
+        const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
+        cargosPermitidos = data.cargos || [];
+      }
+
+      // Verifica se o usuário tem algum cargo permitido
+      const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
+
+      // Se não é admin e não tem cargo permitido, nega
+      if (!isAdmin && !temCargoPermitido) {
         return await interaction.reply({
-          content: '❌ **Permissão negada!** Apenas administradores podem encerrar votações.',
+          content: '❌ **Permissão negada!** Apenas administradores ou membros autorizados podem encerrar votações.',
           ephemeral: true,
         });
       }
@@ -35,7 +40,7 @@ module.exports = {
 
       if (!poll) {
         return await interaction.reply({
-          content: '❌ Enquete não encontrada! Certifique-se de que o ID está correto.',
+          content: '❌ Esta mensagem não é uma enquete ativa! Certifique-se de clicar na mensagem correta da enquete.',
           ephemeral: true,
         });
       }
@@ -87,15 +92,14 @@ module.exports = {
       // CRIAÇÃO DO EMBED DE RESULTADO
       // ====================================
 
-      const resultEmbed = new EmbedBuilder().setColor(cor).setTitle('📊 RESULTADO FINAL DA VOTAÇÃO 📊').setDescription(`**${poll.titulo}**\n\n${tituloResultado}`);
+      const resultEmbed = new EmbedBuilder().setColor(cor).setTitle('📊 RESULTADO FINAL DA VOTAÇÃO 📊').setDescription(`${poll.titulo}\n\n${tituloResultado}`);
 
       // Adiciona ranking de opções (apenas top 3)
       const top3 = resultados.slice(0, 3);
       top3.forEach((resultado, index) => {
         const posicao = index === 0 && !empate ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
-        const destaque = index === 0 && !empate ? '**' : '';
         resultEmbed.addFields({
-          name: `${posicao} ${destaque}${resultado.opcao}${destaque}`,
+          name: `${posicao} __**${resultado.opcao}**__`,
           value: `**${resultado.pontos} pontos** • ${resultado.votantes.length} votante(s)`,
           inline: false,
         });
@@ -162,10 +166,9 @@ module.exports = {
       });
 
       // ====================================
-      // SALVA O RESULTADO (OPCIONAL)
+      // SALVA O RESULTADO
       // ====================================
 
-      // Você pode salvar este resultado em um arquivo ou banco de dados
       const historicoFilePath = './historico-votacoes.json';
       let historico = [];
 
@@ -201,7 +204,7 @@ module.exports = {
       };
       saveActivePolls();
 
-      console.log(`✅ Votação finalizada: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
+      console.log(`✅ Votação finalizada via contexto: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
     } catch (error) {
       console.error('❌ Erro ao encerrar votação:', error);
       await interaction.reply({
