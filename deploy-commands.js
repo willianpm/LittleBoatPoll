@@ -42,9 +42,14 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
     console.log('\n🔄 Registrando comandos slash no Discord...\n');
 
-    // IMPORTANTE: Substitua "SEU_CLIENT_ID" pelo ID real do seu bot
-    // Encontre em: https://discord.com/developers/applications
-    const clientId = process.env.CLIENT_ID || '1476198862250311791';
+    // Verifica se CLIENT_ID está definido
+    const clientId = process.env.CLIENT_ID;
+
+    if (!clientId) {
+      console.error('❌ ERRO: CLIENT_ID não está definido no arquivo .env');
+      console.error('   Adicione: CLIENT_ID=seu_client_id_aqui');
+      process.exit(1);
+    }
 
     // Registra os comandos globalmente (disponível em todos os servidores)
     const data = await rest.put(Routes.applicationCommands(clientId), {

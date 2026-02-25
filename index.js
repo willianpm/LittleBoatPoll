@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, ChannelType } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -21,6 +21,58 @@ client.commands = new Collection();
 
 // Estrutura para armazenar votações ativas em memória
 client.activePolls = new Map();
+
+// =====================================
+// FUNÇÕES AUXILIARES
+// =====================================
+
+// Salva votações ativas em arquivo
+function saveActivePolls() {
+  try {
+    const pollsArray = Array.from(client.activePolls.entries());
+    fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
+  } catch (error) {
+    console.error('❌ Erro ao salvar votações ativas:', error);
+  }
+}
+
+// Carrega votações ativas do arquivo
+function loadActivePolls() {
+  try {
+    if (fs.existsSync('./active-polls.json')) {
+      const pollsArray = JSON.parse(fs.readFileSync('./active-polls.json', 'utf8'));
+      client.activePolls = new Map(pollsArray);
+      console.log(`📊 ${pollsArray.length} votação(ões) ativa(s) carregada(s)`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar votações ativas:', error);
+  }
+}
+
+// Garante que arquivos essenciais existam
+function ensureDataFiles() {
+  // mensalistas.json
+  if (!fs.existsSync('./mensalistas.json')) {
+    fs.writeFileSync('./mensalistas.json', JSON.stringify({ mensalistas: [] }, null, 2));
+    console.log('✅ Arquivo mensalistas.json criado');
+  }
+
+  // historico-votacoes.json
+  if (!fs.existsSync('./historico-votacoes.json')) {
+    fs.writeFileSync('./historico-votacoes.json', JSON.stringify({ votacoes: [] }, null, 2));
+    console.log('✅ Arquivo historico-votacoes.json criado');
+  }
+
+  // cargos-criadores.json
+  if (!fs.existsSync('./cargos-criadores.json')) {
+    fs.writeFileSync('./cargos-criadores.json', JSON.stringify({ cargos: [] }, null, 2));
+    console.log('✅ Arquivo cargos-criadores.json criado');
+  }
+}
+
+// Inicializa arquivos de dados
+ensureDataFiles();
+loadActivePolls();
 
 // =====================================
 // CARREGAMENTO DE COMANDOS
@@ -46,7 +98,7 @@ for (const file of commandFiles) {
 client.once('clientReady', () => {
   console.log(`\n✅ LittleBoatPoll está ONLINE como ${client.user.tag}!`);
   console.log(`📊 Gerenciador de Clube do Livro iniciado\n`);
-  client.user.setActivity('📚 Clube do Livro', { type: 'WATCHING' });
+  client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 });
 
 // Evento: Interação criada (Slash Commands, Buttons, etc)
@@ -96,7 +148,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
     }
 
     // Recarrega os dados de mensalistas
-    const mensalistasData = JSON.parse(fs.readFileSync('./mensalistas.json', 'utf8'));
+    let mensalistasData = { mensalistas: [] };
+    if (fs.existsSync('./mensalistas.json')) {
+      mensalistasData = JSON.parse(fs.readFileSync('./mensalistas.json', 'utf8'));
+    }
     const isMensalista = mensalistasData.mensalistas.includes(user.id);
     // Calcula o peso baseado na configuração da enquete
     const peso = isMensalista && poll.usarPesoMensalista ? 2 : 1;
@@ -131,6 +186,9 @@ client.on('messageReactionAdd', async (reaction, user) => {
     // Adiciona a reação
     poll.votos[user.id].reacoes.push(emoji);
     console.log(`✅ ${user.username} votou em ${emoji} (${poll.votos[user.id].reacoes.length}/${poll.maxVotos})`);
+
+    // Salva as votações após cada mudança
+    saveActivePolls();
   } catch (error) {
     console.error('Erro ao processar reação:', error);
   }
@@ -161,6 +219,9 @@ client.on('messageReactionRemove', async (reaction, user) => {
         }
       }
     }
+
+    // Salva as votações após cada mudança
+    saveActivePolls();
   } catch (error) {
     console.error('Erro ao remover reação:', error);
   }

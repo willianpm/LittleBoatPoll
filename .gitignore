@@ -11,6 +11,9 @@ package-lock.json
 vips.json
 votos.json
 historico-votacoes.json
+mensalistas.json
+cargos-criadores.json
+active-polls.json
 
 # Logs
 *.log

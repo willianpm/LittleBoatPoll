@@ -186,7 +186,7 @@ PASSO A PASSO:
 5. Feche User Settings
 
 AGORA:
-6. Clique com botão direit no nome do seu servidor
+6. Clique com botão direito no nome do seu servidor
 7. Selecione "Copy Server ID"
 
 Exemplo:

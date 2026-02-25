@@ -74,13 +74,14 @@ module.exports = {
     }
 
     try {
-      // Emojis para as opções (letras + números circulados + símbolos)
-      const emojisDisponiveis = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹', '🇺', '🇻', '🇼', '🇽', '🇾', '🇿', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '⭐', '🌟', '✨', '💫', '🔆', '⚡', '🔥', '💥', '❤️', '💚'];
+      // Emojis para as opções (letras circuladas)
+      // Discord limita a 20 reações por mensagem
+      const emojisDisponiveis = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹'];
 
-      // Verifica se há emojis suficientes
-      if (opcoes.length > emojisDisponiveis.length) {
+      // Verifica se há emojis suficientes (limite do Discord: 20 reações)
+      if (opcoes.length > 20) {
         return await interaction.reply({
-          content: `❌ **Erro!** O máximo é ${emojisDisponiveis.length} opções por enquete.`,
+          content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
           ephemeral: true,
         });
       }
@@ -131,6 +132,17 @@ module.exports = {
         votos: {}, // userId -> { reacoes: [emoji1, emoji2], peso: 2 ou 1 }
         status: 'ativa',
       });
+
+      // Salva as votações ativas em arquivo
+      const saveActivePolls = () => {
+        try {
+          const pollsArray = Array.from(client.activePolls.entries());
+          fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
+        } catch (error) {
+          console.error('❌ Erro ao salvar votações:', error);
+        }
+      };
+      saveActivePolls();
 
       console.log(`✅ Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
     } catch (error) {

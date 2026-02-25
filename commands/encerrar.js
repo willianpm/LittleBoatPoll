@@ -187,6 +187,20 @@ module.exports = {
 
       fs.writeFileSync(historicoFilePath, JSON.stringify(historico, null, 2));
 
+      // Remove a enquete das votações ativas e salva
+      client.activePolls.delete(messageId);
+
+      // Salva as votações ativas atualizadas
+      const saveActivePolls = () => {
+        try {
+          const pollsArray = Array.from(client.activePolls.entries());
+          fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
+        } catch (error) {
+          console.error('❌ Erro ao salvar votações:', error);
+        }
+      };
+      saveActivePolls();
+
       console.log(`✅ Votação finalizada: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
     } catch (error) {
       console.error('❌ Erro ao encerrar votação:', error);
