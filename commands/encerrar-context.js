@@ -172,23 +172,30 @@ module.exports = {
       const historicoFilePath = './historico-votacoes.json';
       let historico = [];
 
-      if (fs.existsSync(historicoFilePath)) {
-        historico = JSON.parse(fs.readFileSync(historicoFilePath, 'utf8'));
+      try {
+        if (fs.existsSync(historicoFilePath)) {
+          const conteudo = fs.readFileSync(historicoFilePath, 'utf8');
+          const parsed = JSON.parse(conteudo);
+          // Garante que é um array
+          historico = Array.isArray(parsed) ? parsed : [];
+        }
+
+        historico.push({
+          titulo: poll.titulo,
+          opcoes: poll.opcoes,
+          maxVotos: poll.maxVotos,
+          usarPesoMensalista: poll.usarPesoMensalista,
+          resultados: resultados,
+          vencedor: empate ? 'Empate' : vencedor.opcao,
+          participantes: Object.keys(poll.votos).length,
+          dataCriacao: poll.criadoEm,
+          dataFinalizacao: poll.finalizadaEm,
+        });
+
+        fs.writeFileSync(historicoFilePath, JSON.stringify(historico, null, 2));
+      } catch (historicoError) {
+        console.error('❌ Erro ao salvar histórico:', historicoError);
       }
-
-      historico.push({
-        titulo: poll.titulo,
-        opcoes: poll.opcoes,
-        maxVotos: poll.maxVotos,
-        usarPesoMensalista: poll.usarPesoMensalista,
-        resultados: resultados,
-        vencedor: empate ? 'Empate' : vencedor.opcao,
-        participantes: Object.keys(poll.votos).length,
-        dataCriacao: poll.criadoEm,
-        dataFinalizacao: poll.finalizadaEm,
-      });
-
-      fs.writeFileSync(historicoFilePath, JSON.stringify(historico, null, 2));
 
       // Remove a enquete das votações ativas e salva
       client.activePolls.delete(messageId);
@@ -207,10 +214,12 @@ module.exports = {
       console.log(`✅ Votação finalizada via contexto: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
     } catch (error) {
       console.error('❌ Erro ao encerrar votação:', error);
-      await interaction.reply({
-        content: '❌ Erro ao encerrar a votação!',
-        ephemeral: true,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ Erro ao encerrar a votação!',
+          ephemeral: true,
+        });
+      }
     }
   },
 };
