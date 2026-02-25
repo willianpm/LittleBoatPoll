@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
 
 // =====================================
 // CONFIGURAÇÃO DO CLIENTE DISCORD
@@ -248,6 +249,19 @@ client.on('messageReactionRemove', async (reaction, user) => {
   } catch (error) {
     console.error('Erro ao remover reação:', error);
   }
+});
+
+// =====================================
+// SERVIDOR WEB (MANTER BOT ATIVO)
+// =====================================
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Bot está online!');
+});
+
+app.listen(process.env.PORT || 8080, () => {
+  console.log('🌐 Servidor web rodando na porta', process.env.PORT || 8080);
 });
 
 // =====================================
