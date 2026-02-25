@@ -255,13 +255,12 @@ client.on('messageReactionRemove', async (reaction, user) => {
 // SERVIDOR WEB (MANTER BOT ATIVO)
 // =====================================
 const app = express();
+const port = process.env.PORT || 8000; // O Koyeb injeta a porta automaticamente
 
-app.get('/', (req, res) => {
-  res.send('Bot está online!');
-});
+app.get('/', (req, res) => res.send('Bot Online!'));
 
-app.listen(process.env.PORT || 8080, () => {
-  console.log('🌐 Servidor web rodando na porta', process.env.PORT || 8080);
+app.listen(port, () => {
+  console.log(`🌐 Keep-alive rodando na porta ${port}`);
 });
 
 // =====================================
