@@ -1,395 +1,255 @@
-# 📚 LittleBoatPoll - Bot Discord para Clube do Livro
+# LittleBoatPoll 🚤
 
-Bot Discord completo para gerenciar votações de um Clube do Livro com sistema de peso de votos para membros VIP.
+Bot Discord para gerenciar votações do Clube do Livro com sistema avançado de ponderação de votos.
 
----
+## 📋 Descrição
 
-## 🎯 Funcionalidades Principais
+**LittleBoatPoll** é um bot Discord especializado em organizar e gerenciar enquetes para comunidades de leitura. O bot permite criar votações com múltiplas opções, controlar o número máximo de votos por pessoa e aplicar peso diferenciado para membros mensalistas (com peso duplo).
 
-### 1. **Comando `/enquete`**
+## ✨ Características Principais
 
-Cria uma nova enquete para votação com as seguintes opções:
+- ✅ **Criação de Enquetes Personalizadas** - Crie votações com título, múltiplas opções e limites customizáveis
+- ✅ **Sistema de Peso de Votos** - Membros mensalistas podem ter peso 2 nos votos (opcional)
+- ✅ **Controle por Permissões** - Apenas administradores ou usuários com cargos autorizados podem criar enquetes
+- ✅ **Votação por Reações** - Interface intuitiva usando emojis do Discord
+- ✅ **Histórico de Votações** - Registro completo de todas as votações realizadas
+- ✅ **Gerenciamento de Mensalistas** - Sistema para gerenciar membros mensalistas
+- ✅ **Persistência de Dados** - Votações são salvas em arquivo JSON
+- ✅ **Status em Tempo Real** - Acompanhe o progresso das votações ativas
 
-- 📖 **Livro**: Nome do livro
-- ✍️ **Autor**: Autor do livro
-- 📄 **Páginas**: Número de páginas
+## 🚀 Início Rápido
 
-**Uso:**
+### Requisitos
 
-```
-/enquete livro:"1984" autor:"George Orwell" paginas:328
-```
+- Node.js 16.0.0 ou superior
+- Uma aplicação Discord Bot criada no [Discord Developer Portal](https://discord.com/developers/applications)
+- Token do bot Discord
 
-**✨ Novo:** A mensagem inclui um **botão 🛑 "Encerrar Votação"** integrado para fechar a votação com um clique!
+### Instalação
 
----
+1. **Clone ou baixe o repositório**
 
-### 2. **Botão de Encerramento (NOVO!)**
-
-Cada enquete agora possui um **botão 🛑 vermelho de encerramento** integrado na mensagem.
-
-**Como usar:**
-
-- Clique no botão **🛑 Encerrar Votação** após os membros votarem
-- O resultado aparece instantaneamente
-- Não é necessário copiar ID da mensagem!
-
-**Vantagens:**
-
-- ✅ Interface integrada (sem copiar IDs)
-- ✅ Um clique para encerrar
-- ✅ 0% chance de erro
-- ✅ Resultado imediato e formatado
-
----
-
-### 3. **Comando `/iniciar`**
-
-Inicia o período de votação para uma enquete existente.
-
-**Uso:**
-
-```
-/iniciar mensagem_id:1234567890123456789
+```bash
+cd LittleBoatPoll
 ```
 
----
-
-### 4. **Comando `/encerrar`**
-
-Finaliza a votação, calcula votos com pesos e anuncia o resultado (método alternativo ao botão).
-
-**🏆 Lógica de Cálculo:**
-
-- **Membros VIP (Mensalistas)**: Cada voto = **peso 2**
-- **Usuários Comuns**: Cada voto = **peso 1**
-
-**Uso:**
-
-```
-/encerrar mensagem_id:1234567890123456789
-```
-
-**Exemplo de Resultado:**
-
-```
-Votos SIM: 15 pontos (7 usuários comuns + 1 VIP)
-Votos NÃO: 8 pontos (4 usuários comuns + 0 VIP)
-✅ LIVRO APROVADO!
-```
-
----
-
-### 5. **Comando `/mensalista`**
-
-Gerencia a lista de membros VIP que recebem peso dobrado nos votos.
-
-#### Adicionar Mensalista:
-
-```
-/mensalista adicionar usuario:@usuario_name
-```
-
-#### Remover Mensalista:
-
-```
-/mensalista remover usuario:@usuario_name
-```
-
-#### Listar Mensalistas:
-
-```
-/mensalista listar
-```
-
----
-
-## ⚙️ Configuração Inicial
-
-### 1. **Criar um Bot no Discord Developer Portal**
-
-1. Acesse: https://discord.com/developers/applications
-2. Clique em **New Application**
-3. Dê um nome: "LittleBoatPoll"
-4. Acesse a aba **Bot** e clique em **Add Bot**
-5. Copie o **TOKEN** (nunca compartilhe!)
-
-### 2. **Configurar Permissões (Intents)**
-
-Na aba **Bot**, habilite os seguintes **Privileged Gateway Intents**:
-
-- ✅ **Message Content Intent** - Permite ler o conteúdo das mensagens
-- ✅ **Server Members Intent** - Para gerenciar membros (opcional)
-
-E as seguintes permissões gerais:
-
-- ✅ Send Messages
-- ✅ Embed Links
-- ✅ Read Message History
-- ✅ Add Reactions
-- ✅ Read Reactions
-
-### 3. **Criar o Arquivo `.env`**
-
-Crie um arquivo `.env` na raiz do projeto:
-
-```env
-TOKEN=seu_token_do_bot_aqui
-CLIENT_ID=seu_client_id_aqui
-GUILD_ID=seu_guild_id_aqui
-```
-
-**Como obter o CLIENT_ID:**
-
-- Está na aba **General Information** do Developer Portal
-
-**Como obter o GUILD_ID:**
-
-1. Abra Discord e habilite Modo de Desenvolvedor (User Settings > Advanced > Developer Mode)
-2. Clique direito no seu servidor e copie o ID
-
-### 4. **Instalar Dependências**
+2. **Instale as dependências**
 
 ```bash
 npm install
 ```
 
-### 5. **Registrar Comandos Slash**
+3. **Configure as variáveis de ambiente**
 
-Execute este comando **apenas uma vez** (ou quando adicionar novos comandos):
+Crie um arquivo `.env` na raiz do projeto:
+
+```
+DISCORD_TOKEN=seu_token_aqui
+DISCORD_CLIENT_ID=seu_client_id_aqui
+DISCORD_GUILD_ID=seu_guild_id_aqui
+```
+
+4. **Implante os comandos slash**
 
 ```bash
-node deploy-commands.js
+npm run deploy
 ```
 
-Você verá:
-
-```
-🔄 Registrando comandos slash no Discord...
-
-✅ 4 comando(s) registrado(s) com sucesso!
-
-📋 Comandos disponíveis:
-  • /enquete - Cria uma enquete para votação do Clube do Livro
-  • /iniciar - Inicia o período de votação da enquete
-  • /encerrar - Encerra a votação e anuncia o resultado final
-  • /mensalista - Gerencia a lista de membros VIP do Clube do Livro
-```
-
-### 6. **Iniciar o Bot**
+5. **Inicie o bot**
 
 ```bash
-node index.js
+npm start
 ```
 
-Você verá:
+## ⚙️ Configuração
 
-```
-✅ LittleBoatPoll está ONLINE como LittleBoatPoll#1234!
-📊 Gerenciador de Clube do Livro iniciado
-```
+### Arquivo .env
 
----
+| Variável            | Descrição                                     | Obrigatório |
+| ------------------- | --------------------------------------------- | ----------- |
+| `DISCORD_TOKEN`     | Token do bot (encontre em Applications → Bot) | ✅          |
+| `DISCORD_CLIENT_ID` | ID da aplicação                               | ✅          |
+| `DISCORD_GUILD_ID`  | ID do servidor Discord                        | ✅          |
 
-## 📁 Estrutura de Arquivos
+### Autorizar Cargos para Criar Enquetes
 
-```
-LittleBoatPoll/
-├── index.js                 # Arquivo principal (cliente Discord)
-├── deploy-commands.js       # Script para registrar comandos
-├── .env                     # Variáveis de ambiente (TOKEN, etc)
-├── package.json             # Dependências do projeto
-├── vips.json                # Lista de membros VIP (persistência)
-├── votos.json               # Dados de votações ativas
-└── commands/
-    ├── poll.js              # Comando: /enquete
-    ├── iniciar.js           # Comando: /iniciar
-    ├── encerrar.js          # Comando: /encerrar
-    └── mensalista.js        # Comando: /mensalista
-```
-
----
-
-## 🔐 Sistema de Persistência
-
-### `vips.json`
-
-Armazena IDs dos membros VIP:
+O arquivo `cargos-criadores.json` controla quais cargos podem criar enquetes:
 
 ```json
 {
-  "vips": ["123456789", "987654321"]
+  "cargos": ["123456789012345678", "987654321098765432"]
 }
 ```
 
-### `votos.json`
+Adicione os IDs dos cargos que podem criar enquetes (além de administradores, que sempre têm permissão).
 
-Gerencia votações ativas em memória (limpa ao reiniciar o bot)
+## 📊 Comandos
 
-### `historico-votacoes.json` (Criado automaticamente)
+### `/enquete`
 
-Mantém registro de todas as votações finalizadas:
+Cria uma nova enquete para votação.
 
-```json
-[
-  {
-    "livro": "1984",
-    "autor": "George Orwell",
-    "paginas": 328,
-    "votosPositivos": 15,
-    "votosNegativos": 8,
-    "resultado": "✅ LIVRO APROVADO!",
-    "participantes": 8,
-    "dataCriacao": "2026-02-25T...",
-    "dataFinalizacao": "2026-02-25T..."
-  }
-]
-```
+**Opções:**
 
----
+- `titulo` (obrigatório) - Título da enquete
+- `opcoes` (obrigatório) - Opções separadas por vírgula
+- `max_votos` (obrigatório) - Número máximo de votos por pessoa
+- `peso_mensalista` (obrigatório) - Mensalistas têm peso duplo? (Sim/Não)
 
-## 🎨 Intents do Discord (Permissões para Leitura/Escrita)
-
-No arquivo `index.js`, configuramos os **Intents** necessários:
-
-```javascript
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds, // Ler informações do servidor
-    GatewayIntentBits.GuildMessages, // Ler mensagens do servidor
-    GatewayIntentBits.MessageContent, // Ler conteúdo das mensagens
-    GatewayIntentBits.DirectMessages, // Aceitar DMs
-    GatewayIntentBits.GuildMessageReactions, // ⭐ CRUCIAL: Ler reações!
-  ],
-});
-```
-
-**Por que `GatewayIntentBits.GuildMessageReactions` é importante?**
-
-- Permite que o bot escute eventos de reações (👍, 👎)
-- Sem isso, o bot não conseguiria contar os votos!
-
----
-
-## 🚀 Como Usar (Passo a Passo)
-
-### 1️⃣ Criar uma Enquete
+**Exemplo:**
 
 ```
-/enquete livro:"O Hobby" autor:"J.R.R. Tolkien" paginas:424
+/enquete titulo:"Próximo livro do clube" opcoes:"1984, O Cortiço, O Alienista" max_votos:1 peso_mensalista:Sim
 ```
 
-O bot enviarão uma mensagem com reações 👍 e 👎
+### `/iniciar`
 
-### 2️⃣ Iniciar a Votação (Opcional)
+Inicia o período de votação para uma enquete.
+
+**Opções:**
+
+- `mensagem_id` (obrigatório) - ID da mensagem da enquete
+
+**Como obter o ID da mensagem:**
+
+1. Ative o modo de desenvolvedor no Discord (User Settings → Advanced)
+2. Clique com botão direito na mensagem e selecione "Copiar ID da Mensagem"
+
+### `/encerrar`
+
+Finaliza a votação e exibe os resultados.
+
+**Opções:**
+
+- `mensagem_id` (obrigatório) - ID da mensagem da enquete
+
+### `/criadores`
+
+Gerencia cargos autorizados para criar enquetes.
+
+**Subcomandos:**
+
+- `adicionar` - Adiciona um cargo à lista de criadores
+- `remover` - Remove um cargo da lista
+- `listar` - Exibe a lista de cargos autorizados
+
+### `/mensalista`
+
+Gerencia a lista de membros mensalistas.
+
+**Subcomandos:**
+
+- `adicionar` - Adiciona um membro como mensalista
+- `remover` - Remove um membro da lista
+- `listar` - Exibe todos os mensalistas
+
+## 📁 Arquivos de Dados
+
+O bot cria automaticamente os seguintes arquivos JSON:
+
+| Arquivo                   | Descrição                               |
+| ------------------------- | --------------------------------------- |
+| `active-polls.json`       | Votações ativas em tempo real           |
+| `historico-votacoes.json` | Registro histórico de todas as votações |
+| `mensalistas.json`        | Lista de membros mensalistas            |
+| `cargos-criadores.json`   | Cargos autorizados para criar enquetes  |
+| `votos.json`              | Registro detalhado de votos por usuário |
+
+## 🔐 Permissões Necessárias
+
+Certifique-se de que o bot tem as seguintes permissões no Discord:
+
+- ✅ Ver Canais
+- ✅ Enviar Mensagens
+- ✅ Adicionar Reações
+- ✅ Ler Histórico de Mensagens
+- ✅ Usar Comandos de Barra (/)
+
+## 🛠️ Scripts Disponíveis
+
+| Comando          | Descrição                             |
+| ---------------- | ------------------------------------- |
+| `npm start`      | Inicia o bot                          |
+| `npm run deploy` | Implanta os comandos slash no Discord |
+| `npm run dev`    | Inicia o bot (alias para start)       |
+| `npm test`       | Deploy + Start                        |
+
+## 📝 Estrutura do Projeto
 
 ```
-/iniciar mensagem_id:1234567890
+LittleBoatPoll/
+├── index.js                      # Arquivo principal do bot
+├── deploy-commands.js            # Script para implantar comandos
+├── package.json                  # Dependências do projeto
+├── .env                          # Variáveis de ambiente
+├── README.md                     # Esta documentação
+├── commands/                     # Pasta com todos os comandos
+│   ├── poll.js                   # Comando /enquete
+│   ├── iniciar.js                # Comando /iniciar
+│   ├── encerrar.js               # Comando /encerrar
+│   ├── criadores.js              # Comando /criadores
+│   └── mensalista.js             # Comando /mensalista
+├── active-polls.json             # Votações ativas (auto-gerado)
+├── historico-votacoes.json       # Histórico (auto-gerado)
+├── mensalistas.json              # Mensalistas (auto-gerado)
+├── cargos-criadores.json         # Cargos (auto-gerado)
+└── votos.json                    # Registro de votos (auto-gerado)
 ```
 
-ID da mensagem: Clique direito na mensagem → Copiar ID
+## 🎯 Como Usar
 
-### 3️⃣ Membros Votam
-
-Os membros clicam nas reações para votar:
-
-- 👍 = Sim, quero ler este livro
-- 👎 = Não, não quero ler
-
-### 4️⃣ Adicionar Mensalistas (VIPs)
+### Passo 1: Criar uma Enquete
 
 ```
-/mensalista adicionar usuario:@nome_usuario
+/enquete titulo:"Qual livro?" opcoes:"Livro A, Livro B, Livro C" max_votos:1 peso_mensalista:Sim
 ```
 
-### 5️⃣ Encerrar Votação e Ver Resultado
+### Passo 2: Iniciar a Votação
 
-```
-/encerrar mensagem_id:1234567890
-```
+1. Copie o ID da mensagem da enquete
+2. Use `/iniciar mensagem_id:123456789`
 
-O bot exibirá:
+### Passo 3: Membros Votam
 
-- Total de votos (com pesos)
-- Voto dos membros VIP (contando como 2)
-- Voto dos usuários comuns (contando como 1)
-- Resultado final (Aprovado/Rejeitado/Empate)
+- Clique nas reações com emojis para votar
+- Pode-se mudar o voto clicando em outra reação
 
----
+### Passo 4: Encerrar e Ver Resultados
 
-## 🔧 Troubleshooting
+1. Use `/encerrar mensagem_id:123456789`
+2. O bot exibirá os resultados com contagem de votos
+
+## 🐛 Solução de Problemas
 
 ### O bot não responde aos comandos
 
-**Solução:**
+- [ ] Verifique se o token está correto no `.env`
+- [ ] Verifique se os comandos foram implantados com `npm run deploy`
+- [ ] Certifique-se de que o bot tem permissão para usar comandos slash no canal
 
-1. Verifique se o TOKEN no `.env` está correto
-2. Execute `node deploy-commands.js` novamente
-3. Reinicie o bot: `node index.js`
+### As reações não funcionam
 
-### Comandos não aparecem no Discord
+- [ ] Verifique se o bot tem permissão "Adicionar Reações"
+- [ ] Verifique se o número de opções não ultrapassa 20 (limite do Discord)
 
-**Solução:**
+### Erro ao salvar enquetes
 
-- Verifique se executou `node deploy-commands.js`
-- Confirme se o CLIENT_ID no `.env` está correto
-- Aguarde 1-2 minutos para o Discord sincronizar
+- [ ] Certifique-se de que a pasta tem permissão de leitura/escrita
+- [ ] Verifique se há espaço disponível no disco
 
-### Bot não lê as reações
+## 📦 Dependências
 
-**Solução:**
-
-- Verifique se `GatewayIntentBits.GuildMessageReactions` está habilitado em `index.js`
-- Na aba **Bot** do Developer Portal, habilite **Message Content Intent**
-
-### Erro: "Cannot read property 'vips' of undefined"
-
-**Solução:**
-
-- Verifique se `vips.json` existe e tem conteúdo válido
-- Se não existe, execute: `node index.js` para criar automaticamente
-
----
-
-## 📝 Variáveis de Ambiente (.env)
-
-```env
-# Token do Bot (NUNCA compartilhe!)
-TOKEN=seu_token_aqui
-
-# Client ID (encontre no Developer Portal)
-CLIENT_ID=seu_client_id_aqui
-
-# Guild ID (ID do seu servidor)
-GUILD_ID=seu_guild_id_aqui
-```
-
----
-
-## 🤝 Contribuições
-
-Para adicionar novos comandos:
-
-1. Crie um novo arquivo em `commands/seu-comando.js`
-2. Siga o padrão dos comandos existentes
-3. Execute `node deploy-commands.js` para registrar
-4. Reinicie o bot
-
----
+- **discord.js** (^14.25.1) - Biblioteca oficial para interação com Discord
+- **dotenv** (^17.3.1) - Carregamento de variáveis de ambiente
 
 ## 📄 Licença
 
-Este projeto é de código aberto e pode ser usado livremente.
+MIT - Sinta-se livre para usar e modificar este projeto
+
+## 👨‍💻 Autor
+
+LittleBoatPoll © 2026
 
 ---
 
-## 📞 Suporte
-
-Para dúvidas ou problemas:
-
-- Acesse: https://discord.js.org (Documentação)
-- Discord Developer Portal: https://discord.com/developers
-
----
-
-**Desenvolvido com ❤️ para Clubes do Livro**
+**Precisa de ajuda?** Abra uma issue no repositório ou consulte a documentação do [discord.js](https://discord.js.org/)
