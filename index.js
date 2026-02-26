@@ -4,6 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
+// Controle de verbosidade de logs (DEBUG=true para logs detalhados)
+const DEBUG_MODE = process.env.DEBUG === 'true';
+
 // =====================================
 // CONFIGURAÇÃO DO CLIENTE DISCORD
 // =====================================
@@ -579,18 +582,11 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (!poll) return;
 
     const emoji = reaction.emoji.name;
-    // Reação processada
 
     // Verifica se o emoji é válido para esta enquete
     if (!poll.emojiNumeros.includes(emoji)) {
       // Emoji não faz parte desta enquete, remove
-      await reaction.users.remove(user.id).catch((err) => {
-        if (err.code === 50013) {
-          console.error(`Sem permissão para remover reação no canal. Verifique se o bot tem "Gerenciar Mensagens" ativo ❌`);
-        } else {
-          console.error(`Erro ao remover reação: ${err.message}`);
-        }
-      });
+      await reaction.users.remove(user.id).catch(() => null);
       return;
     }
 
@@ -626,24 +622,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
       saveActivePolls();
     }
 
-    // Verifica limite de votos
-
-    // Alerta se o bot nao tiver permissao para remover reacoes
-    const botMember = reaction.message.guild?.members.me;
-    if (botMember && !botMember.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      console.warn('Bot sem permissao de Gerenciar Mensagens; limite de votos pode nao ser aplicado ⚠️');
-    }
-
     // Verifica se atingiu o limite de votos
     if (poll.votos[user.id].reacoes.length >= poll.maxVotos) {
       // Remove a reação e notifica (se possível)
-      await reaction.users.remove(user.id).catch((err) => {
-        if (err.code === 50013) {
-          console.error(`Erro ao remover reação (Missing Permissions). O bot precisa da permissão "Gerenciar Mensagens" no canal ❌`);
-        } else {
-          console.error(`Erro ao processar reação: ${err.message} ❌`);
-        }
-      });
+      await reaction.users.remove(user.id).catch(() => null);
       try {
         await user.send(`❌ Você já atingiu o limite de **${poll.maxVotos}** voto(s) nesta enquete: "${poll.titulo}"`);
       } catch (e) {
@@ -658,7 +640,9 @@ client.on('messageReactionAdd', async (reaction, user) => {
     // Salva as votações após cada mudança
     saveActivePolls();
   } catch (error) {
-    console.error('Erro ao processar reação:', error);
+    if (DEBUG_MODE) {
+      console.error('Erro ao processar reação:', error);
+    }
   }
 });
 
@@ -679,14 +663,12 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (!poll) return;
 
     const emoji = reaction.emoji.name;
-    // Reação removida
 
     // Remove apenas esta reação específica
     if (poll.votos[user.id] && poll.votos[user.id].reacoes) {
       const index = poll.votos[user.id].reacoes.indexOf(emoji);
       if (index > -1) {
         poll.votos[user.id].reacoes.splice(index, 1);
-        // Reação removida
 
         // Se não tem mais reações, remove o usuário completamente
         if (poll.votos[user.id].reacoes.length === 0) {
@@ -698,7 +680,9 @@ client.on('messageReactionRemove', async (reaction, user) => {
     // Salva as votações após cada mudança
     saveActivePolls();
   } catch (error) {
-    console.error('Erro ao remover reação:', error);
+    if (DEBUG_MODE) {
+      console.error('Erro ao remover reação:', error);
+    }
   }
 });
 
