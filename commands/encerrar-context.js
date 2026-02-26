@@ -140,11 +140,14 @@ module.exports = {
         console.error('Erro ao buscar mensalistas:', error);
       }
 
-      resultEmbed.addFields({
-        name: '👑 Mensalistas que votaram:',
-        value: `${mensmentalList}`,
-        inline: false,
-      });
+      // Adiciona a seção de mensalistas apenas se o peso de mensalista está ativado
+      if (poll.usarPesoMensalista) {
+        resultEmbed.addFields({
+          name: '👑 Mensalistas que votaram:',
+          value: `${mensmentalList}`,
+          inline: false,
+        });
+      }
 
       resultEmbed
         .addFields(
