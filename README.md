@@ -1,55 +1,57 @@
 # LittleBoatPoll
 
-LittleBoatPoll is a Discord bot for running book club polls with weighted votes.
+LittleBoatPoll é um bot do Discord para votações em clubes do livro, com votos ponderados.
 
-## Permission Model
+## Permissões
 
-The bot uses a **binary permission system**:
+Sistema binário:
 
-- **Criador Role**: Users with the "Criador" role have full access to all bot commands and features.
-- **Admins and Server Owner**: Also have full access to all bot commands and features.
-- **Regular Users**: Users without the "Criador" role can only vote on active polls through reactions.
+- Criador: acesso total
+- Administrador e dono do servidor: acesso total
+- Usuário comum: apenas vota por reações
 
-There are no intermediate levels, partial permissions, or hierarchies. It's either full access (Criador) or vote-only (regular user).
+Não existem níveis intermediários. Para ocultar comandos de usuários comuns, restrinja os comandos nas integrações do Discord.
 
-To ensure commands are visible only to the Criador role (and optionally admins), enable the bot's commands only for those roles in Discord's integration settings.
-
-## Requirements
+## Requisitos
 
 - Node.js >= 24
 - npm
-- Discord bot token and application client ID
+- Token do bot e client ID
 
-## Install
+## Instalação
 
 ```bash
 npm install
 ```
 
-Create a `.env` file in the project root:
+Crie o arquivo `.env`:
 
 ```env
-TOKEN=your_bot_token_here
-CLIENT_ID=your_application_id_here
+TOKEN=seu_token_aqui
+CLIENT_ID=seu_client_id_aqui
 ```
 
-## Run
-
-Start the bot (automatically registers commands first):
+## Executar
 
 ```bash
 npm start
 ```
 
-If you want to skip command registration (faster startup):
+Registrar comandos manualmente:
 
 ```bash
-npm run start:quick
+npm run deploy
 ```
 
-## Tests
+Registrar comandos automaticamente na inicialização:
 
-There are no automated tests yet. The `test` script registers commands and starts the bot:
+```env
+DEPLOY=true
+```
+
+## Testes
+
+Não há testes automatizados. O script `test` registra comandos e inicia o bot:
 
 ```bash
 npm test
