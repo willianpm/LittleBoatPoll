@@ -12,7 +12,8 @@
     "url": "https://github.com/willianpm/LittleBoatPoll/issues"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.js --deploy && node index.js",
+    "start:quick": "node index.js",
     "deploy": "node index.js --deploy",
     "dev": "node index.js",
     "test": "node index.js --deploy && node index.js"

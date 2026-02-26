@@ -2,7 +2,7 @@ const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, Permiss
 const fs = require('fs');
 
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Toggle Opção em Rascunho').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction, client) {
     try {
