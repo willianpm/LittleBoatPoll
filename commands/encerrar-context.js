@@ -1,4 +1,4 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 
 /**
@@ -31,7 +31,7 @@ module.exports = {
       if (!isAdmin && !temCargoPermitido) {
         return await interaction.reply({
           content: '❌ **Permissão negada!** Apenas administradores ou membros autorizados podem encerrar votações.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -41,7 +41,7 @@ module.exports = {
       if (!poll) {
         return await interaction.reply({
           content: '❌ Esta mensagem não é uma enquete ativa! Certifique-se de clicar na mensagem correta da enquete.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -220,7 +220,7 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao encerrar a votação!',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }

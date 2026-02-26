@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 
 /**
@@ -38,7 +38,7 @@ module.exports = {
     if (opcoes.length < 2) {
       return await interaction.reply({
         content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -46,7 +46,7 @@ module.exports = {
     if (maxVotos > opcoes.length) {
       return await interaction.reply({
         content: `❌ **Erro!** O número máximo de votos (${maxVotos}) não pode ser maior que o número de opções (${opcoes.length}).`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -69,7 +69,7 @@ module.exports = {
     if (!isAdmin && !temCargoPermitido) {
       return await interaction.reply({
         content: '❌ **Permissão negada!** Apenas administradores ou membros com cargos autorizados podem criar enquetes.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -85,7 +85,7 @@ module.exports = {
       if (opcoes.length > 20) {
         return await interaction.reply({
           content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -148,7 +148,7 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao criar a enquete!',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } else if (interaction.deferred && !interaction.replied) {
         await interaction.editReply({

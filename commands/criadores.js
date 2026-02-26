@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 
 /**
@@ -38,7 +38,7 @@ module.exports = {
     if ((subcommand === 'adicionar' || subcommand === 'remover') && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return await interaction.reply({
         content: '❌ **Permissão negada!** Apenas administradores podem gerenciar os cargos criadores.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -60,7 +60,7 @@ module.exports = {
       if (data.cargos.includes(cargo.id)) {
         return await interaction.reply({
           content: `❌ O cargo **${cargo.name}** já está autorizado a criar enquetes!`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -70,7 +70,7 @@ module.exports = {
 
       const embed = new EmbedBuilder().setColor('#00FF00').setTitle('✅ Cargo Adicionado!').setDescription(`O cargo **${cargo.name}** agora pode criar enquetes.`).setTimestamp();
 
-      return await interaction.reply({ embeds: [embed], ephemeral: true });
+      return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     // =====================================
@@ -83,7 +83,7 @@ module.exports = {
       if (!data.cargos.includes(cargo.id)) {
         return await interaction.reply({
           content: `❌ O cargo **${cargo.name}** não está na lista de criadores!`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -93,7 +93,7 @@ module.exports = {
 
       const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Cargo Removido!').setDescription(`O cargo **${cargo.name}** não pode mais criar enquetes.`).setTimestamp();
 
-      return await interaction.reply({ embeds: [embed], ephemeral: true });
+      return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     // =====================================

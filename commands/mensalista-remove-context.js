@@ -1,4 +1,4 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
       if (!isAdmin && !temCargoPermitido) {
         return await interaction.reply({
           content: 'Permissao negada. Apenas administradores ou membros autorizados podem gerenciar mensalistas.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -35,7 +35,7 @@ module.exports = {
       if (index === -1) {
         return await interaction.reply({
           content: `${usuario.username} nao esta na lista de mensalistas.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -53,14 +53,14 @@ module.exports = {
         })
         .setTimestamp();
 
-      await interaction.reply({ embeds: [removeEmbed], ephemeral: true });
+      await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
       console.log(`❌ Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
     } catch (error) {
       console.error('❌ Erro ao remover mensalista (contexto):', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: 'Erro ao processar o comando.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }

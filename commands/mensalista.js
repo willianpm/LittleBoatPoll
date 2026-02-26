@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 
 /**
@@ -55,7 +55,7 @@ module.exports = {
         if (!isAdmin && !temCargoPermitido) {
           return await interaction.reply({
             content: '❌ **Permissão negada!** Apenas administradores ou membros autorizados podem gerenciar mensalistas.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       }
@@ -79,7 +79,7 @@ module.exports = {
         if (mensalistasData.mensalistas.includes(usuario.id)) {
           return await interaction.reply({
             content: `⚠️ ${usuario.username} já está na lista de mensalistas!`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -99,7 +99,7 @@ module.exports = {
           .setFooter({ text: 'Parabéns! 🎉' })
           .setTimestamp();
 
-        await interaction.reply({ embeds: [addEmbed], ephemeral: true });
+        await interaction.reply({ embeds: [addEmbed], flags: MessageFlags.Ephemeral });
         console.log(`✅ Mensalista adicionado: ${usuario.username} (${usuario.id})`);
       }
 
@@ -115,7 +115,7 @@ module.exports = {
         if (index === -1) {
           return await interaction.reply({
             content: `⚠️ ${usuario.username} não está na lista de mensalistas!`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -134,7 +134,7 @@ module.exports = {
           })
           .setTimestamp();
 
-        await interaction.reply({ embeds: [removeEmbed], ephemeral: true });
+        await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
         console.log(`❌ Mensalista removido: ${usuario.username} (${usuario.id})`);
       }
 
@@ -145,7 +145,7 @@ module.exports = {
         if (mensalistasData.mensalistas.length === 0) {
           return await interaction.reply({
             content: '📋 Nenhum mensalista cadastrado no momento.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -179,7 +179,7 @@ module.exports = {
       console.error('❌ Erro ao gerenciar mensalistas:', error);
       await interaction.reply({
         content: '❌ Erro ao processar o comando!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

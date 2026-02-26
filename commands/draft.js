@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const crypto = require('crypto');
 
@@ -96,7 +96,7 @@ module.exports = {
     if ((subcommand === 'criar' || subcommand === 'editar' || subcommand === 'adicionar-opcao' || subcommand === 'remover-opcao' || subcommand === 'deletar' || subcommand === 'publicar') && !isAdmin && !temCargoPermitido) {
       return await interaction.reply({
         content: '❌ **Permissão negada!** Apenas administradores ou membros com cargos autorizados podem gerenciar enquetes.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -114,7 +114,7 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao processar o comando!',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } else if (interaction.deferred && !interaction.replied) {
         await interaction.editReply({
@@ -146,7 +146,7 @@ async function handleCriar(interaction, client) {
   if (opcoes.length < 2) {
     return await interaction.reply({
       content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -154,7 +154,7 @@ async function handleCriar(interaction, client) {
   if (maxVotos > opcoes.length) {
     return await interaction.reply({
       content: `❌ **Erro!** O número máximo de votos (${maxVotos}) não pode ser maior que o número de opções (${opcoes.length}).`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -162,7 +162,7 @@ async function handleCriar(interaction, client) {
   if (opcoes.length > 20) {
     return await interaction.reply({
       content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -213,7 +213,7 @@ async function handleCriar(interaction, client) {
 
   await interaction.reply({
     embeds: [confirmEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   console.log(`✅ Rascunho criado: ${titulo} | ID: ${draftId} | Criador: ${interaction.user.tag}`);
@@ -227,7 +227,7 @@ async function handleEditar(interaction, client) {
   if (!draft) {
     return await interaction.reply({
       content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -236,7 +236,7 @@ async function handleEditar(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !isAdmin) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador ou administrador podem editar este rascunho.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -261,14 +261,14 @@ async function handleEditar(interaction, client) {
     if (novasOpcoes.length < 2) {
       return await interaction.reply({
         content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     if (novasOpcoes.length > 20) {
       return await interaction.reply({
         content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -280,7 +280,7 @@ async function handleEditar(interaction, client) {
     if (novoMaxVotos > draft.opcoes.length) {
       return await interaction.reply({
         content: `❌ **Erro!** O número máximo de votos (${novoMaxVotos}) não pode ser maior que o número de opções (${draft.opcoes.length}).`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     draft.maxVotos = novoMaxVotos;
@@ -308,7 +308,7 @@ async function handleEditar(interaction, client) {
 
   await interaction.reply({
     embeds: [updateEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   console.log(`✅ Rascunho editado: ${draft.titulo} | ID: ${draftId}`);
@@ -318,7 +318,7 @@ async function handleListar(interaction, client) {
   if (client.draftPolls.size === 0) {
     return await interaction.reply({
       content: '📝 Não há rascunhos de enquetes no momento.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -349,7 +349,7 @@ async function handleListar(interaction, client) {
 
   await interaction.reply({
     embeds: [listEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 }
 
@@ -360,7 +360,7 @@ async function handleExibir(interaction, client) {
   if (!draft) {
     return await interaction.reply({
       content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -382,7 +382,7 @@ async function handleExibir(interaction, client) {
 
   await interaction.reply({
     embeds: [detailEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 }
 
@@ -394,7 +394,7 @@ async function handlePublicar(interaction, client) {
   if (!draft) {
     return await interaction.reply({
       content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -403,12 +403,12 @@ async function handlePublicar(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !isAdmin) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador ou administrador podem publicar este rascunho.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
   // Defer reply porque a operação vai demorar (adicionar reações)
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
     // Define o canal (usado o escolhido ou o canal atual)
@@ -499,7 +499,7 @@ async function handleDeletar(interaction, client) {
   if (!draft) {
     return await interaction.reply({
       content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -508,7 +508,7 @@ async function handleDeletar(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !isAdmin) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador ou administrador podem deletar este rascunho.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -528,7 +528,7 @@ async function handleDeletar(interaction, client) {
 
   await interaction.reply({
     embeds: [deleteEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   console.log(`✅ Rascunho deletado: ${draft.titulo} | ID: ${draftId}`);
@@ -542,7 +542,7 @@ async function handleAdicionarOpcao(interaction, client) {
   if (!draft) {
     return await interaction.reply({
       content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -551,7 +551,7 @@ async function handleAdicionarOpcao(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !isAdmin) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador ou administrador podem editar este rascunho.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -564,7 +564,7 @@ async function handleAdicionarOpcao(interaction, client) {
   if (novasOpcoes.length === 0) {
     return await interaction.reply({
       content: '❌ **Erro!** Nenhuma opção válida foi fornecida.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -575,7 +575,7 @@ async function handleAdicionarOpcao(interaction, client) {
   if (duplicatas.length > 0) {
     return await interaction.reply({
       content: `❌ **Erro!** As seguintes opções já existem no rascunho: ${duplicatas.join(', ')}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -586,7 +586,7 @@ async function handleAdicionarOpcao(interaction, client) {
   if (draft.opcoes.length > 20) {
     return await interaction.reply({
       content: `❌ **Erro!** O Discord limita a 20 reações por mensagem. Total de opções: ${draft.opcoes.length}. Remova ${draft.opcoes.length - 20} opção(ões).`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -612,7 +612,7 @@ async function handleAdicionarOpcao(interaction, client) {
 
   await interaction.reply({
     embeds: [updateEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   console.log(`✅ Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
@@ -626,7 +626,7 @@ async function handleRemoverOpcao(interaction, client) {
   if (!draft) {
     return await interaction.reply({
       content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -635,7 +635,7 @@ async function handleRemoverOpcao(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !isAdmin) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador ou administrador podem editar este rascunho.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -659,7 +659,7 @@ async function handleRemoverOpcao(interaction, client) {
   if (indexRemover === -1) {
     return await interaction.reply({
       content: `❌ **Erro!** Opção "${opcaoParaRemover}" não encontrada.\n\n**Opções disponíveis:**\n${draft.opcoes.map((op, i) => `${i + 1}. ${op}`).join('\n')}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -670,7 +670,7 @@ async function handleRemoverOpcao(interaction, client) {
   if (draft.opcoes.length < 2) {
     return await interaction.reply({
       content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções. Não é possível remover mais opções.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -696,7 +696,7 @@ async function handleRemoverOpcao(interaction, client) {
 
   await interaction.reply({
     embeds: [updateEmbed],
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   console.log(`✅ Opção removida do rascunho: ${draft.titulo} | ID: ${draftId} | Removida: ${opcaoRemovida}`);

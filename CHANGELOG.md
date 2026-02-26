@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Improve draft validations (duplicates, limits, max votes adjustments).
 - Fix interaction timeouts for slower commands.
 - Centralize draft persistence helpers.
+- Add context menus: "Adicionar Mensalista" and "Remover Mensalista" for quick user management.
+- Make mensalista add/remove responses ephemeral (private to command executor).
+- Fix Discord.js deprecation warning: migrate from `ephemeral: true` to `flags: MessageFlags.Ephemeral`.
 
 ## 1.1.0 - 2026-02-25
 
