@@ -99,7 +99,7 @@ module.exports = {
           .setFooter({ text: 'Parabéns! 🎉' })
           .setTimestamp();
 
-        await interaction.reply({ embeds: [addEmbed] });
+        await interaction.reply({ embeds: [addEmbed], ephemeral: true });
         console.log(`✅ Mensalista adicionado: ${usuario.username} (${usuario.id})`);
       }
 
@@ -134,7 +134,7 @@ module.exports = {
           })
           .setTimestamp();
 
-        await interaction.reply({ embeds: [removeEmbed] });
+        await interaction.reply({ embeds: [removeEmbed], ephemeral: true });
         console.log(`❌ Mensalista removido: ${usuario.username} (${usuario.id})`);
       }
 

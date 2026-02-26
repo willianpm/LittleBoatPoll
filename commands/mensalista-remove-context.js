@@ -53,7 +53,7 @@ module.exports = {
         })
         .setTimestamp();
 
-      await interaction.reply({ embeds: [removeEmbed] });
+      await interaction.reply({ embeds: [removeEmbed], ephemeral: true });
       console.log(`❌ Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
     } catch (error) {
       console.error('❌ Erro ao remover mensalista (contexto):', error);

@@ -52,7 +52,7 @@ module.exports = {
         })
         .setTimestamp();
 
-      await interaction.reply({ embeds: [addEmbed] });
+      await interaction.reply({ embeds: [addEmbed], ephemeral: true });
       console.log(`✅ Mensalista adicionado (contexto): ${usuario.username} (${usuario.id})`);
     } catch (error) {
       console.error('❌ Erro ao adicionar mensalista (contexto):', error);
