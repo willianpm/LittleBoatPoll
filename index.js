@@ -149,6 +149,8 @@ loadDraftPolls();
 async function syncPollReactions() {
   console.log('🔄 Sincronizando reações das enquetes ativas...');
 
+  const enquetesOrfas = [];
+
   for (const [messageId, poll] of client.activePolls.entries()) {
     try {
       // Se não tiver channelId, pula (enquetes antigas antes da atualização)
@@ -158,17 +160,59 @@ async function syncPollReactions() {
         continue;
       }
 
-      // Busca o canal e a mensagem
-      const channel = await client.channels.fetch(poll.channelId).catch(() => null);
+      // Busca o canal
+      const channel = await client.channels.fetch(poll.channelId).catch((err) => {
+        console.log(`❌ Erro ao buscar canal ${poll.channelId}: ${err.message}`);
+        return null;
+      });
       if (!channel) {
-        console.log(`⚠️ Canal não encontrado para enquete "${poll.titulo}"`);
+        console.log(`⚠️ Canal não encontrado para enquete "${poll.titulo}" - marcando para remoção`);
+        enquetesOrfas.push(messageId);
         continue;
       }
 
-      const message = await channel.messages.fetch(messageId).catch(() => null);
+      // Verifica permissões do bot no canal
+      const botMember = channel.guild?.members.me;
+      if (botMember) {
+        const permissions = channel.permissionsFor(botMember);
+        const canView = permissions?.has('ViewChannel');
+        const canRead = permissions?.has('ReadMessageHistory');
+        const canManage = permissions?.has('ManageMessages');
+
+        console.log(`   📋 Enquete: "${poll.titulo}"`);
+        console.log(`   📍 Canal: ${channel.name} (${poll.channelId})`);
+        console.log(`   ✅ Ver Canal: ${canView ? 'Sim' : 'NÃO'}`);
+        console.log(`   ✅ Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}`);
+        console.log(`   ✅ Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`);
+        console.log(`   🔧 Bits (DEBUG): ${permissions?.bitfield || 'indefinido'}`);
+
+        // Debug: mostra os cargos do bot
+        if (botMember.roles?.cache?.size > 0) {
+          console.log(`   📌 Cargos do bot: ${botMember.roles.cache.map((r) => r.name).join(', ')}`);
+        }
+      } else {
+        console.log(`   ⚠️ Bot não encontrado no servidor como membro`);
+      }
+
+      // Tenta buscar a mensagem
+      const message = await channel.messages.fetch(messageId).catch((err) => {
+        console.log(`   ❌ Erro ao buscar mensagem ${messageId}: ${err.message} (${err.code})`);
+        return null;
+      });
       if (!message) {
-        console.log(`⚠️ Mensagem não encontrada para enquete "${poll.titulo}"`);
+        console.log(`   ⚠️ Mensagem não encontrada ou inacessível`);
+        enquetesOrfas.push(messageId);
         continue;
+      }
+
+      // Fetch todas as reações para garantir cache completo
+      // Isso é crucial para detectar votos feitos enquanto o bot estava offline
+      for (const reaction of message.reactions.cache.values()) {
+        if (reaction.partial) {
+          await reaction.fetch().catch(() => null);
+        }
+        // Força fetch de todos os usuários para cada reação
+        await reaction.users.fetch().catch(() => null);
       }
 
       // Carrega mensalistas
@@ -222,6 +266,14 @@ async function syncPollReactions() {
     }
   }
 
+  // Remove enquetes órfãs (mensagens deletadas)
+  if (enquetesOrfas.length > 0) {
+    console.log(`\n🗑️ Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    for (const messageId of enquetesOrfas) {
+      client.activePolls.delete(messageId);
+    }
+  }
+
   // Salva após sincronizar
   saveActivePolls();
   console.log('✅ Sincronização concluída!\n');
@@ -231,16 +283,59 @@ async function syncPollReactions() {
 async function enforceVoteLimits() {
   console.log('🔍 Verificando limites de votos...');
 
+  const enquetesOrfas = [];
+
   for (const [messageId, poll] of client.activePolls.entries()) {
     try {
       // Se não tiver channelId, pula
       if (!poll.channelId) continue;
 
-      const channel = await client.channels.fetch(poll.channelId).catch(() => null);
-      if (!channel) continue;
+      const channel = await client.channels.fetch(poll.channelId).catch((err) => {
+        console.log(`❌ Erro ao buscar canal ${poll.channelId}: ${err.message}`);
+        return null;
+      });
+      if (!channel) {
+        enquetesOrfas.push(messageId);
+        continue;
+      }
 
-      const message = await channel.messages.fetch(messageId).catch(() => null);
-      if (!message) continue;
+      // Verifica permissões do bot no canal
+      const botMember = channel.guild?.members.me;
+      if (botMember) {
+        const permissions = channel.permissionsFor(botMember);
+        const canView = permissions?.has('ViewChannel');
+        const canRead = permissions?.has('ReadMessageHistory');
+        const canManage = permissions?.has('ManageMessages');
+
+        if (!canView || !canRead || !canManage) {
+          console.log(`⚠️ Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` + `   ✅ Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` + `   ✅ Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` + `   ✅ Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`);
+        }
+      }
+
+      const message = await channel.messages.fetch(messageId).catch((err) => {
+        console.log(`❌ Erro ao buscar mensagem ${messageId} no canal ${channel.name}: ${err.message} (${err.code})`);
+        return null;
+      });
+      if (!message) {
+        enquetesOrfas.push(messageId);
+        continue;
+      }
+
+      // Fetch todas as reações para garantir cache completo
+      // Sem isso, reações adicionadas enquanto bot estava offline não são detectadas
+      for (const reaction of message.reactions.cache.values()) {
+        if (reaction.partial) {
+          await reaction.fetch().catch(() => null);
+        }
+        await reaction.users.fetch().catch(() => null);
+      }
+
+      // Normaliza maxVotos para garantir que seja um número válido
+      const maxVotos = Number(poll.maxVotos);
+      const maxVotosValido = Number.isFinite(maxVotos) && maxVotos > 0 ? maxVotos : 1;
+      if (poll.maxVotos !== maxVotosValido) {
+        poll.maxVotos = maxVotosValido;
+      }
 
       let violacoesSencontradas = 0;
 
@@ -291,6 +386,14 @@ async function enforceVoteLimits() {
       }
     } catch (error) {
       console.error(`❌ Erro ao verificar limites de "${poll.titulo}":`, error.message);
+    }
+  }
+
+  // Remove enquetes órfãs (se ainda não foram removidas na sincronização)
+  if (enquetesOrfas.length > 0) {
+    console.log(`\n🗑️ Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    for (const messageId of enquetesOrfas) {
+      client.activePolls.delete(messageId);
     }
   }
 
