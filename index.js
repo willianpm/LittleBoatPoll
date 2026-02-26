@@ -356,7 +356,13 @@ async function enforceVoteLimits() {
             for (const emoji of reacoesParaRemover) {
               const reaction = message.reactions.cache.find((r) => r.emoji.name === emoji);
               if (reaction) {
-                await reaction.users.remove(userId).catch(() => {});
+                await reaction.users.remove(userId).catch((err) => {
+                  if (err.code === 50013) {
+                    console.error(`⚠️ Sem permissão para remover reação de ${userVotes.usuario}. O bot precisa de "Gerenciar Mensagens".`);
+                  } else {
+                    console.error(`Erro ao remover reação: ${err.message}`);
+                  }
+                });
               }
             }
 
@@ -592,7 +598,13 @@ client.on('messageReactionAdd', async (reaction, user) => {
     // Verifica se o emoji é válido para esta enquete
     if (!poll.emojiNumeros.includes(emoji)) {
       // Emoji não faz parte desta enquete, remove
-      await reaction.users.remove(user.id);
+      await reaction.users.remove(user.id).catch((err) => {
+        if (err.code === 50013) {
+          console.error(`❌ Sem permissão para remover reação no canal. Verifique se o bot tem "Gerenciar Mensagens" ativo.`);
+        } else {
+          console.error(`Erro ao remover reação: ${err.message}`);
+        }
+      });
       return;
     }
 
@@ -641,7 +653,13 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (poll.votos[user.id].reacoes.length >= poll.maxVotos) {
       console.log(`⛔ Limite atingido! Removendo reação extra de ${user.username}`);
       // Remove a reação e notifica (se possível)
-      await reaction.users.remove(user.id).catch(() => null);
+      await reaction.users.remove(user.id).catch((err) => {
+        if (err.code === 50013) {
+          console.error(`❌ Erro ao remover reação (Missing Permissions). O bot precisa da permissão "Gerenciar Mensagens" no canal.`);
+        } else {
+          console.error(`❌ Erro ao processar reação: ${err.message}`);
+        }
+      });
       try {
         await user.send(`❌ Você já atingiu o limite de **${poll.maxVotos}** voto(s) nesta enquete: "${poll.titulo}"`);
       } catch (e) {
