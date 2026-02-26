@@ -448,9 +448,17 @@ ou: /rascunho remover-opcao opcao:2
 
 ### Persistência
 
-- Rascunhos salvos automaticamente em `draft-polls.json`
-- Carregados na inicialização do bot
-- Formato normalizado com todas as propriedades
+- **Salvamento Automático**: Rascunhos são salvos automaticamente em `draft-polls.json` após cada operação (criar, editar, adicionar opção, remover opção, deletar)
+- **Carregamento na Inicialização**: Todos os rascunhos são carregados automaticamente quando o bot é iniciado
+- **Recuperação Após Reinicialização**: Seus rascunhos permanecem disponíveis mesmo após o bot ser desligado ou reiniciado
+- **Formato Normalizado**: Dados salvos com todas as propriedades garantindo compatibilidade
+- **Operações que Salvam Automaticamente**:
+  - `/rascunho criar` - Salva novo rascunho
+  - `/rascunho editar` - Salva alterações
+  - `/rascunho adicionar-opcao` - Salva novas opções
+  - `/rascunho remover-opcao` - Salva após remoção
+  - `/rascunho deletar` - Remove do arquivo
+  - `/rascunho publicar` - Remove rascunho e salva enquete ativa
 
 ## 📋 Changelog
 

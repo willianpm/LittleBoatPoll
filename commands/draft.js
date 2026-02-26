@@ -111,10 +111,14 @@ module.exports = {
       else if (subcommand === 'deletar') await handleDeletar(interaction, client);
     } catch (error) {
       console.error('❌ Erro ao gerenciar rascunho:', error);
-      if (!interaction.replied) {
+      if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao processar o comando!',
           ephemeral: true,
+        });
+      } else if (interaction.deferred && !interaction.replied) {
+        await interaction.editReply({
+          content: '❌ Erro ao processar o comando!',
         });
       }
     }
@@ -183,15 +187,7 @@ async function handleCriar(interaction, client) {
   client.draftPolls.set(draftId, draft);
 
   // Salva em arquivo
-  const saveFunc = () => {
-    try {
-      const draftsArray = Array.from(client.draftPolls.values());
-      fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-    } catch (error) {
-      console.error('❌ Erro ao salvar rascunho:', error);
-    }
-  };
-  saveFunc();
+  client.saveDraftPolls();
 
   // Cria o embed de confirmação
   const confirmEmbed = new EmbedBuilder()
@@ -300,15 +296,7 @@ async function handleEditar(interaction, client) {
 
   // Salva a alteração
   client.draftPolls.set(draftId, draft);
-  const saveFunc = () => {
-    try {
-      const draftsArray = Array.from(client.draftPolls.values());
-      fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-    } catch (error) {
-      console.error('❌ Erro ao salvar rascunho:', error);
-    }
-  };
-  saveFunc();
+  client.saveDraftPolls();
 
   // Cria o embed de confirmação
   const updateEmbed = new EmbedBuilder()
@@ -419,6 +407,9 @@ async function handlePublicar(interaction, client) {
     });
   }
 
+  // Defer reply porque a operação vai demorar (adicionar reações)
+  await interaction.deferReply({ ephemeral: true });
+
   try {
     // Define o canal (usado o escolhido ou o canal atual)
     const targetChannel = canalEscolhido || interaction.channel;
@@ -472,29 +463,13 @@ async function handlePublicar(interaction, client) {
     });
 
     // Salva as votações ativas
-    const saveActiveFunc = () => {
-      try {
-        const pollsArray = Array.from(client.activePolls.entries());
-        fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
-      } catch (error) {
-        console.error('❌ Erro ao salvar votações:', error);
-      }
-    };
-    saveActiveFunc();
+    client.saveActivePolls();
 
     // Remove o rascunho
     client.draftPolls.delete(draftId);
 
     // Salva os rascunhos (agora sem o publicado)
-    const saveDraftFunc = () => {
-      try {
-        const draftsArray = Array.from(client.draftPolls.values());
-        fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-      } catch (error) {
-        console.error('❌ Erro ao salvar rascunhos:', error);
-      }
-    };
-    saveDraftFunc();
+    client.saveDraftPolls();
 
     // Confirmação
     const publishEmbed = new EmbedBuilder()
@@ -504,17 +479,15 @@ async function handlePublicar(interaction, client) {
       .setFooter({ text: 'A enquete está ativa e aceitando votos' })
       .setTimestamp();
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [publishEmbed],
-      ephemeral: true,
     });
 
     console.log(`✅ Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
   } catch (error) {
     console.error('❌ Erro ao publicar rascunho:', error);
-    await interaction.reply({
+    await interaction.editReply({
       content: '❌ Erro ao publicar o rascunho. Verifique minhas permissões no canal.',
-      ephemeral: true,
     });
   }
 }
@@ -543,15 +516,7 @@ async function handleDeletar(interaction, client) {
   client.draftPolls.delete(draftId);
 
   // Salva a alteração
-  const saveFunc = () => {
-    try {
-      const draftsArray = Array.from(client.draftPolls.values());
-      fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-    } catch (error) {
-      console.error('❌ Erro ao salvar rascunhos:', error);
-    }
-  };
-  saveFunc();
+  client.saveDraftPolls();
 
   // Confirmação
   const deleteEmbed = new EmbedBuilder()
@@ -635,15 +600,7 @@ async function handleAdicionarOpcao(interaction, client) {
 
   // Salva a alteração
   client.draftPolls.set(draftId, draft);
-  const saveFunc = () => {
-    try {
-      const draftsArray = Array.from(client.draftPolls.values());
-      fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-    } catch (error) {
-      console.error('❌ Erro ao salvar rascunho:', error);
-    }
-  };
-  saveFunc();
+  client.saveDraftPolls();
 
   // Cria o embed de confirmação
   const updateEmbed = new EmbedBuilder()
@@ -727,15 +684,7 @@ async function handleRemoverOpcao(interaction, client) {
 
   // Salva a alteração
   client.draftPolls.set(draftId, draft);
-  const saveFunc = () => {
-    try {
-      const draftsArray = Array.from(client.draftPolls.values());
-      fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-    } catch (error) {
-      console.error('❌ Erro ao salvar rascunho:', error);
-    }
-  };
-  saveFunc();
+  client.saveDraftPolls();
 
   // Cria o embed de confirmação
   const updateEmbed = new EmbedBuilder()

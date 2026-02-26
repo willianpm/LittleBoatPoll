@@ -73,6 +73,9 @@ module.exports = {
       });
     }
 
+    // Defer reply porque adicionar reações pode demorar
+    await interaction.deferReply();
+
     try {
       // Emojis para as opções (letras circuladas)
       // Discord limita a 20 reações por mensagem
@@ -104,8 +107,8 @@ module.exports = {
         .setFooter({ text: `${opcoes.length} opções disponíveis` })
         .setTimestamp();
 
-      // Envia a mensagem com o embed
-      await interaction.reply({
+      // Envia a mensagem com o embed (usando editReply porque já fizemos defer)
+      await interaction.editReply({
         embeds: [pollEmbed],
       });
 
@@ -137,23 +140,19 @@ module.exports = {
       });
 
       // Salva as votações ativas em arquivo
-      const saveActivePolls = () => {
-        try {
-          const pollsArray = Array.from(client.activePolls.entries());
-          fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
-        } catch (error) {
-          console.error('❌ Erro ao salvar votações:', error);
-        }
-      };
-      saveActivePolls();
+      client.saveActivePolls();
 
       console.log(`✅ Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
     } catch (error) {
       console.error('❌ Erro ao criar enquete:', error);
-      if (!interaction.replied) {
+      if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao criar a enquete!',
           ephemeral: true,
+        });
+      } else if (interaction.deferred && !interaction.replied) {
+        await interaction.editReply({
+          content: '❌ Erro ao criar a enquete!',
         });
       }
     }

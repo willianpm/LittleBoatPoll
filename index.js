@@ -40,6 +40,20 @@ function saveActivePolls() {
   }
 }
 
+// Salva rascunhos de enquetes em arquivo
+function saveDraftPolls() {
+  try {
+    const draftsArray = Array.from(client.draftPolls.values());
+    fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
+  } catch (error) {
+    console.error('❌ Erro ao salvar rascunhos:', error);
+  }
+}
+
+// Exporta funções de persistência via client para uso nos comandos
+client.saveActivePolls = saveActivePolls;
+client.saveDraftPolls = saveDraftPolls;
+
 // Carrega votações ativas do arquivo
 function loadActivePolls() {
   try {
@@ -93,16 +107,6 @@ function ensureDataFiles() {
   if (!fs.existsSync('./draft-polls.json')) {
     fs.writeFileSync('./draft-polls.json', JSON.stringify([], null, 2));
     console.log('✅ Arquivo draft-polls.json criado');
-  }
-}
-
-// Salva rascunhos de enquetes em arquivo
-function saveDraftPolls() {
-  try {
-    const draftsArray = Array.from(client.draftPolls.values());
-    fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
-  } catch (error) {
-    console.error('❌ Erro ao salvar rascunhos:', error);
   }
 }
 
