@@ -42,8 +42,24 @@ function loadActivePolls() {
   try {
     if (fs.existsSync('./active-polls.json')) {
       const pollsArray = JSON.parse(fs.readFileSync('./active-polls.json', 'utf8'));
-      client.activePolls = new Map(pollsArray);
-      console.log(`📊 ${pollsArray.length} votação(ões) ativa(s) carregada(s)`);
+
+      // Normaliza os dados para garantir compatibilidade com enquetes antigas
+      const normalizedPolls = pollsArray.map(([id, poll]) => {
+        return [
+          id,
+          {
+            ...poll,
+            channelId: poll.channelId || null, // Garante que channelId existe
+            maxVotos: poll.maxVotos || 1, // Garante que maxVotos existe
+            usarPesoMensalista: poll.usarPesoMensalista !== undefined ? poll.usarPesoMensalista : false,
+            votos: poll.votos || {},
+            status: poll.status || 'ativa',
+          },
+        ];
+      });
+
+      client.activePolls = new Map(normalizedPolls);
+      console.log(`📊 ${normalizedPolls.length} votação(ões) ativa(s) carregada(s)`);
     }
   } catch (error) {
     console.error('❌ Erro ao carregar votações ativas:', error);
@@ -75,6 +91,88 @@ function ensureDataFiles() {
 ensureDataFiles();
 loadActivePolls();
 
+// Sincroniza reações das enquetes ativas após o bot iniciar
+async function syncPollReactions() {
+  console.log('🔄 Sincronizando reações das enquetes ativas...');
+
+  for (const [messageId, poll] of client.activePolls.entries()) {
+    try {
+      // Se não tiver channelId, pula (enquetes antigas antes da atualização)
+      if (!poll.channelId) {
+        console.log(`⚠️ Enquete "${poll.titulo}" não tem channelId salvo - pulando sincronização`);
+        console.log(`   ℹ️ A sincronização funcionará após a próxima reinicialização`);
+        continue;
+      }
+
+      // Busca o canal e a mensagem
+      const channel = await client.channels.fetch(poll.channelId).catch(() => null);
+      if (!channel) {
+        console.log(`⚠️ Canal não encontrado para enquete "${poll.titulo}"`);
+        continue;
+      }
+
+      const message = await channel.messages.fetch(messageId).catch(() => null);
+      if (!message) {
+        console.log(`⚠️ Mensagem não encontrada para enquete "${poll.titulo}"`);
+        continue;
+      }
+
+      // Carrega mensalistas
+      let mensalistasData = { mensalistas: [] };
+      if (fs.existsSync('./mensalistas.json')) {
+        mensalistasData = JSON.parse(fs.readFileSync('./mensalistas.json', 'utf8'));
+      }
+
+      // Reseta os votos para reconstruir baseado nas reações reais
+      const votosAtualizados = {};
+
+      // Para cada reação na mensagem
+      for (const reaction of message.reactions.cache.values()) {
+        const emoji = reaction.emoji.name;
+
+        // Só processa emojis válidos da enquete
+        if (!poll.emojiNumeros.includes(emoji)) continue;
+
+        // Busca todos os usuários que reagiram
+        const users = await reaction.users.fetch();
+
+        for (const user of users.values()) {
+          if (user.bot) continue; // Ignora bot
+
+          // Inicializa votos do usuário se não existir
+          if (!votosAtualizados[user.id]) {
+            const isMensalista = mensalistasData.mensalistas.includes(user.id);
+            const peso = isMensalista && poll.usarPesoMensalista ? 2 : 1;
+
+            votosAtualizados[user.id] = {
+              usuario: user.username,
+              peso: peso,
+              reacoes: [],
+              timestamp: poll.votos[user.id]?.timestamp || new Date(),
+            };
+          }
+
+          // Adiciona a reação se não estiver duplicada
+          if (!votosAtualizados[user.id].reacoes.includes(emoji)) {
+            votosAtualizados[user.id].reacoes.push(emoji);
+          }
+        }
+      }
+
+      // Atualiza os votos da enquete
+      poll.votos = votosAtualizados;
+
+      console.log(`✅ Sincronizado: "${poll.titulo}" - ${Object.keys(votosAtualizados).length} votantes`);
+    } catch (error) {
+      console.error(`❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+    }
+  }
+
+  // Salva após sincronizar
+  saveActivePolls();
+  console.log('✅ Sincronização concluída!\n');
+}
+
 // =====================================
 // CARREGAMENTO DE COMANDOS
 // =====================================
@@ -96,10 +194,13 @@ for (const file of commandFiles) {
 // =====================================
 
 // Evento: Bot conectado e pronto
-client.once('clientReady', () => {
+client.once('clientReady', async () => {
   console.log(`\n✅ LittleBoatPoll está ONLINE como ${client.user.tag}!`);
   console.log(`📊 Gerenciador de Clube do Livro iniciado\n`);
   client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
+
+  // Sincroniza reações das enquetes ativas
+  await syncPollReactions();
 });
 
 // Evento: Interação criada (Slash Commands, Context Menu, Buttons, etc)
@@ -195,8 +296,12 @@ client.on('messageReactionAdd', async (reaction, user) => {
       return; // Já votou nesta opção
     }
 
+    // DEBUG: Log do estado atual
+    console.log(`📊 Estado atual - Usuário: ${user.username}, Votos atuais: ${poll.votos[user.id].reacoes.length}, Máximo: ${poll.maxVotos}`);
+
     // Verifica se atingiu o limite de votos
     if (poll.votos[user.id].reacoes.length >= poll.maxVotos) {
+      console.log(`⛔ Limite atingido! Removendo reação extra de ${user.username}`);
       // Remove a reação e notifica (se possível)
       await reaction.users.remove(user.id);
       try {

@@ -185,10 +185,16 @@ const msg = await interaction.reply({
   withResponse: true,
 });
 
-withResponse: true é IMPORTANTE
+withResponse: true é IMPORTANTE (anteriormente fetchReply)
 Retorna a mensagem criada para que possamos usar seu ID
 Sem isso, não conseguiríamos adicionar reações
-(Atualizado de fetchReply para withResponse - nova API do Discord.js)
+
+ATUALIZAÇÃO: Agora usamos o método moderno:
+1. await interaction.reply() - Envia a resposta
+2. await interaction.fetchReply() - Busca a mensagem para obter ID
+3. await interaction.editReply() - Edita a resposta
+
+Isso evita warnings de deprecação e segue as melhores práticas do Discord.js
 */
 
 /*
@@ -433,6 +439,43 @@ module.exports = {
 
 6. Múltiplas Opções:
    - Não só 👍👎, mas 5 estrelas ou múltiplas escolhas
+*/
+
+// ============================================
+// 10. SINCRONIZAÇÃO DE REAÇÕES AO REINICIAR
+// ============================================
+
+/*
+PROBLEMA: Quando o bot reinicia, ele perde o estado em memória
+
+Antes da correção:
+- Bot carregava active-polls.json com os votos salvos
+- MAS as reações já estavam na mensagem do Discord
+- Se os votos salvos estivessem desatualizados, o limite de votos era ignorado
+
+SOLUÇÃO: Função syncPollReactions()
+Executada quando o bot inicia (evento 'clientReady')
+
+O que faz:
+1. Para cada enquete ativa carregada
+2. Busca a mensagem real no Discord usando channelId + messageId
+3. Lê TODAS as reações atuais da mensagem
+4. Reconstrói o objeto votos{} baseado nas reações reais
+5. Salva o estado atualizado
+
+Resultado:
+- Estado em memória = Estado real no Discord
+- Limite de votos respeitado mesmo após reinicialização
+- Dados sincronizados e confiáveis
+
+Campos necessários salvos na enquete:
+- channelId: Para encontrar o canal onde está a mensagem
+- messageId: Para buscar a mensagem específica
+- maxVotos: Limite de votos por usuário
+- votos: Reconstruído com base nas reações reais
+
+Nota: Enquetes criadas antes da atualização sem channelId
+não serão sincronizadas até serem recriadas.
 */
 
 console.log('📖 Documentação interna carregada!');

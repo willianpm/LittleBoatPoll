@@ -125,6 +125,7 @@ module.exports = {
       // Inicializa a votação ativa em memória
       client.activePolls.set(msg.id, {
         messageId: msg.id,
+        channelId: interaction.channelId,
         titulo: titulo,
         opcoes: opcoes,
         emojiNumeros: emojiNumeros.slice(0, opcoes.length),
