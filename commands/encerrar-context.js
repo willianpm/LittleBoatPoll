@@ -1,5 +1,6 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
+const fs = require('fs');
 
 /**
  * COMANDO DE CONTEXTO: Encerrar Votação
