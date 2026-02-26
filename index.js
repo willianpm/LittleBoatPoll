@@ -451,8 +451,6 @@ async function deployCommands() {
     // Cria a instância REST para comunicar com a API do Discord
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-    console.log(`\nRegistrando ${slashCount + contextCount} comando(s)...`);
-
     // Verifica se CLIENT_ID está definido
     const clientId = process.env.CLIENT_ID;
 
@@ -466,8 +464,6 @@ async function deployCommands() {
     const data = await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
-
-    console.log(`Deploy concluído\n`);
 
     return true;
   } catch (error) {
@@ -491,7 +487,7 @@ client.once('clientReady', async () => {
 
   // Deploy de comandos se requisitado via variável de ambiente ou flag
   if (process.env.DEPLOY === 'true' || process.argv.includes('--deploy')) {
-    console.log('Modo DEPLOY ativado\n');
+    console.log('Registrando comandos...');
     const deploySuccess = await deployCommands();
     if (deploySuccess) {
       console.log('Deploy concluído com sucesso\n');
