@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Fix interaction timeouts for slower commands.
 - Centralize draft persistence helpers.
 - Add context menus: "Adicionar Mensalista" and "Remover Mensalista" for quick user management.
+- Add context menu: "Toggle Opção em Rascunho" for adding/removing draft options from text messages.
 - Make mensalista add/remove responses ephemeral (private to command executor).
 - Fix Discord.js deprecation warning: migrate from `ephemeral: true` to `flags: MessageFlags.Ephemeral`.
 
