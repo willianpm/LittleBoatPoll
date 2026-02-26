@@ -173,6 +173,78 @@ async function syncPollReactions() {
   console.log('✅ Sincronização concluída!\n');
 }
 
+// Verifica e remove votos que excedem o limite configurado
+async function enforceVoteLimits() {
+  console.log('🔍 Verificando limites de votos...');
+
+  for (const [messageId, poll] of client.activePolls.entries()) {
+    try {
+      // Se não tiver channelId, pula
+      if (!poll.channelId) continue;
+
+      const channel = await client.channels.fetch(poll.channelId).catch(() => null);
+      if (!channel) continue;
+
+      const message = await channel.messages.fetch(messageId).catch(() => null);
+      if (!message) continue;
+
+      let violacoesSencontradas = 0;
+
+      // Para cada usuário que votou
+      for (const [userId, userVotes] of Object.entries(poll.votos)) {
+        const numVotos = userVotes.reacoes.length;
+
+        // Se excedeu o limite
+        if (numVotos > poll.maxVotos) {
+          console.log(`⚠️ "${poll.titulo}" - ${userVotes.usuario}: ${numVotos} votos (limite: ${poll.maxVotos})`);
+
+          // Determina quantos votos remover (remove os últimos adicionados)
+          const votosParaRemover = numVotos - poll.maxVotos;
+          const reacoesParaRemover = userVotes.reacoes.slice(-votosParaRemover);
+
+          try {
+            // Remove as reações em excesso da mensagem
+            for (const emoji of reacoesParaRemover) {
+              const reaction = message.reactions.cache.find((r) => r.emoji.name === emoji);
+              if (reaction) {
+                await reaction.users.remove(userId).catch(() => {});
+              }
+            }
+
+            // Atualiza votos em memória, mantendo apenas os primeiros
+            userVotes.reacoes = userVotes.reacoes.slice(0, poll.maxVotos);
+
+            // Tenta notificar o usuário
+            try {
+              const user = await client.users.fetch(userId).catch(() => null);
+              if (user) {
+                await user.send(`⚠️ **Votos ajustados em "${poll.titulo}"**\n\n` + `Você havia votado em ${numVotos} opção(ões), mas o limite é ${poll.maxVotos}.\n` + `As ${votosParaRemover} opção(ões) mais recente(s) foram removidas.\n` + `Seus votos atuais: ${userVotes.reacoes.join(', ')}`).catch(() => {});
+              }
+            } catch (e) {
+              // Silencioso se não conseguir enviar DM
+            }
+
+            violacoesSencontradas++;
+            console.log(`✅ Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario}`);
+          } catch (error) {
+            console.error(`❌ Erro ao remover votos de ${userVotes.usuario}:`, error.message);
+          }
+        }
+      }
+
+      if (violacoesSencontradas > 0) {
+        console.log(`📊 "${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados`);
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao verificar limites de "${poll.titulo}":`, error.message);
+    }
+  }
+
+  // Salva após aplicar limites
+  saveActivePolls();
+  console.log('✅ Verificação de limites concluída!\n');
+}
+
 // =====================================
 // CARREGAMENTO DE COMANDOS
 // =====================================
@@ -201,6 +273,9 @@ client.once('clientReady', async () => {
 
   // Sincroniza reações das enquetes ativas
   await syncPollReactions();
+
+  // Verifica e remove votos que excedem o limite
+  await enforceVoteLimits();
 });
 
 // Evento: Interação criada (Slash Commands, Context Menu, Buttons, etc)

@@ -478,4 +478,82 @@ Nota: Enquetes criadas antes da atualização sem channelId
 não serão sincronizadas até serem recriadas.
 */
 
+// ============================================
+// 11. ENFORCEMENT DE LIMITES DE VOTOS
+// ============================================
+
+/*
+PROBLEMA: O bot fica offline, usuários adicionam reações
+e quando o bot volta, ele pode ter votos em excesso na memória
+
+Cenário de violação:
+1. Bot está online, limit é 2 votos por usuário
+2. Usuário A vota em 2 opções (OK)
+3. Bot fica offline
+4. Usuário A adiciona mais 2 reações enquanto bot está offline
+5. Bot volta online e sincroniza, encontrando 4 reações
+6. Sistema PRECISA remover as 2 extras automaticamente
+
+SOLUÇÃO: Função enforceVoteLimits()
+Executada APÓS syncPollReactions() no evento 'clientReady'
+
+O que faz:
+1. Para cada enquete ativa
+2. Para cada usuário que votou
+3. Se reacoes.length > maxVotos:
+   a. Identifica qual(is) votos remover (últimos adicionados)
+   b. Remove essas reações da mensagem no Discord
+   c. Atualiza votos{} em memória
+   d. Notifica o usuário por DM explicando o que aconteceu
+
+Estratégia de remoção:
+- "First-come, first-served"
+- Mantém os PRIMEIROS votos adicionados
+- Remove os ÚLTIMOS (mais novos) votos
+- Exemplo: Se limit é 2 e tem 4 votos, remove os 2 mais recentes
+
+Notificação do usuário:
+- Enviada por DM
+- Informa quantos votos foram removidos
+- Lista os votos mantidos
+- Educativo e transparente
+
+Campos usados:
+- maxVotos: Limite configurado para a enquete
+- votos[userId].reacoes: Array de reações do usuário
+- channelId e messageId: Para acessar a mensagem real
+
+Fluxo completo ao bot reiniciar:
+┌─────────────────────────────┐
+│ Evento 'clientReady'        │
+└──────────────┬──────────────┘
+               │
+         ┌─────▼─────┐
+         │ Carregar  │
+         │ .json     │
+         └─────┬─────┘
+               │
+         ┌─────▼──────────────────┐
+         │ syncPollReactions()    │
+         │ (lê estado real)       │
+         └─────┬──────────────────┘
+               │
+         ┌─────▼──────────────────┐
+         │ enforceVoteLimits()    │
+         │ (remove exceder)       │
+         └─────┬──────────────────┘
+               │
+         ┌─────▼──────────────────┐
+         │ Salva estado final     │
+         │ Estado garantidamente  │
+         │ válido e sincronizado  │
+         └────────────────────────┘
+
+Resultado:
+- Nenhum limite é violado mesmo se bot ficar offline
+- Usuários são automaticamente notificados
+- Estado sempre consistente com as regras da enquete
+- Transparência total das ações
+*/
+
 console.log('📖 Documentação interna carregada!');
