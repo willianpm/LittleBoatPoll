@@ -23,16 +23,16 @@ CLIENT_ID=your_application_id_here
 
 ## Run
 
-Register commands (first time and whenever commands change):
-
-```bash
-npm run deploy
-```
-
-Start the bot:
+Start the bot (automatically registers commands first):
 
 ```bash
 npm start
+```
+
+If you want to skip command registration (faster startup):
+
+```bash
+npm run start:quick
 ```
 
 ## Tests
