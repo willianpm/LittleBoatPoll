@@ -42,7 +42,15 @@ module.exports = {
       }
 
       // Carrega os rascunhos
-      if (!client.draftPolls || client.draftPolls.size === 0) {
+      if (!client.draftPolls) {
+        console.error('❌ client.draftPolls não inicializado!');
+        return await interaction.reply({
+          content: '❌ Erro interno: Sistema de rascunhos não inicializado. Por favor, contate o administrador.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      if (client.draftPolls.size === 0) {
         return await interaction.reply({
           content: '❌ Nenhum rascunho encontrado! Crie um rascunho primeiro com `/rascunho criar`.',
           flags: MessageFlags.Ephemeral,
@@ -62,6 +70,15 @@ module.exports = {
       }
 
       const rascunho = userDrafts[0];
+
+      // Validação extra de segurança
+      if (!rascunho || !rascunho.opcoes || !Array.isArray(rascunho.opcoes)) {
+        console.error('❌ Rascunho corrompido:', rascunho);
+        return await interaction.reply({
+          content: '❌ Erro: Rascunho corrompido. Por favor, crie um novo rascunho.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
 
       // Verifica se a opção já existe (case-insensitive)
       const opcaoExistente = rascunho.opcoes.findIndex((op) => op.toLowerCase() === textoSelecionado.toLowerCase());
@@ -125,11 +142,21 @@ module.exports = {
       console.log(`✅ Opção ${acao.toLowerCase()} via context menu: "${textoSelecionado}" (Rascunho: ${rascunho.id})`);
     } catch (error) {
       console.error('❌ Erro ao processar toggle de opção (context menu):', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ Erro ao processar o comando.',
-          flags: MessageFlags.Ephemeral,
-        });
+      console.error('Stack trace:', error.stack);
+
+      try {
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content: '❌ Erro ao processar o comando. Detalhes registrados no log.',
+            flags: MessageFlags.Ephemeral,
+          });
+        } else if (interaction.deferred) {
+          await interaction.editReply({
+            content: '❌ Erro ao processar o comando. Detalhes registrados no log.',
+          });
+        }
+      } catch (replyError) {
+        console.error('❌ Erro ao enviar mensagem de erro:', replyError);
       }
     }
   },
