@@ -1,25 +1,18 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const fs = require('fs');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(0),
 
   async execute(interaction, client) {
     try {
-      // Verifica permissões
-      const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-
-      let cargosPermitidos = [];
-      if (fs.existsSync('./cargos-criadores.json')) {
-        const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-        cargosPermitidos = data.cargos || [];
-      }
-
-      const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
-
-      if (!isAdmin && !temCargoPermitido) {
+      // =====================================
+      // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+      // Apenas usuários com o cargo Criador podem executar este comando
+      // =====================================
+      if (!isCriador(interaction.member)) {
         return await interaction.reply({
-          content: '❌ Permissão negada! Apenas administradores ou membros autorizados podem gerenciar rascunhos.',
+          content: MENSAGEM_PERMISSAO_NEGADA,
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -45,7 +38,7 @@ module.exports = {
       if (!client.draftPolls) {
         console.error('❌ client.draftPolls não inicializado!');
         return await interaction.reply({
-          content: '❌ Erro interno: Sistema de rascunhos não inicializado. Por favor, contate o administrador.',
+          content: '❌ Erro interno: Sistema de rascunhos não inicializado. Por favor, contate um Criador.',
           flags: MessageFlags.Ephemeral,
         });
       }

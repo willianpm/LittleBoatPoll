@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const fs = require('fs');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 
 /**
  * COMANDO: /enquete
@@ -15,6 +15,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('enquete')
     .setDescription('Cria uma enquete para votação do Clube do Livro')
+    .setDefaultMemberPermissions(0)
     .addStringOption((option) => option.setName('nome-da-enquete').setDescription('Nome/Título da enquete').setRequired(true))
     .addStringOption((option) => option.setName('opcoes').setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)').setRequired(true))
     .addIntegerOption((option) => option.setName('max_votos').setDescription('Número máximo de votos por pessoa').setRequired(true).setMinValue(1))
@@ -51,24 +52,12 @@ module.exports = {
     }
 
     // =====================================
-    // VERIFICAÇÃO DE PERMISSÕES
+    // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+    // Apenas usuários com o cargo Criador podem executar este comando
     // =====================================
-    const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-
-    // Carrega os cargos permitidos
-    let cargosPermitidos = [];
-    if (fs.existsSync('./cargos-criadores.json')) {
-      const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-      cargosPermitidos = data.cargos || [];
-    }
-
-    // Verifica se o usuário tem algum cargo permitido
-    const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
-
-    // Se não é admin e não tem cargo permitido, nega
-    if (!isAdmin && !temCargoPermitido) {
+    if (!isCriador(interaction.member)) {
       return await interaction.reply({
-        content: '❌ **Permissão negada!** Apenas administradores ou membros com cargos autorizados podem criar enquetes.',
+        content: MENSAGEM_PERMISSAO_NEGADA,
         flags: MessageFlags.Ephemeral,
       });
     }

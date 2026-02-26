@@ -1,43 +1,45 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 const fs = require('fs');
 
 /**
  * COMANDO: /criadores
- * Gerencia os cargos que podem criar enquetes
+ * Gerencia os cargos Criador (acesso total ao bot)
  *
  * Subcomandos:
  * - adicionar: Adiciona um cargo à lista de criadores
  * - remover: Remove um cargo da lista de criadores
- * - listar: Lista todos os cargos autorizados
+ * - listar: Lista todos os cargos Criador
  */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('criadores')
-    .setDescription('Gerencia os cargos autorizados a criar enquetes')
+    .setDescription('Gerencia os cargos Criador (acesso total ao bot)')
+    .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('adicionar')
-        .setDescription('Adiciona um cargo à lista de criadores')
+        .setDescription('Adiciona um cargo Criador')
         .addRoleOption((option) => option.setName('cargo').setDescription('Cargo a ser adicionado').setRequired(true)),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('remover')
-        .setDescription('Remove um cargo da lista de criadores')
+        .setDescription('Remove um cargo Criador')
         .addRoleOption((option) => option.setName('cargo').setDescription('Cargo a ser removido').setRequired(true)),
     )
-    .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os cargos autorizados a criar enquetes'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os cargos Criador')),
 
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand();
 
     // =====================================
-    // VERIFICAÇÃO DE PERMISSÕES (adicionar/remover)
+    // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+    // Apenas usuários com o cargo Criador podem executar este comando
     // =====================================
-    if ((subcommand === 'adicionar' || subcommand === 'remover') && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    if (!isCriador(interaction.member)) {
       return await interaction.reply({
-        content: '❌ **Permissão negada!** Apenas administradores podem gerenciar os cargos criadores.',
+        content: MENSAGEM_PERMISSAO_NEGADA,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -59,7 +61,7 @@ module.exports = {
       // Verifica se já está na lista
       if (data.cargos.includes(cargo.id)) {
         return await interaction.reply({
-          content: `❌ O cargo **${cargo.name}** já está autorizado a criar enquetes!`,
+          content: `❌ O cargo **${cargo.name}** já está na lista de Criadores!`,
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -68,7 +70,7 @@ module.exports = {
       data.cargos.push(cargo.id);
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
-      const embed = new EmbedBuilder().setColor('#00FF00').setTitle('✅ Cargo Adicionado!').setDescription(`O cargo **${cargo.name}** agora pode criar enquetes.`).setTimestamp();
+      const embed = new EmbedBuilder().setColor('#00FF00').setTitle('✅ Cargo Criador Adicionado!').setDescription(`O cargo **${cargo.name}** agora tem acesso total ao bot.`).setTimestamp();
 
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
@@ -82,7 +84,7 @@ module.exports = {
       // Verifica se está na lista
       if (!data.cargos.includes(cargo.id)) {
         return await interaction.reply({
-          content: `❌ O cargo **${cargo.name}** não está na lista de criadores!`,
+          content: `❌ O cargo **${cargo.name}** não está na lista de Criadores!`,
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -91,7 +93,7 @@ module.exports = {
       data.cargos = data.cargos.filter((id) => id !== cargo.id);
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
-      const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Cargo Removido!').setDescription(`O cargo **${cargo.name}** não pode mais criar enquetes.`).setTimestamp();
+      const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Cargo Criador Removido!').setDescription(`O cargo **${cargo.name}** não tem mais acesso total ao bot.`).setTimestamp();
 
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
@@ -101,7 +103,7 @@ module.exports = {
     // =====================================
     if (subcommand === 'listar') {
       if (data.cargos.length === 0) {
-        const embed = new EmbedBuilder().setColor('#FFA500').setTitle('📋 Cargos Criadores').setDescription('Nenhum cargo autorizado ainda.\n\n_Apenas administradores podem criar enquetes no momento._').setTimestamp();
+        const embed = new EmbedBuilder().setColor('#FFA500').setTitle('📋 Cargos Criadores').setDescription('Nenhum cargo Criador definido ainda.\n\n_Adicione um cargo para permitir acesso total ao bot._').setTimestamp();
 
         return await interaction.reply({ embeds: [embed], ephemeral: false });
       }
@@ -123,8 +125,8 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor('#4169E1')
-        .setTitle('📋 Cargos Autorizados a Criar Enquetes')
-        .setDescription(lista || 'Nenhum cargo encontrado.')
+        .setTitle('📋 Cargos Criador (Acesso Total)')
+        .setDescription((lista || 'Nenhum cargo encontrado.') + '\n\n_Usuários com estes cargos têm acesso total ao bot._\n_Usuários sem estes cargos podem apenas votar._')
         .setFooter({ text: `Total: ${data.cargos.length} cargo(s)` })
         .setTimestamp();
 

@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 const fs = require('fs');
 
 /**
@@ -10,12 +11,13 @@ const fs = require('fs');
  * - remover @usuario: Remove um usuário da lista de mensalistas
  * - listar: Mostra todos os mensalistas cadastrados
  *
- * PERMISSÃO: Apenas administradores ou cargos autorizados podem adicionar/remover
+ * PERMISSÃO: Apenas usuários com o cargo Criador podem adicionar/remover
  */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('mensalista')
     .setDescription('Gerencia a lista de mensalistas do Clube do Livro')
+    .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('adicionar')
@@ -28,36 +30,22 @@ module.exports = {
         .setDescription('Remove um usuário da lista de mensalistas')
         .addUserOption((option) => option.setName('usuario').setDescription('Usuário a remover').setRequired(true)),
     )
-    .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os mensalistas cadastrados'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // ✅ Apenas admins
+    .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os mensalistas cadastrados')),
 
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();
     const mensalistasFilePath = './mensalistas.json';
 
     try {
-      // ✅ VERIFICAÇÃO DE PERMISSÕES
-      // Apenas admins ou cargos autorizados podem adicionar/remover (listar é permitido para todos)
-      if (subcommand === 'adicionar' || subcommand === 'remover') {
-        const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-
-        // Carrega os cargos permitidos
-        let cargosPermitidos = [];
-        if (fs.existsSync('./cargos-criadores.json')) {
-          const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-          cargosPermitidos = data.cargos || [];
-        }
-
-        // Verifica se o usuário tem algum cargo permitido
-        const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
-
-        // Se não é admin e não tem cargo permitido, nega
-        if (!isAdmin && !temCargoPermitido) {
-          return await interaction.reply({
-            content: '❌ **Permissão negada!** Apenas administradores ou membros autorizados podem gerenciar mensalistas.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
+      // =====================================
+      // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+      // Apenas usuários com o cargo Criador podem executar este comando
+      // =====================================
+      if (!isCriador(interaction.member)) {
+        return await interaction.reply({
+          content: MENSAGEM_PERMISSAO_NEGADA,
+          flags: MessageFlags.Ephemeral,
+        });
       }
 
       // Lê o arquivo de mensalistas

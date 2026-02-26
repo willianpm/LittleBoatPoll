@@ -417,8 +417,8 @@ module.exports = {
 
 /*
 1. Permissões:
-   - Apenas admin pode usar /mensalista
-   - Apenas certos roles podem criar enquetes
+  - Apenas Criador pode usar /mensalista
+  - Apenas Criador pode criar enquetes
 
 2. Banco de Dados:
    - Guardar votos em MongoDB ou PostgreSQL

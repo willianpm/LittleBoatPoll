@@ -1,6 +1,18 @@
 # LittleBoatPoll
 
-LittleBoatPoll is a Discord bot for running book club polls with weighted votes (monthly members can have weight 2).
+LittleBoatPoll is a Discord bot for running book club polls with weighted votes.
+
+## Permission Model
+
+The bot uses a **binary permission system**:
+
+- **Criador Role**: Users with the "Criador" role have full access to all bot commands and features.
+- **Admins and Server Owner**: Also have full access to all bot commands and features.
+- **Regular Users**: Users without the "Criador" role can only vote on active polls through reactions.
+
+There are no intermediate levels, partial permissions, or hierarchies. It's either full access (Criador) or vote-only (regular user).
+
+To ensure commands are visible only to the Criador role (and optionally admins), enable the bot's commands only for those roles in Discord's integration settings.
 
 ## Requirements
 

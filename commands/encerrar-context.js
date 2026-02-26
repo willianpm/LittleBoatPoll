@@ -1,5 +1,5 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const fs = require('fs');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 
 /**
  * COMANDO DE CONTEXTO: Encerrar Votação
@@ -7,30 +7,20 @@ const fs = require('fs');
  * Encerra a votação se for uma enquete ativa
  */
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Encerrar Votação').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  data: new ContextMenuCommandBuilder().setName('Encerrar Votação').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(0),
 
   async execute(interaction, client) {
     const message = interaction.targetMessage;
     const messageId = message.id;
 
     try {
-      // ✅ VERIFICAÇÃO DE PERMISSÕES
-      const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-
-      // Carrega os cargos permitidos
-      let cargosPermitidos = [];
-      if (fs.existsSync('./cargos-criadores.json')) {
-        const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-        cargosPermitidos = data.cargos || [];
-      }
-
-      // Verifica se o usuário tem algum cargo permitido
-      const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
-
-      // Se não é admin e não tem cargo permitido, nega
-      if (!isAdmin && !temCargoPermitido) {
+      // =====================================
+      // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+      // Apenas usuários com o cargo Criador podem executar este comando
+      // =====================================
+      if (!isCriador(interaction.member)) {
         return await interaction.reply({
-          content: '❌ **Permissão negada!** Apenas administradores ou membros autorizados podem encerrar votações.',
+          content: MENSAGEM_PERMISSAO_NEGADA,
           flags: MessageFlags.Ephemeral,
         });
       }

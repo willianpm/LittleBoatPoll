@@ -270,7 +270,7 @@ NÍVEIS DE PERMISSÃO (DO MAIS RESTRITIVO AO MAIS AMPLO):
 
 2. SERVIDOR (Guild)
    - Permissões gerais para todo o servidor
-   - Exemplo: Admin vs Membro comum
+   - Exemplo: Criador vs Membro comum
 
 3. GLOBAL (Developer Portal)
    - Permissões base do bot
@@ -286,8 +286,8 @@ COMO DEFINIR PERMISSÕES POR CANAL:
 
 No futuro, você pode querer:
 - Bot pode ver apenas #votacoes
-- Admin pode usar todos os comandos
-- Memberg comuns podem só votar
+- Criador pode usar todos os comandos
+- Membros comuns podem só votar
 */
 
 // ============================================

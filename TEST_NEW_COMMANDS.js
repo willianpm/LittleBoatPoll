@@ -510,7 +510,7 @@ ERRO: "Precisa ter pelo menos 2 opções"
 → Adicione novas opções antes de remover
 
 ERRO: "Permissão negada"
-→ Solução: Você precisa ser criador do rascunho ou admin
+→ Solução: Você precisa ter o cargo Criador
 → Verifique com /rascunho listar quem criou
 */
 

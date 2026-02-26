@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 const fs = require('fs');
 const crypto = require('crypto');
 
@@ -20,6 +21,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('rascunho')
     .setDescription('Gerencia rascunhos de enquetes para futuras votações')
+    .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('criar')
@@ -78,24 +80,14 @@ module.exports = {
     const subcommand = interaction.options.getSubcommand();
 
     // =====================================
-    // VERIFICAÇÃO DE PERMISSÕES
+    // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+    // Apenas usuários com o cargo Criador podem executar comandos de gestão
     // =====================================
-    const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
 
-    // Carrega os cargos permitidos
-    let cargosPermitidos = [];
-    if (fs.existsSync('./cargos-criadores.json')) {
-      const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-      cargosPermitidos = data.cargos || [];
-    }
-
-    // Verifica se o usuário tem algum cargo permitido
-    const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
-
-    // Se não é admin e não tem cargo permitido, nega para criar/editar
-    if ((subcommand === 'criar' || subcommand === 'editar' || subcommand === 'adicionar-opcao' || subcommand === 'remover-opcao' || subcommand === 'deletar' || subcommand === 'publicar') && !isAdmin && !temCargoPermitido) {
+    // Todos os subcomandos exigem cargo Criador
+    if (!isCriador(interaction.member)) {
       return await interaction.reply({
-        content: '❌ **Permissão negada!** Apenas administradores ou membros com cargos autorizados podem gerenciar enquetes.',
+        content: MENSAGEM_PERMISSAO_NEGADA,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -231,11 +223,11 @@ async function handleEditar(interaction, client) {
     });
   }
 
-  // Verifica se o usuário é o criador ou admin
-  const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-  if (draft.criadorId !== interaction.user.id && !isAdmin) {
+  // Verifica se o usuário é o criador ou tem cargo Criador
+  const temCargoCriador = isCriador(interaction.member);
+  if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador ou administrador podem editar este rascunho.',
+      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -398,11 +390,11 @@ async function handlePublicar(interaction, client) {
     });
   }
 
-  // Verifica se o usuário é o criador ou admin
-  const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-  if (draft.criadorId !== interaction.user.id && !isAdmin) {
+  // Verifica se o usuário é o criador ou tem cargo Criador
+  const temCargoCriador = isCriador(interaction.member);
+  if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador ou administrador podem publicar este rascunho.',
+      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem publicar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -503,11 +495,11 @@ async function handleDeletar(interaction, client) {
     });
   }
 
-  // Verifica se o usuário é o criador ou admin
-  const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-  if (draft.criadorId !== interaction.user.id && !isAdmin) {
+  // Verifica se o usuário é o criador ou tem cargo Criador
+  const temCargoCriador = isCriador(interaction.member);
+  if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador ou administrador podem deletar este rascunho.',
+      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem deletar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -546,11 +538,11 @@ async function handleAdicionarOpcao(interaction, client) {
     });
   }
 
-  // Verifica se o usuário é o criador ou admin
-  const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-  if (draft.criadorId !== interaction.user.id && !isAdmin) {
+  // Verifica se o usuário é o criador ou tem cargo Criador
+  const temCargoCriador = isCriador(interaction.member);
+  if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador ou administrador podem editar este rascunho.',
+      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -630,11 +622,11 @@ async function handleRemoverOpcao(interaction, client) {
     });
   }
 
-  // Verifica se o usuário é o criador ou admin
-  const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-  if (draft.criadorId !== interaction.user.id && !isAdmin) {
+  // Verifica se o usuário é o criador ou tem cargo Criador
+  const temCargoCriador = isCriador(interaction.member);
+  if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador ou administrador podem editar este rascunho.',
+      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes, Partials, PermissionFlagsBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -15,6 +15,7 @@ const client = new Client({
     GatewayIntentBits.DirectMessages, // Para DMs
     GatewayIntentBits.GuildMessageReactions, // CRUCIAL: Para ler reações
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 // Criamos uma coleção para armazenar os comandos slash
@@ -470,6 +471,14 @@ client.on('messageReactionAdd', async (reaction, user) => {
     // Ignora reações do próprio bot
     if (user.bot) return;
 
+    // Garante acesso a dados completos em mensagens/reacoes nao cacheadas
+    if (reaction.partial) {
+      await reaction.fetch().catch(() => null);
+    }
+    if (reaction.message && reaction.message.partial) {
+      await reaction.message.fetch().catch(() => null);
+    }
+
     // Busca a votação ativa para esta mensagem
     const poll = client.activePolls.get(reaction.message.id);
     if (!poll) return;
@@ -508,14 +517,28 @@ client.on('messageReactionAdd', async (reaction, user) => {
       return; // Já votou nesta opção
     }
 
+    // Normaliza maxVotos
+    const maxVotos = Number(poll.maxVotos);
+    const maxVotosValido = Number.isFinite(maxVotos) && maxVotos > 0 ? maxVotos : 1;
+    if (poll.maxVotos !== maxVotosValido) {
+      poll.maxVotos = maxVotosValido;
+      saveActivePolls();
+    }
+
     // DEBUG: Log do estado atual
     console.log(`📊 Estado atual - Usuário: ${user.username}, Votos atuais: ${poll.votos[user.id].reacoes.length}, Máximo: ${poll.maxVotos}`);
+
+    // Alerta se o bot nao tiver permissao para remover reacoes
+    const botMember = reaction.message.guild?.members.me;
+    if (botMember && !botMember.permissions.has(PermissionFlagsBits.ManageMessages)) {
+      console.warn('⚠️ Bot sem permissao de Gerenciar Mensagens; limite de votos pode nao ser aplicado.');
+    }
 
     // Verifica se atingiu o limite de votos
     if (poll.votos[user.id].reacoes.length >= poll.maxVotos) {
       console.log(`⛔ Limite atingido! Removendo reação extra de ${user.username}`);
       // Remove a reação e notifica (se possível)
-      await reaction.users.remove(user.id);
+      await reaction.users.remove(user.id).catch(() => null);
       try {
         await user.send(`❌ Você já atingiu o limite de **${poll.maxVotos}** voto(s) nesta enquete: "${poll.titulo}"`);
       } catch (e) {
@@ -539,6 +562,14 @@ client.on('messageReactionAdd', async (reaction, user) => {
 client.on('messageReactionRemove', async (reaction, user) => {
   try {
     if (user.bot) return;
+
+    // Garante acesso a dados completos em mensagens/reacoes nao cacheadas
+    if (reaction.partial) {
+      await reaction.fetch().catch(() => null);
+    }
+    if (reaction.message && reaction.message.partial) {
+      await reaction.message.fetch().catch(() => null);
+    }
 
     const poll = client.activePolls.get(reaction.message.id);
     if (!poll) return;

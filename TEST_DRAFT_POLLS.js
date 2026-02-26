@@ -261,8 +261,8 @@ ERRO: "O número máximo de votos não pode ser maior que o número de opções"
 → Aumente opções ou diminua max_votos
 
 ERRO: "Permissão negada"
-→ Verifique se é Admin ou tem cargo autorizado
-→ Use /criadores listar para ver cargos permitidos
+→ Verifique se possui o cargo Criador
+→ Use /criadores listar para ver os cargos Criador
 
 ERRO: "Discord limita a 20 reações por mensagem"
 → Use máximo 20 opções por enquete

@@ -1,27 +1,22 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 const fs = require('fs');
 
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Adicionar Mensalista').setType(ApplicationCommandType.User).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  data: new ContextMenuCommandBuilder().setName('Adicionar Mensalista').setType(ApplicationCommandType.User).setDefaultMemberPermissions(0),
 
   async execute(interaction, client) {
     const mensalistasFilePath = './mensalistas.json';
     const usuario = interaction.targetUser;
 
     try {
-      const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
-
-      let cargosPermitidos = [];
-      if (fs.existsSync('./cargos-criadores.json')) {
-        const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-        cargosPermitidos = data.cargos || [];
-      }
-
-      const temCargoPermitido = interaction.member.roles.cache.some((role) => cargosPermitidos.includes(role.id));
-
-      if (!isAdmin && !temCargoPermitido) {
+      // =====================================
+      // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+      // Apenas usuários com o cargo Criador podem executar este comando
+      // =====================================
+      if (!isCriador(interaction.member)) {
         return await interaction.reply({
-          content: 'Permissao negada. Apenas administradores ou membros autorizados podem gerenciar mensalistas.',
+          content: MENSAGEM_PERMISSAO_NEGADA,
           flags: MessageFlags.Ephemeral,
         });
       }
