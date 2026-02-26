@@ -1,0 +1,26 @@
+[
+  {
+    "id": "75DB97C4",
+    "titulo": "Apenas um grande teste de rascuinho",
+    "opcoes": ["Livro33", "Livro 34"],
+    "maxVotos": 2,
+    "usarPesoMensalista": false,
+    "criadorId": "300728666042662912",
+    "criadorNome": "willianpm",
+    "criadoEm": "2026-02-26T12:36:23.540Z",
+    "editadoEm": "2026-02-26T12:37:16.654Z",
+    "status": "rascunho"
+  },
+  {
+    "id": "57A7000E",
+    "titulo": "Um grande teste de Rascunho será realizado aqui",
+    "opcoes": ["Livro 1 - BBB", "Livro 2 -AAA", "Livro 3 CCC", "Livro 4 HHH", "Livro 5- PPP"],
+    "maxVotos": 2,
+    "usarPesoMensalista": true,
+    "criadorId": "300728666042662912",
+    "criadorNome": "willianpm",
+    "criadoEm": "2026-02-26T12:45:34.246Z",
+    "editadoEm": "2026-02-26T12:48:05.434Z",
+    "status": "rascunho"
+  }
+]

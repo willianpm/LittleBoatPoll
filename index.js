@@ -23,6 +23,9 @@ client.commands = new Collection();
 // Estrutura para armazenar votações ativas em memória
 client.activePolls = new Map();
 
+// Estrutura para armazenar rascunhos de enquetes
+client.draftPolls = new Map();
+
 // =====================================
 // FUNÇÕES AUXILIARES
 // =====================================
@@ -85,11 +88,57 @@ function ensureDataFiles() {
     fs.writeFileSync('./cargos-criadores.json', JSON.stringify({ cargos: [] }, null, 2));
     console.log('✅ Arquivo cargos-criadores.json criado');
   }
+
+  // draft-polls.json
+  if (!fs.existsSync('./draft-polls.json')) {
+    fs.writeFileSync('./draft-polls.json', JSON.stringify([], null, 2));
+    console.log('✅ Arquivo draft-polls.json criado');
+  }
+}
+
+// Salva rascunhos de enquetes em arquivo
+function saveDraftPolls() {
+  try {
+    const draftsArray = Array.from(client.draftPolls.values());
+    fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
+  } catch (error) {
+    console.error('❌ Erro ao salvar rascunhos:', error);
+  }
+}
+
+// Carrega rascunhos de enquetes do arquivo
+function loadDraftPolls() {
+  try {
+    if (fs.existsSync('./draft-polls.json')) {
+      const draftsArray = JSON.parse(fs.readFileSync('./draft-polls.json', 'utf8'));
+
+      // Normaliza os dados
+      const normalizedDrafts = draftsArray.map((draft) => {
+        return [
+          draft.id,
+          {
+            ...draft,
+            maxVotos: draft.maxVotos || 1,
+            usarPesoMensalista: draft.usarPesoMensalista !== undefined ? draft.usarPesoMensalista : false,
+            criadorId: draft.criadorId || null,
+            criadoEm: draft.criadoEm || new Date().toISOString(),
+            editadoEm: draft.editadoEm || new Date().toISOString(),
+          },
+        ];
+      });
+
+      client.draftPolls = new Map(normalizedDrafts);
+      console.log(`📝 ${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar rascunhos:', error);
+  }
 }
 
 // Inicializa arquivos de dados
 ensureDataFiles();
 loadActivePolls();
+loadDraftPolls();
 
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
