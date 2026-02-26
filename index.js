@@ -37,7 +37,7 @@ function saveActivePolls() {
     const pollsArray = Array.from(client.activePolls.entries());
     fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
   } catch (error) {
-    console.error('❌ Erro ao salvar votações ativas:', error);
+    console.error('Erro ao salvar votações ativas: ❌', error);
   }
 }
 
@@ -47,7 +47,7 @@ function saveDraftPolls() {
     const draftsArray = Array.from(client.draftPolls.values());
     fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
   } catch (error) {
-    console.error('❌ Erro ao salvar rascunhos:', error);
+    console.error('Erro ao salvar rascunhos: ❌', error);
   }
 }
 
@@ -77,10 +77,10 @@ function loadActivePolls() {
       });
 
       client.activePolls = new Map(normalizedPolls);
-      console.log(`📊 ${normalizedPolls.length} votação(ões) ativa(s) carregada(s)`);
+      console.log(`${normalizedPolls.length} votação(ões) ativa(s) carregada(s) 📊`);
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar votações ativas:', error);
+    console.error('Erro ao carregar votações ativas: ❌', error);
   }
 }
 
@@ -89,25 +89,25 @@ function ensureDataFiles() {
   // mensalistas.json
   if (!fs.existsSync('./mensalistas.json')) {
     fs.writeFileSync('./mensalistas.json', JSON.stringify({ mensalistas: [] }, null, 2));
-    console.log('✅ Arquivo mensalistas.json criado');
+    console.log('Arquivo mensalistas.json criado ✅');
   }
 
   // historico-votacoes.json
   if (!fs.existsSync('./historico-votacoes.json')) {
     fs.writeFileSync('./historico-votacoes.json', JSON.stringify({ votacoes: [] }, null, 2));
-    console.log('✅ Arquivo historico-votacoes.json criado');
+    console.log('Arquivo historico-votacoes.json criado ✅');
   }
 
   // cargos-criadores.json
   if (!fs.existsSync('./cargos-criadores.json')) {
     fs.writeFileSync('./cargos-criadores.json', JSON.stringify({ cargos: [] }, null, 2));
-    console.log('✅ Arquivo cargos-criadores.json criado');
+    console.log('Arquivo cargos-criadores.json criado ✅');
   }
 
   // draft-polls.json
   if (!fs.existsSync('./draft-polls.json')) {
     fs.writeFileSync('./draft-polls.json', JSON.stringify([], null, 2));
-    console.log('✅ Arquivo draft-polls.json criado');
+    console.log('Arquivo draft-polls.json criado ✅');
   }
 }
 
@@ -133,10 +133,10 @@ function loadDraftPolls() {
       });
 
       client.draftPolls = new Map(normalizedDrafts);
-      console.log(`📝 ${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
+      console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s) 📝`);
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar rascunhos:', error);
+    console.error('Erro ao carregar rascunhos: ❌', error);
   }
 }
 
@@ -147,7 +147,7 @@ loadDraftPolls();
 
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
-  console.log('🔄 Sincronizando reações das enquetes ativas...');
+  console.log('Sincronizando reações das enquetes ativas... 🔄');
 
   const enquetesOrfas = [];
 
@@ -155,18 +155,17 @@ async function syncPollReactions() {
     try {
       // Se não tiver channelId, pula (enquetes antigas antes da atualização)
       if (!poll.channelId) {
-        console.log(`⚠️ Enquete "${poll.titulo}" não tem channelId salvo - pulando sincronização`);
-        console.log(`   ℹ️ A sincronização funcionará após a próxima reinicialização`);
+        console.log(`Enquete "${poll.titulo}" sem channelId - pulando ⚠️`);
         continue;
       }
 
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`❌ Erro ao buscar canal ${poll.channelId}: ${err.message}`);
+        console.log(`Erro ao buscar canal ${poll.channelId}: ${err.message} ❌`);
         return null;
       });
       if (!channel) {
-        console.log(`⚠️ Canal não encontrado para enquete "${poll.titulo}" - marcando para remoção`);
+        console.log(`Canal não encontrado para enquete "${poll.titulo}" - marcando para remoção ⚠️`);
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -175,32 +174,19 @@ async function syncPollReactions() {
       const botMember = channel.guild?.members.me;
       if (botMember) {
         const permissions = channel.permissionsFor(botMember);
-        const canView = permissions?.has('ViewChannel');
         const canRead = permissions?.has('ReadMessageHistory');
-        const canManage = permissions?.has('ManageMessages');
 
-        console.log(`   📋 Enquete: "${poll.titulo}"`);
-        console.log(`   📍 Canal: ${channel.name} (${poll.channelId})`);
-        console.log(`   ✅ Ver Canal: ${canView ? 'Sim' : 'NÃO'}`);
-        console.log(`   ✅ Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}`);
-        console.log(`   ✅ Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`);
-        console.log(`   🔧 Bits (DEBUG): ${permissions?.bitfield || 'indefinido'}`);
-
-        // Debug: mostra os cargos do bot
-        if (botMember.roles?.cache?.size > 0) {
-          console.log(`   📌 Cargos do bot: ${botMember.roles.cache.map((r) => r.name).join(', ')}`);
+        if (!canRead) {
+          console.log(`"${poll.titulo}" (${channel.name}): Falta permissão "Ler Histórico" ⚠️`);
         }
-      } else {
-        console.log(`   ⚠️ Bot não encontrado no servidor como membro`);
       }
 
       // Tenta buscar a mensagem
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`   ❌ Erro ao buscar mensagem ${messageId}: ${err.message} (${err.code})`);
+        console.log(`"${poll.titulo}": ${err.message} (${err.code}) ⚠️`);
         return null;
       });
       if (!message) {
-        console.log(`   ⚠️ Mensagem não encontrada ou inacessível`);
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -260,15 +246,15 @@ async function syncPollReactions() {
       // Atualiza os votos da enquete
       poll.votos = votosAtualizados;
 
-      console.log(`✅ Sincronizado: "${poll.titulo}" - ${Object.keys(votosAtualizados).length} votantes`);
+      // Sincronização silenciosa - sucesso
     } catch (error) {
-      console.error(`❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+      console.error(`Erro ao sincronizar enquete "${poll.titulo}": ❌`, error.message);
     }
   }
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`\n🗑️ Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)... 🗑️`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -276,13 +262,17 @@ async function syncPollReactions() {
 
   // Salva após sincronizar
   saveActivePolls();
-  console.log('✅ Sincronização concluída!\n');
+
+  const totalEnquetes = client.activePolls.size;
+  if (totalEnquetes > 0) {
+    console.log(`${totalEnquetes} enquete(s) sincronizada(s) ✅\n`);
+  } else {
+    console.log('Sincronização concluída ✅\n');
+  }
 }
 
 // Verifica e remove votos que excedem o limite configurado
 async function enforceVoteLimits() {
-  console.log('🔍 Verificando limites de votos...');
-
   const enquetesOrfas = [];
 
   for (const [messageId, poll] of client.activePolls.entries()) {
@@ -291,7 +281,7 @@ async function enforceVoteLimits() {
       if (!poll.channelId) continue;
 
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`❌ Erro ao buscar canal ${poll.channelId}: ${err.message}`);
+        console.log(`Erro ao buscar canal ${poll.channelId}: ${err.message} ❌`);
         return null;
       });
       if (!channel) {
@@ -308,12 +298,12 @@ async function enforceVoteLimits() {
         const canManage = permissions?.has('ManageMessages');
 
         if (!canView || !canRead || !canManage) {
-          console.log(`⚠️ Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` + `   ✅ Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` + `   ✅ Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` + `   ✅ Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`);
+          console.log(`Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões: ⚠️\n` + `   Ver Canal: ${canView ? 'Sim ✅' : 'NÃO ❌'}\n` + `   Ler Histórico: ${canRead ? 'Sim ✅' : 'NÃO ❌'}\n` + `   Gerenciar Mensagens: ${canManage ? 'Sim ✅' : 'NÃO ❌'}`);
         }
       }
 
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`❌ Erro ao buscar mensagem ${messageId} no canal ${channel.name}: ${err.message} (${err.code})`);
+        console.log(`Erro ao buscar mensagem ${messageId} no canal ${channel.name}: ${err.message} (${err.code}) ❌`);
         return null;
       });
       if (!message) {
@@ -345,7 +335,7 @@ async function enforceVoteLimits() {
 
         // Se excedeu o limite
         if (numVotos > poll.maxVotos) {
-          console.log(`⚠️ "${poll.titulo}" - ${userVotes.usuario}: ${numVotos} votos (limite: ${poll.maxVotos})`);
+          console.log(`"${poll.titulo}" - ${userVotes.usuario}: ${numVotos} votos (limite: ${poll.maxVotos}) ⚠️`);
 
           // Determina quantos votos remover (remove os últimos adicionados)
           const votosParaRemover = numVotos - poll.maxVotos;
@@ -358,7 +348,7 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
-                    console.error(`⚠️ Sem permissão para remover reação de ${userVotes.usuario}. O bot precisa de "Gerenciar Mensagens".`);
+                    console.error(`Sem permissão para remover reação de ${userVotes.usuario}. O bot precisa de "Gerenciar Mensagens" ⚠️`);
                   } else {
                     console.error(`Erro ao remover reação: ${err.message}`);
                   }
@@ -380,24 +370,24 @@ async function enforceVoteLimits() {
             }
 
             violacoesSencontradas++;
-            console.log(`✅ Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario}`);
+            console.log(`Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario} ✅`);
           } catch (error) {
-            console.error(`❌ Erro ao remover votos de ${userVotes.usuario}:`, error.message);
+            console.error(`Erro ao remover votos de ${userVotes.usuario}: ❌`, error.message);
           }
         }
       }
 
       if (violacoesSencontradas > 0) {
-        console.log(`📊 "${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados`);
+        console.log(`"${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados 📊`);
       }
     } catch (error) {
-      console.error(`❌ Erro ao verificar limites de "${poll.titulo}":`, error.message);
+      console.error(`Erro ao verificar limites de "${poll.titulo}": ❌`, error.message);
     }
   }
 
   // Remove enquetes órfãs (se ainda não foram removidas na sincronização)
   if (enquetesOrfas.length > 0) {
-    console.log(`\n🗑️ Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)... 🗑️`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -405,7 +395,9 @@ async function enforceVoteLimits() {
 
   // Salva após aplicar limites
   saveActivePolls();
-  console.log('✅ Verificação de limites concluída!\n');
+  if (client.activePolls.size > 0) {
+    console.log('Verificação de limites concluída ✅\n');
+  }
 }
 
 // =====================================
@@ -420,9 +412,11 @@ for (const file of commandFiles) {
 
   if (command.data && command.execute) {
     client.commands.set(command.data.name, command);
-    console.log(`✅ Comando carregado: ${command.data.name}`);
+    // Comando carregado silenciosamente
   }
 }
+
+console.log(`${client.commands.size} comando(s) carregado(s) ✅\n`);
 
 // =====================================
 // DEPLOY DE COMANDOS
@@ -454,14 +448,13 @@ async function deployCommands() {
     // Cria a instância REST para comunicar com a API do Discord
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-    console.log(`\n🔄 Registrando comandos no Discord...`);
-    console.log(`   ${slashCount} slash command(s) + ${contextCount} context menu command(s)\n`);
+    console.log(`\nRegistrando ${slashCount + contextCount} comando(s)... 🔄`);
 
     // Verifica se CLIENT_ID está definido
     const clientId = process.env.CLIENT_ID;
 
     if (!clientId) {
-      console.error('❌ ERRO: CLIENT_ID não está definido no arquivo .env');
+      console.error('ERRO: CLIENT_ID não está definido no arquivo .env ❌');
       console.error('   Adicione: CLIENT_ID=seu_client_id_aqui');
       return false;
     }
@@ -471,17 +464,11 @@ async function deployCommands() {
       body: commands,
     });
 
-    console.log(`✅ ${data.length} comando(s) registrado(s) com sucesso!`);
-    console.log('\n📋 Comandos disponíveis:');
-    data.forEach((cmd) => {
-      const tipo = cmd.type === 3 ? '🖱️ (contexto)' : '💬 (slash)';
-      const descricao = cmd.description ? ` - ${cmd.description}` : '';
-      console.log(`  ${tipo} ${cmd.name}${descricao}`);
-    });
+    console.log(`Deploy concluído ✅\n`);
 
     return true;
   } catch (error) {
-    console.error('❌ Erro ao registrar comandos:', error);
+    console.error('Erro ao registrar comandos: ❌', error);
     return false;
   }
 }
@@ -496,22 +483,21 @@ async function deployCommands() {
 
 // Evento: Bot conectado e pronto
 client.once('clientReady', async () => {
-  console.log(`\n✅ LittleBoatPoll está ONLINE como ${client.user.tag}!`);
-  console.log(`📊 Gerenciador de Clube do Livro iniciado\n`);
+  console.log(`${client.user.tag} está ONLINE ✅\n`);
   client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 
   // Deploy de comandos se requisitado via variável de ambiente ou flag
   if (process.env.DEPLOY === 'true' || process.argv.includes('--deploy')) {
-    console.log('📢 Modo DEPLOY ativado - registrando comandos...\n');
+    console.log('Modo DEPLOY ativado 📢\n');
     const deploySuccess = await deployCommands();
     if (deploySuccess) {
-      console.log('\n✨ Deploy concluído com sucesso!\n');
+      console.log('Deploy concluído com sucesso ✨\n');
       // Se foi deployment via linha de comando, sai após sucesso
       if (process.argv.includes('--deploy')) {
         process.exit(0);
       }
     } else {
-      console.error('\n❌ Deploy falhou!\n');
+      console.error('Deploy falhou ❌\n');
       if (process.argv.includes('--deploy')) {
         process.exit(1);
       }
@@ -532,15 +518,15 @@ client.on('interactionCreate', async (interaction) => {
     const command = client.commands.get(interaction.commandName);
 
     if (!command) {
-      console.error(`⚠️ Comando não encontrado: ${interaction.commandName}`);
+      console.error(`Comando não encontrado: ${interaction.commandName} ⚠️`);
       return;
     }
 
     try {
-      console.log(`📝 Executando comando: /${interaction.commandName} - Usuário: ${interaction.user.tag}`);
+      // Comando executado
       await command.execute(interaction, client);
     } catch (error) {
-      console.error('❌ Erro ao executar o comando:', error);
+      console.error('Erro ao executar o comando: ❌', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao executar o comando!',
@@ -555,15 +541,15 @@ client.on('interactionCreate', async (interaction) => {
     const command = client.commands.get(interaction.commandName);
 
     if (!command) {
-      console.error(`⚠️ Comando de contexto não encontrado: ${interaction.commandName}`);
+      console.error(`Comando de contexto não encontrado: ${interaction.commandName} ⚠️`);
       return;
     }
 
     try {
-      console.log(`🖱️ Executando comando de contexto: ${interaction.commandName} - Usuário: ${interaction.user.tag}`);
+      // Comando de contexto executado
       await command.execute(interaction, client);
     } catch (error) {
-      console.error('❌ Erro ao executar o comando de contexto:', error);
+      console.error('Erro ao executar o comando de contexto: ❌', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao executar o comando!',
@@ -593,14 +579,14 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (!poll) return;
 
     const emoji = reaction.emoji.name;
-    console.log(`🔔 ${user.username} reagiu com ${emoji}`);
+    // Reação processada
 
     // Verifica se o emoji é válido para esta enquete
     if (!poll.emojiNumeros.includes(emoji)) {
       // Emoji não faz parte desta enquete, remove
       await reaction.users.remove(user.id).catch((err) => {
         if (err.code === 50013) {
-          console.error(`❌ Sem permissão para remover reação no canal. Verifique se o bot tem "Gerenciar Mensagens" ativo.`);
+          console.error(`Sem permissão para remover reação no canal. Verifique se o bot tem "Gerenciar Mensagens" ativo ❌`);
         } else {
           console.error(`Erro ao remover reação: ${err.message}`);
         }
@@ -640,37 +626,34 @@ client.on('messageReactionAdd', async (reaction, user) => {
       saveActivePolls();
     }
 
-    // DEBUG: Log do estado atual
-    console.log(`📊 Estado atual - Usuário: ${user.username}, Votos atuais: ${poll.votos[user.id].reacoes.length}, Máximo: ${poll.maxVotos}`);
+    // Verifica limite de votos
 
     // Alerta se o bot nao tiver permissao para remover reacoes
     const botMember = reaction.message.guild?.members.me;
     if (botMember && !botMember.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      console.warn('⚠️ Bot sem permissao de Gerenciar Mensagens; limite de votos pode nao ser aplicado.');
+      console.warn('Bot sem permissao de Gerenciar Mensagens; limite de votos pode nao ser aplicado ⚠️');
     }
 
     // Verifica se atingiu o limite de votos
     if (poll.votos[user.id].reacoes.length >= poll.maxVotos) {
-      console.log(`⛔ Limite atingido! Removendo reação extra de ${user.username}`);
       // Remove a reação e notifica (se possível)
       await reaction.users.remove(user.id).catch((err) => {
         if (err.code === 50013) {
-          console.error(`❌ Erro ao remover reação (Missing Permissions). O bot precisa da permissão "Gerenciar Mensagens" no canal.`);
+          console.error(`Erro ao remover reação (Missing Permissions). O bot precisa da permissão "Gerenciar Mensagens" no canal ❌`);
         } else {
-          console.error(`❌ Erro ao processar reação: ${err.message}`);
+          console.error(`Erro ao processar reação: ${err.message} ❌`);
         }
       });
       try {
         await user.send(`❌ Você já atingiu o limite de **${poll.maxVotos}** voto(s) nesta enquete: "${poll.titulo}"`);
       } catch (e) {
-        console.log(`Não foi possível enviar DM para ${user.username}`);
+        // DM bloqueada ou desativada
       }
       return;
     }
 
     // Adiciona a reação
     poll.votos[user.id].reacoes.push(emoji);
-    console.log(`✅ ${user.username} votou em ${emoji} (${poll.votos[user.id].reacoes.length}/${poll.maxVotos})`);
 
     // Salva as votações após cada mudança
     saveActivePolls();
@@ -696,19 +679,18 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (!poll) return;
 
     const emoji = reaction.emoji.name;
-    console.log(`🗑️ ${user.username} removeu a reação ${emoji}`);
+    // Reação removida
 
     // Remove apenas esta reação específica
     if (poll.votos[user.id] && poll.votos[user.id].reacoes) {
       const index = poll.votos[user.id].reacoes.indexOf(emoji);
       if (index > -1) {
         poll.votos[user.id].reacoes.splice(index, 1);
-        console.log(`✅ Reação ${emoji} removida de ${user.username}`);
+        // Reação removida
 
         // Se não tem mais reações, remove o usuário completamente
         if (poll.votos[user.id].reacoes.length === 0) {
           delete poll.votos[user.id];
-          console.log(`🗑️ ${user.username} não tem mais votos`);
         }
       }
     }
@@ -729,7 +711,7 @@ const port = process.env.PORT || 8000; // O Koyeb injeta a porta automaticamente
 app.get('/', (req, res) => res.send('Bot Online!'));
 
 app.listen(port, () => {
-  console.log(`🌐 Keep-alive rodando na porta ${port}`);
+  console.log(`Keep-alive rodando na porta ${port} 🌐`);
 });
 
 // =====================================
