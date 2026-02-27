@@ -44,17 +44,7 @@ function parseOptions(opcoesString) {
     .filter((op) => op.length > 0);
 }
 
-/**
- * Valida se o peso mensalista é válido
- * @param {string} peso - Valor do peso ("sim" ou "nao")
- * @returns {boolean} true se válido
- */
-function validatePesoMensalista(peso) {
-  return peso === 'sim' || peso === 'nao';
-}
-
 module.exports = {
   validatePollOptions,
   parseOptions,
-  validatePesoMensalista,
 };

@@ -24,49 +24,46 @@ module.exports = {
     .addStringOption((option) => option.setName('peso_mensalista').setDescription('Mensalistas têm peso 2 nos votos?').setRequired(true).addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' })),
 
   async execute(interaction, client) {
-    // Coleta as informações
-    const titulo = interaction.options.getString('nome-da-enquete');
-    const opcoesString = interaction.options.getString('opcoes');
-    const maxVotos = interaction.options.getInteger('max_votos') || 1;
-    const pesoMensalistaOption = interaction.options.getString('peso_mensalista');
-    const usarPesoMensalista = pesoMensalistaOption === 'sim';
-
-    // Processa as opções
-    const opcoes = parseOptions(opcoesString);
-
-    // Valida opções
-    const validation = validatePollOptions(opcoes, maxVotos);
-    if (!validation.valid) {
-      return await interaction.reply({
-        content: `❌ **Erro!** ${validation.error}`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    // =====================================
-    // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
-    // Apenas usuários com o cargo Criador podem executar este comando
-    // =====================================
-    if (!isCriador(interaction.member)) {
-      return await interaction.reply({
-        content: MENSAGEM_PERMISSAO_NEGADA,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    // Defer reply porque adicionar reações pode demorar
+    // Defer reply IMEDIATAMENTE para evitar timeout (3s do Discord)
     await interaction.deferReply();
 
     try {
+      // Coleta as informações
+      const titulo = interaction.options.getString('nome-da-enquete');
+      const opcoesString = interaction.options.getString('opcoes');
+      const maxVotos = interaction.options.getInteger('max_votos') || 1;
+      const pesoMensalistaOption = interaction.options.getString('peso_mensalista');
+      const usarPesoMensalista = pesoMensalistaOption === 'sim';
+
+      // Processa as opções
+      const opcoes = parseOptions(opcoesString);
+
+      // Valida opções
+      const validation = validatePollOptions(opcoes, maxVotos);
+      if (!validation.valid) {
+        return await interaction.editReply({
+          content: `❌ **Erro!** ${validation.error}`,
+        });
+      }
+
+      // =====================================
+      // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
+      // Apenas usuários com o cargo Criador podem executar este comando
+      // =====================================
+      if (!isCriador(interaction.member)) {
+        return await interaction.editReply({
+          content: MENSAGEM_PERMISSAO_NEGADA,
+        });
+      }
+
       // Emojis para as opções (letras circuladas)
       // Discord limita a 20 reações por mensagem
       const emojiNumeros = EMOJIS_DISPONIVEIS.slice(0, opcoes.length);
 
       // Verifica se há emojis suficientes (limite do Discord: 20 reações)
       if (opcoes.length > LIMITS.MAX_OPTIONS) {
-        return await interaction.reply({
+        return await interaction.editReply({
           content: `❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: ${LIMITS.MAX_OPTIONS} opções por enquete.`,
-          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -124,16 +121,9 @@ module.exports = {
       console.log(`✅ Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
     } catch (error) {
       console.error('❌ Erro ao criar enquete:', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ Erro ao criar a enquete!',
-          flags: MessageFlags.Ephemeral,
-        });
-      } else if (interaction.deferred && !interaction.replied) {
-        await interaction.editReply({
-          content: '❌ Erro ao criar a enquete!',
-        });
-      }
+      await interaction.editReply({
+        content: '❌ Erro ao criar a enquete!',
+      });
     }
   },
 };

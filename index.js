@@ -462,7 +462,6 @@ for (const file of commandFiles) {
 
   if (command.data && command.execute) {
     client.commands.set(command.data.name, command);
-    // Comando carregado silenciosamente
   }
 }
 
@@ -518,10 +517,6 @@ async function deployCommands() {
     return false;
   }
 }
-
-// =====================================
-// CARREGAMENTO DE COMANDOS
-// =====================================
 
 // =====================================
 // EVENTOS

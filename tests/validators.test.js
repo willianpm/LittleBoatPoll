@@ -1,4 +1,4 @@
-const { validatePollOptions, parseOptions, validatePesoMensalista } = require('../utils/validators');
+const { validatePollOptions, parseOptions } = require('../utils/validators');
 
 describe('validators - validatePollOptions', () => {
   test('deve validar opções válidas com 2 opções', () => {
@@ -97,29 +97,5 @@ describe('validators - parseOptions', () => {
   test('deve lidar com opções com vírgulas no texto', () => {
     const result = parseOptions('Livro A, Livro B');
     expect(result).toHaveLength(2);
-  });
-});
-
-describe('validators - validatePesoMensalista', () => {
-  test('deve validar "sim" como válido', () => {
-    expect(validatePesoMensalista('sim')).toBe(true);
-  });
-
-  test('deve validar "nao" como válido', () => {
-    expect(validatePesoMensalista('nao')).toBe(true);
-  });
-
-  test('deve rejeitar "yes"', () => {
-    expect(validatePesoMensalista('yes')).toBe(false);
-  });
-
-  test('deve rejeitar string vazia', () => {
-    expect(validatePesoMensalista('')).toBe(false);
-  });
-
-  test('deve rejeitar valores diferentes', () => {
-    expect(validatePesoMensalista('true')).toBe(false);
-    expect(validatePesoMensalista('false')).toBe(false);
-    expect(validatePesoMensalista('Sim')).toBe(false); // case sensitive
   });
 });
