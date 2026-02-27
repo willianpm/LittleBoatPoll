@@ -2,9 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## 1.4.0 - 2026-02-27
+## 1.4.0
 
 ### Testing Infrastructure
+
 - **Add automated testing:** Implemented comprehensive test suite using Jest.
   - 59 unit tests covering 100% of utility modules
   - Tests run in ~1.3s with 70% coverage threshold
@@ -12,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - **Test documentation:** Added detailed README in tests directory.
 
 ### Performance Improvements
+
 - **Optimize poll reaction sync:** Parallelized reaction fetching to reduce startup time by ~50-70%.
   - Eliminated duplicate API calls to Discord
   - Cache reaction users to avoid redundant fetches
@@ -19,13 +21,15 @@ All notable changes to this project will be documented in this file.
 - **Enhanced logging:** Added progress indicators, timing info, and visual status emojis.
 
 ### Documentation
+
 - **Update README:** Reflect new testing capabilities and scripts.
 - **Refactoring report:** Consolidated technical documentation in `/docs`.
 
 ### Consolidation
+
 - Includes all architectural improvements from v1.3.0 (utility modules, code deduplication).
 
-## 1.3.0 - 2026-02-27
+## 1.3.0
 
 ### Code Quality & Refactoring
 
@@ -40,7 +44,7 @@ All notable changes to this project will be documented in this file.
 - **Improved maintainability:** Eliminated duplicated file I/O patterns, validation logic, and emoji lists.
 - **Documentation:** Added comprehensive technical refactoring report.
 
-## 1.2.2 - 2026-02-27
+## 1.2.2
 
 - Rename "Criador" to "Criador de Enquetes" for clarity across the entire project.
 - Unify mensalista context menus: combine "Adicionar Mensalista" and "Remover Mensalista" into a single "Add/Del Mensalistas" context menu with toggle functionality.
@@ -48,11 +52,11 @@ All notable changes to this project will be documented in this file.
 - Use shortened "Add/Del" prefix for context menus to comply with Discord's 32-character name limit.
 - Refactor context menu architecture to reduce duplication and improve maintainability.
 
-## 1.2.1 - 2026-02-27
+## 1.2.1
 
 - Add context menu to toggle the "Criador" role for a user.
 
-## 1.2.0 - 2026-02-26
+## 1.2.0
 
 - Add draft poll option management (add/remove options without retyping all options).
 - Improve draft validations (duplicates, limits, max votes adjustments).
@@ -67,12 +71,12 @@ All notable changes to this project will be documented in this file.
 - **Auto-deploy on start:** `npm start` now always deploys commands before starting the bot, ensuring commands are always up-to-date.
   - Use `npm run start:quick` to skip deployment for faster startup when commands haven't changed.
 
-## 1.1.0 - 2026-02-25
+## 1.1.0
 
 - Add draft poll system (create, edit, list, show, publish, delete).
 - Persist draft polls to disk.
 - Add preview before publishing.
 
-## 1.0.0 - 2026-01-01
+## 1.0.0
 
 - Initial release with direct polls, weighted votes, and results summary.
