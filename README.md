@@ -1,6 +1,6 @@
 # LittleBoatPoll
 
-LittleBoatPoll é um bot do Discord para votações em clubes do livro, com votos ponderados.
+Um bot Discord feito especialmente e sob medida para o canal de Discord Tripulação de Papel, com sistema de votações ponderadas para escolhas do clube do livro.
 
 ## Permissões
 
@@ -14,7 +14,7 @@ Não existem níveis intermediários. Para ocultar comandos de usuários comuns,
 
 ## Requisitos
 
-- Node.js >= 24
+- Node.js >= 22
 - npm
 - Token do bot e client ID
 
