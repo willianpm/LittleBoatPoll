@@ -1,6 +1,6 @@
 # LittleBoatPoll
 
-Um bot Discord feito especialmente e sob medida para o canal de Discord Tripulação de Papel, com sistema de votações ponderadas para escolhas do clube do livro.
+Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripulação de Papel, com sistema de votações ponderadas para escolhas do clube do livro.
 
 ## Permissões
 
