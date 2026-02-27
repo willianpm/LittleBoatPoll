@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - **Auto-deploy on start:** `npm start` now always deploys commands before starting the bot, ensuring commands are always up-to-date.
   - Use `npm run start:quick` to skip deployment for faster startup when commands haven't changed.
 
+## 1.2.1 - 2026-02-27
+
+- Add context menu to toggle the "Criador" role for a user.
+
 ## 1.1.0 - 2026-02-25
 
 - Add draft poll system (create, edit, list, show, publish, delete).
