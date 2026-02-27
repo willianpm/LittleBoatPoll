@@ -4,13 +4,25 @@ Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripu
 
 ## Permissões
 
-Sistema binário:
+Sistema binário **interno** (não depende de cargos do Discord):
 
-- Criador: acesso total
-- Administrador e dono do servidor: acesso total
-- Usuário comum: apenas vota por reações
+- **Criador de Enquetes**: Usuários adicionados internamente com `/criador adicionar`
+- **Administrador e dono do servidor**: acesso total automático
+- **Usuário comum**: apenas vota por reações
 
-Não existem níveis intermediários. Para ocultar comandos de usuários comuns, restrinja os comandos nas integrações do Discord.
+Não existem níveis intermediários. O sistema é 100% gerenciado internamente.
+
+### Gerenciar Criadores
+
+```bash
+/criador adicionar @usuario   # Adiciona permissão administrativa
+/criador remover @usuario     # Remove permissão
+/criador listar               # Lista todos os criadores
+```
+
+Ou use o **Context Menu** (botão direito no usuário → Apps → "Add/Del Criador de Enquetes")
+
+📖 **Leia mais:** [Documentação de Migração](docs/MIGRACAO-PERMISSOES-INTERNAS.md)
 
 ## Requisitos
 

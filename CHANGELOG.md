@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.0.0 - 2026-02-27
+
+### 🚀 BREAKING CHANGES: Sistema de Permissões Interno
+
+**Migração completa do sistema de permissões de cargos do Discord para gerenciamento 100% interno.**
+
+#### ✨ Novidades
+
+- **Novo comando `/criador`**: Gerencia criadores de enquetes por ID de usuário
+  - `/criador adicionar @usuario` - Adiciona usuário à lista de criadores
+  - `/criador remover @usuario` - Remove usuário da lista
+  - `/criador listar` - Lista todos os criadores cadastrados
+- **Context Menu atualizado**: "Add/Del Criador de Enquetes" agora gerencia permissões internas
+- **Novo arquivo de dados**: `criadores-internos.json` - Armazena IDs de usuários com permissões
+- **Sistema mais simples**: Não requer criação de cargos no Discord
+- **Maior segurança**: Permissões não podem ser deletadas acidentalmente
+- **Proteção inteligente**: Impede remoção do último criador
+
+#### ⚠️ Breaking Changes
+
+- ❌ **Comando `/criadores` descontinuado**: Agora mostra aviso de migração para `/criador`
+- ❌ **Sistema de cargos não é mais usado**: Arquivo `cargos-criadores.json` mantido apenas para compatibilidade
+- ⚠️ **Requer migração manual**: Usuários com cargo "Criador de Enquetes" devem ser re-adicionados com `/criador adicionar`
+
+#### 📁 Arquivos Modificados
+
+- `utils/permissions.js` - Verifica `criadores-internos.json` em vez de cargos
+- `utils/file-handler.js` - Adicionadas funções `loadCriadores()` e `saveCriadores()`
+- `commands/criador.js` - **NOVO** comando para gerenciar criadores
+- `commands/criadores.js` - **DESCONTINUADO** (mostra aviso)
+- `commands/criador-toggle-context.js` - Atualizado para sistema interno
+
+#### 📚 Documentação
+
+- Criado `docs/MIGRACAO-PERMISSOES-INTERNAS.md` - Guia completo de migração
+- Atualizado `README.md` - Instruções do novo sistema
+- Atualizado `permissoes.md` (wiki) - Documentação completa
+
+#### ✅ Vantagens do Novo Sistema
+
+- ✅ Não precisa criar cargos no servidor Discord
+- ✅ Sem problemas com hierarquia de cargos
+- ✅ Configuração instantânea
+- ✅ Mais controle e flexibilidade
+- ✅ Logs detalhados de todas as alterações
+
+#### 🔄 Migração
+
+Para migrar de servidores existentes:
+
+1. Identifique usuários com o cargo "Criador de Enquetes"
+2. Use `/criador adicionar @usuario` para cada um
+3. (Opcional) Delete o cargo antigo do servidor
+
+**Leia:** [Documentação completa de migração](docs/MIGRACAO-PERMISSOES-INTERNAS.md)
+
+---
+
 ## 1.4.0
 
 ### Testing Infrastructure

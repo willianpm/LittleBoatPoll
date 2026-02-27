@@ -1,15 +1,16 @@
-/**
- * ============================================
- * SETUP COMPLETO DO DISCORD
- * Passo a Passo para Registrar o Bot
- * ============================================
- */
+/\*\*
+
+- ============================================
+- SETUP COMPLETO DO DISCORD
+- Passo a Passo para Registrar o Bot
+- ============================================
+  \*/
 
 // ============================================
 // 1. CRIAR A APLICAÇÃO NO DEVELOPER PORTAL
 // ============================================
 
-/*
+/\*
 PASSO A PASSO:
 
 1. Acesse: https://discord.com/developers/applications
@@ -18,13 +19,13 @@ PASSO A PASSO:
 4. Clique em "Create"
 
 🎉 Pronto! Agora você tem uma aplicação
-*/
+\*/
 
 // ============================================
 // 2. ENCONTRAR CLIENT_ID
 // ============================================
 
-/*
+/\*
 COMO ENCONTRAR:
 
 1. Você está na página da aplicação
@@ -38,13 +39,13 @@ CLIENT_ID = "1234567890123456789"
 
 PASSO NO .env:
 CLIENT_ID=1234567890123456789
-*/
+\*/
 
 // ============================================
 // 3. CRIAR O BOT
 // ============================================
 
-/*
+/\*
 PASSO A PASSO:
 
 1. Na sua aplicação, clique em "Bot" (lado esquerdo)
@@ -52,13 +53,13 @@ PASSO A PASSO:
 3. Um novo bot foi criado!
 
 ⚠️ IMPORTANTE: Nunca compartilhe o TOKEN
-*/
+\*/
 
 // ============================================
 // 4. COPIAR TOKEN DO BOT
 // ============================================
 
-/*
+/\*
 COMO ENCONTRAR E COPIAR O TOKEN:
 
 1. Clique em "Bot" (lado esquerdo)
@@ -72,15 +73,16 @@ PASSO NO .env:
 TOKEN=MTQ3NjE5ODg2MjI1MDMxMTc5MQ.Gv_xx.dXXXXXXXXXXXXXXXXXX
 
 ⚠️ SE COMPARTILHOU:
+
 - Clique em "Regenerate" para gerar um novo
 - NUNCA commit .env no Git!
-*/
+  \*/
 
 // ============================================
 // 5. HABILITAR PRIVILEGED GATEWAY INTENTS
 // ============================================
 
-/*
+/\*
 IMPORTANTE: SEM ISSO, O BOT NÃO LÊ REAÇÕES!
 
 PASSO A PASSO:
@@ -109,15 +111,15 @@ O QUE CADA UM FAZ:
   • Menos importante para votações
 
 ⚠️ NOTE: GatewayIntentBits.GuildMessageReactions
-   Não aparece no Developer Portal como "privileged"
-   Mas está habilitado automaticamente em index.js
-*/
+Não aparece no Developer Portal como "privileged"
+Mas está habilitado automaticamente em index.js
+\*/
 
 // ============================================
 // 6. CONFIGURAR PERMISSÕES DO BOT
 // ============================================
 
-/*
+/\*
 PASSO A PASSO:
 
 1. Clique em "Bot" (lado esquerdo)
@@ -126,27 +128,30 @@ PASSO A PASSO:
 4. Habilite as permissões necessárias:
 
 ✅ ESSENCIAIS:
-   - Send Messages
-   - Embed Links
-   - Read Message History
-   - Add Reactions
+
+- Send Messages
+- Embed Links
+- Read Message History
+- Add Reactions
 
 ✅ RECOMENDADAS:
-   - Read Message/Channel
-   - Manage Messages
-   - Use External Emojis
+
+- Read Message/Channel
+- Manage Messages
+- Use External Emojis
 
 As permissões podem ser configuradas também:
+
 - Globalmente (aqui no portal)
 - Por servidor (depois)
 - Por canal (depois)
-*/
+  \*/
 
 // ============================================
 // 7. ADICIONAR BOT AO SEU SERVIDOR DISCORD
 // ============================================
 
-/*
+/\*
 PASSO A PASSO:
 
 1. No Developer Portal, clique em "OAuth2" (lado esquerdo)
@@ -170,13 +175,13 @@ PASSO A PASSO:
 8. Autorize
 
 🎉 Bot adicionado ao servidor!
-*/
+\*/
 
 // ============================================
 // 8. ENCONTRAR GUILD_ID (Server ID)
 // ============================================
 
-/*
+/\*
 PASSO A PASSO:
 
 1. Abra Discord e clique no seu servidor
@@ -185,36 +190,41 @@ PASSO A PASSO:
 4. Habilite "Developer Mode"
 5. Feche User Settings
 
-AGORA:
-6. Clique com botão direito no nome do seu servidor
-7. Selecione "Copy Server ID"
+AGORA: 6. Clique com botão direito no nome do seu servidor 7. Selecione "Copy Server ID"
 
 Exemplo:
 GUILD_ID = "123456789012345678"
 
 OBS: Alguns comandos usam este ID
-*/
+\*/
 
 // ============================================
 // 9. ARQUIVO .env COMPLETO
 // ============================================
 
-/*
+/\*
 Crie o arquivo .env na raiz do projeto:
 
 ------- ARQUIVO .env -------
 
 # Token do seu Bot Discord
+
 # NUNCA compartilhe este token!
+
 # Se compartilhou, clique em "Regenerate" no portal
+
 TOKEN=SEU_TOKEN_AQUI
 
 # ID da sua aplicação (Client ID)
+
 # Encontre em: Developer Portal > General Information
+
 CLIENT_ID=SEU_CLIENT_ID_AQUI
 
 # ID do seu servidor Discord (Guild ID)
+
 # Ative Developer Mode e copie
+
 GUILD_ID=SEU_GUILD_ID_AQUI
 
 ------- FIM DO ARQUIVO .env -------
@@ -225,13 +235,13 @@ GUILD_ID=SEU_GUILD_ID_AQUI
 echo ".env" >> .gitignore
 git add .gitignore
 git commit -m "Add .env to gitignore"
-*/
+\*/
 
 // ============================================
 // 10. VERIFICAR SE ESTÁ TUDO CERTO
 // ============================================
 
-/*
+/\*
 CHECKLIST:
 
 □ Arquivo .env criado com TOKEN, CLIENT_ID, GUILD_ID
@@ -251,17 +261,18 @@ Esperado:
 📊 Gerenciador de Clube do Livro iniciado
 
 Se não funcionar, verifique:
+
 1. TOKEN está correto?
 2. CLIENT_ID está correto?
 3. Bot foi adicionado ao servidor?
 4. Privileged Gateway Intents habilitados?
-*/
+   \*/
 
 // ============================================
 // 11. ESTRUTURA DE PERMISSÕES
 // ============================================
 
-/*
+/\*
 NÍVEIS DE PERMISSÃO (DO MAIS RESTRITIVO AO MAIS AMPLO):
 
 1. CANAL
@@ -285,16 +296,17 @@ COMO DEFINIR PERMISSÕES POR CANAL:
 5. Configure permissões específicas
 
 No futuro, você pode querer:
+
 - Bot pode ver apenas #votacoes
 - Criador pode usar todos os comandos
 - Membros comuns podem só votar
-*/
+  \*/
 
 // ============================================
 // 12. PROBLEMAS COMUNS DURANTE SETUP
 // ============================================
 
-/*
+/\*
 PROBLEMA: "Invalid Token"
 CAUSA: Token copiado errado
 SOLUÇÃO: Regenere o token e copie novamente
@@ -318,14 +330,15 @@ SOLUÇÃO: Regenere um novo token
 PROBLEMA: "Unknown Application"
 CAUSA: CLIENT_ID incorreto
 SOLUÇÃO: Verifique CLIENT_ID no Developer Portal
-*/
+\*/
 
 // ============================================
 // 13. SEGURANÇA E BOAS PRÁTICAS
 // ============================================
 
-/*
+/\*
 ✅ FAÇA:
+
 - Mantenha .env seguro
 - Use .gitignore para não expor token
 - Regenere token se compartilhar acidentalmente
@@ -333,48 +346,49 @@ SOLUÇÃO: Verifique CLIENT_ID no Developer Portal
 - Use ephemeral: true para mensagens sensíveis
 
 ❌ NÃO FAÇA:
+
 - Nunca compartilhe seu TOKEN
 - Nunca faça commit de .env no Git
 - Não use tokens compartilhados
 - Não habilite permissões desnecessárias
 - Não esqueça de fazer logout da aplicação no portal
-*/
+  \*/
 
 // ============================================
 // 14. RESUMO DO FLUXO COMPLETO
 // ============================================
 
-/*
+/\*
 1️⃣ Criar aplicação no Developer Portal
-   → Copia CLIENT_ID
-   → Salva em .env
+→ Copia CLIENT_ID
+→ Salva em .env
 
 2️⃣ Criar Bot na aplicação
-   → Copia TOKEN
-   → Salva em .env
+→ Copia TOKEN
+→ Salva em .env
 
 3️⃣ Habilitar Privileged Gateway Intents
-   → Message Content Intent (obrigatório)
+→ Message Content Intent (obrigatório)
 
 4️⃣ Configurar permissões
-   → Send Messages, Add Reactions, etc
+→ Send Messages, Add Reactions, etc
 
 5️⃣ Gerar URL de convite (OAuth2)
-   → Adiciona bot ao servidor
+→ Adiciona bot ao servidor
 
 6️⃣ Encontrar GUILD_ID
-   → Ativa Developer Mode
-   → Copia Server ID
-   → Salva em .env
+→ Ativa Developer Mode
+→ Copia Server ID
+→ Salva em .env
 
 7️⃣ npm install
-   → Instala dependências
+→ Instala dependências
 
 8️⃣ node deploy-commands.js
-   → Registra comandos slash
+→ Registra comandos slash
 
 9️⃣ node index.js
-   → Bot online!
+→ Bot online!
 
 🎉 PRONTO!
 
@@ -382,6 +396,67 @@ Estrutura .env final:
 TOKEN=seu_token_aqui
 CLIENT_ID=seu_client_id_aqui
 GUILD_ID=seu_guild_id_aqui
-*/
+\*/
+
+// ============================================
+// 15. SISTEMA DE PERMISSÕES INTERNO (v2.0+)
+// ============================================
+
+/\*
+⭐ NOVO: Sistema 100% Interno - Não Depende de Cargos do Discord
+
+MUDANÇA IMPORTANTE:
+
+- ❌ NÃO precisa criar cargo "Criador de Enquetes" no Discord
+- ✅ Permissões gerenciadas internamente pelo bot
+- ✅ Baseado em IDs de usuários, não em cargos
+- ✅ Mais simples, mais seguro, mais flexível
+
+COMO ADICIONAR CRIADORES:
+
+1. Use comandos:
+   /criador adicionar @usuario
+   /criador remover @usuario
+   /criador listar
+
+2. Ou use Context Menu:
+   - Clique direito no usuário
+   - Apps → "Add/Del Criador de Enquetes"
+
+VERIFICAÇÃO DE PERMISSÕES (ordem):
+
+1. É Administrador do Discord? → ✅ Acesso total
+2. É dono do servidor? → ✅ Acesso total
+3. ID está em criadores-internos.json? → ✅ Acesso total
+4. Nenhum dos acima? → ❌ Apenas pode votar
+
+ARQUIVO DE DADOS:
+
+criadores-internos.json:
+{
+"criadores": [
+"300728666042662912",
+"123456789012345678"
+]
+}
+
+VANTAGENS:
+
+✅ Sem configuração no Discord
+✅ Sem problemas de hierarquia
+✅ Não pode ser deletado acidentalmente
+✅ Persistente e confiável
+✅ Controle total pelo bot
+
+MIGRAÇÃO DO SISTEMA ANTIGO:
+
+Se você usava cargos (v1.x):
+
+1. Identifique quem tinha o cargo "Criador de Enquetes"
+2. Adicione-os com /criador adicionar @usuario
+3. (Opcional) Delete o cargo antigo
+
+Leia mais: docs/MIGRACAO-PERMISSOES-INTERNAS.md
+\*/
 
 console.log('Guia de Setup Discord carregado!');
