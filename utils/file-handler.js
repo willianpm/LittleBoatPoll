@@ -1,0 +1,117 @@
+const fs = require('fs');
+
+/**
+ * Carrega um arquivo JSON com valor padrão em caso de erro
+ * @param {string} filePath - Caminho do arquivo
+ * @param {any} defaultValue - Valor padrão se arquivo não existir
+ * @returns {any} Dados do JSON ou valor padrão
+ */
+function loadJsonFile(filePath, defaultValue = {}) {
+  try {
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+  } catch (error) {
+    console.error(`Erro ao carregar ${filePath}:`, error);
+  }
+  return defaultValue;
+}
+
+/**
+ * Salva dados em um arquivo JSON
+ * @param {string} filePath - Caminho do arquivo
+ * @param {any} data - Dados a salvar
+ * @returns {boolean} true se sucesso, false se erro
+ */
+function saveJsonFile(filePath, data) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error(`Erro ao salvar ${filePath}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Carrega a lista de mensalistas
+ * @returns {Object} Objeto com array de IDs
+ */
+function loadMensalistas() {
+  return loadJsonFile('./mensalistas.json', { mensalistas: [] });
+}
+
+/**
+ * Salva a lista de mensalistas
+ * @param {Object} data - Dados com array de mensalistas
+ * @returns {boolean} true se sucesso
+ */
+function saveMensalistas(data) {
+  return saveJsonFile('./mensalistas.json', data);
+}
+
+/**
+ * Carrega cargos de criadores
+ * @returns {Object} Objeto com array de IDs de cargos
+ */
+function loadCargos() {
+  return loadJsonFile('./cargos-criadores.json', { cargos: [] });
+}
+
+/**
+ * Salva cargos de criadores
+ * @param {Object} data - Dados com array de cargos
+ * @returns {boolean} true se sucesso
+ */
+function saveCargos(data) {
+  return saveJsonFile('./cargos-criadores.json', data);
+}
+
+/**
+ * Carrega histórico de votações
+ * @returns {Array} Array de votações históricas
+ */
+function loadVotacoes() {
+  const data = loadJsonFile('./historico-votacoes.json', {});
+  return Array.isArray(data) ? data : data.votacoes || [];
+}
+
+/**
+ * Salva histórico de votações
+ * @param {Array} data - Array de votações
+ * @returns {boolean} true se sucesso
+ */
+function saveVotacoes(data) {
+  return saveJsonFile('./historico-votacoes.json', data);
+}
+
+/**
+ * Garante que arquivos essenciais existam
+ */
+function ensureDataFiles() {
+  const files = [
+    { path: './mensalistas.json', content: { mensalistas: [] } },
+    { path: './historico-votacoes.json', content: [] },
+    { path: './cargos-criadores.json', content: { cargos: [] } },
+    { path: './draft-polls.json', content: [] },
+  ];
+
+  files.forEach(({ path, content }) => {
+    if (!fs.existsSync(path)) {
+      saveJsonFile(path, content);
+      console.log(`Arquivo ${path} criado`);
+    }
+  });
+}
+
+module.exports = {
+  loadJsonFile,
+  saveJsonFile,
+  loadMensalistas,
+  saveMensalistas,
+  loadCargos,
+  saveCargos,
+  loadVotacoes,
+  saveVotacoes,
+  ensureDataFiles,
+};

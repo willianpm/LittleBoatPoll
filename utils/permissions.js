@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { MessageFlags } = require('discord.js');
 
 /**
  * SISTEMA DE PERMISSÕES BINÁRIO
@@ -46,7 +47,25 @@ function isCriador(member) {
  */
 const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas usuários com o cargo "Criador de Enquetes", Administradores ou o dono do servidor podem executar este comando.';
 
+/**
+ * Verifica permissão e responde automaticamente se negado
+ * @param {Interaction} interaction - Interação do Discord
+ * @param {GuildMember} member - Membro a verificar
+ * @returns {Promise<boolean>} true se tem permissão, false caso contrário (já responde a interação)
+ */
+async function checkPermissionReply(interaction, member) {
+  if (!isCriador(member)) {
+    await interaction.reply({
+      content: MENSAGEM_PERMISSAO_NEGADA,
+      flags: MessageFlags.Ephemeral,
+    });
+    return false;
+  }
+  return true;
+}
+
 module.exports = {
   isCriador,
   MENSAGEM_PERMISSAO_NEGADA,
+  checkPermissionReply,
 };
