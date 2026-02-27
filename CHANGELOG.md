@@ -25,10 +25,10 @@ All notable changes to this project will be documented in this file.
 
 #### ✨ Novidades
 
-- **Novo comando `/criador`**: Gerencia criadores de enquetes por ID de usuário
-  - `/criador adicionar @usuario` - Adiciona usuário à lista de criadores
-  - `/criador remover @usuario` - Remove usuário da lista
-  - `/criador listar` - Lista todos os criadores cadastrados
+- **Novo comando `/criador-de-enquete`**: Gerencia criadores de enquetes por ID de usuário
+  - `/criador-de-enquete adicionar @usuario` - Adiciona usuário à lista de criadores
+  - `/criador-de-enquete remover @usuario` - Remove usuário da lista
+  - `/criador-de-enquete listar` - Lista todos os criadores cadastrados
 - **Context Menu atualizado**: "Add/Del Criador de Enquetes" agora gerencia permissões internas
 - **Novo arquivo de dados**: `criadores-internos.json` - Armazena IDs de usuários com permissões
 - **Sistema mais simples**: Não requer criação de cargos no Discord para permissões administrativas
@@ -37,15 +37,15 @@ All notable changes to this project will be documented in this file.
 
 #### ⚠️ Breaking Changes
 
-- ❌ **Comando `/criadores` descontinuado**: Agora mostra aviso de migração para `/criador`
+- ❌ **Comando `/criadores` descontinuado**: Agora mostra aviso de migração para `/criador-de-enquete`
 - ❌ **Cargos de criador não são mais usados**: Arquivo `cargos-criadores.json` mantido apenas para compatibilidade
-- ⚠️ **Requer migração manual**: Usuários com cargo "Criador de Enquetes" devem ser re-adicionados com `/criador adicionar`
+- ⚠️ **Requer migração manual**: Usuários com cargo "Criador de Enquetes" devem ser re-adicionados com `/criador-de-enquete adicionar`
 
 #### 📁 Arquivos Modificados
 
 - `utils/permissions.js` - Verifica `criadores-internos.json` em vez de cargos
 - `utils/file-handler.js` - Adicionadas funções `loadCriadores()` e `saveCriadores()`
-- `commands/criador.js` - **NOVO** comando para gerenciar criadores
+- `commands/criador-de-enquete.js` - **NOVO** comando para gerenciar criadores
 - `commands/criadores.js` - **DESCONTINUADO** (mostra aviso)
 - `commands/criador-toggle-context.js` - Atualizado para sistema interno
 
@@ -68,7 +68,7 @@ All notable changes to this project will be documented in this file.
 Para migrar de servidores existentes:
 
 1. Identifique usuários com o cargo "Criador de Enquetes"
-2. Use `/criador adicionar @usuario` para cada um
+2. Use `/criador-de-enquete adicionar @usuario` para cada um
 3. (Opcional) Delete o cargo antigo do servidor
 
 **Leia:** [Documentação completa de migração](docs/MIGRACAO-PERMISSOES-INTERNAS.md)

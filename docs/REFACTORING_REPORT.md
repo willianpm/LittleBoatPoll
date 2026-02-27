@@ -214,7 +214,7 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 ## FUNCIONALIDADES MANTIDAS
 
 ✓ Sistema de votação com peso para mensalistas  
-✓ Comandos slash (`/enquete`, `/mensalista`, `/criador`, `/rascunho`)  
+✓ Comandos slash (`/enquete`, `/mensalista`, `/criador-de-enquete`, `/rascunho`)  
 ✓ Context menus (Encerrar Votação, Add/Del Mensalista, Add/Del Criador, Adicionar/Remover da enquete)  
 ✓ Sistema de rascunhos (criar, editar, publicar, deletar, listar)  
 ✓ Sincronização de reações  

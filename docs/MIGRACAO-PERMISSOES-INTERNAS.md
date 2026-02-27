@@ -9,7 +9,7 @@ O bot migrou as permissões administrativas de um sistema baseado em **cargos do
 ### ⚠️ Breaking Changes
 
 - ✅ **Não é mais necessário** criar o cargo "Criador de Enquetes" no servidor
-- ✅ **Comando `/criadores`** foi descontinuado → Use **`/criador`**
+- ✅ **Comando `/criadores`** foi descontinuado → Use **`/criador-de-enquete-de-enquete`**
 - ✅ **Context Menu** agora gerencia permissões internas (não adiciona cargos)
 - ✅ Permissões são salvas em `criadores-internos.json`
 
@@ -42,7 +42,7 @@ O bot migrou as permissões administrativas de um sistema baseado em **cargos do
 **Método 1: Comando Slash**
 
 ```
-/criador adicionar @usuario
+/criador-de-enquete adicionar @usuario
 ```
 
 **Método 2: Context Menu (Botão Direito)**
@@ -55,7 +55,7 @@ O bot migrou as permissões administrativas de um sistema baseado em **cargos do
 **Método 1: Comando Slash**
 
 ```
-/criador remover @usuario
+/criador-de-enquete remover @usuario
 ```
 
 **Método 2: Context Menu**
@@ -65,7 +65,7 @@ O bot migrou as permissões administrativas de um sistema baseado em **cargos do
 ### 3. Listar todos os Criadores
 
 ```
-/criador listar
+/criador-de-enquete listar
 ```
 
 ---
@@ -102,7 +102,7 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 1. **Identifique quem tem o cargo "Criador de Enquetes"**
 2. **Adicione-os ao novo sistema:**
    ```
-   /criador adicionar @usuario
+   /criador-de-enquete adicionar @usuario
    ```
 3. **(Opcional) Remova o cargo antigo** do servidor
 
@@ -130,7 +130,7 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 | ------------------------------------ | --------------------------------------------------------- |
 | `utils/permissions.js`               | Agora verifica `criadores-internos.json`                  |
 | `utils/file-handler.js`              | Adicionadas funções `loadCriadores()` e `saveCriadores()` |
-| `commands/criador.js`                | **NOVO** - Gerencia criadores por ID                      |
+| `commands/criador-de-enquete.js`     | **NOVO** - Gerencia criadores por ID                      |
 | `commands/criadores.js`              | **DESCONTINUADO** - Mostra aviso de migração              |
 | `commands/criador-toggle-context.js` | Atualizado para sistema interno                           |
 
@@ -154,14 +154,14 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 
 ## 📊 Comparação: Antes vs Depois
 
-| Aspecto                 | Sistema Antigo (Cargos)     | Sistema Novo (Interno)     |
-| ----------------------- | --------------------------- | -------------------------- |
-| **Setup Inicial**       | Criar cargo no Discord      | Nenhum                     |
-| **Adicionar Permissão** | Adicionar cargo ao usuário  | `/criador adicionar @user` |
-| **Visibilidade**        | Visível na lista de membros | Apenas no bot              |
-| **Hierarquia**          | Requer configuração         | Não se aplica              |
-| **Persistência**        | Pode ser deletado           | Sempre persiste            |
-| **Comando**             | `/criadores` (com cargo)    | `/criador` (com usuário)   |
+| Aspecto                 | Sistema Antigo (Cargos)     | Sistema Novo (Interno)                |
+| ----------------------- | --------------------------- | ------------------------------------- |
+| **Setup Inicial**       | Criar cargo no Discord      | Nenhum                                |
+| **Adicionar Permissão** | Adicionar cargo ao usuário  | `/criador-de-enquete adicionar @user` |
+| **Visibilidade**        | Visível na lista de membros | Apenas no bot                         |
+| **Hierarquia**          | Requer configuração         | Não se aplica                         |
+| **Persistência**        | Pode ser deletado           | Sempre persiste                       |
+| **Comando**             | `/criadores` (com cargo)    | `/criador-de-enquete` (com usuário)   |
 
 ---
 
@@ -169,7 +169,7 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 
 ### Preciso recriar minhas permissões?
 
-Sim, se você usava o sistema antigo, adicione os usuários novamente com `/criador adicionar`.
+Sim, se você usava o sistema antigo, adicione os usuários novamente com `/criador-de-enquete adicionar`.
 
 ### O que acontece com o arquivo `cargos-criadores.json`?
 
@@ -194,8 +194,8 @@ Não! Administradores do Discord e o dono do servidor **sempre** têm acesso tot
 ### Cenário: Novo servidor começando do zero
 
 1. **Dono do servidor** inicia o bot
-2. Dono usa `/criador adicionar @moderador1`
-3. Dono usa `/criador adicionar @moderador2`
+2. Dono usa `/criador-de-enquete adicionar @moderador1`
+3. Dono usa `/criador-de-enquete adicionar @moderador2`
 4. Agora 3 pessoas podem gerenciar enquetes:
    - Dono (automático)
    - @moderador1 (adicionado internamente)
@@ -219,7 +219,7 @@ Não! Administradores do Discord e o dono do servidor **sempre** têm acesso tot
 Se encontrar problemas:
 
 1. Verifique se o arquivo `criadores-internos.json` existe
-2. Use `/criador listar` para ver quem tem permissões
+2. Use `/criador-de-enquete listar` para ver quem tem permissões
 3. Administradores sempre podem adicionar criadores
 4. Consulte os logs do bot para detalhes de erros
 

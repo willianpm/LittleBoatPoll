@@ -6,7 +6,7 @@ Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripu
 
 Sistema binário **interno** para permissões administrativas:
 
-- **Criador de Enquetes**: Usuários adicionados internamente com `/criador adicionar`
+- **Criador de Enquetes**: Usuários adicionados internamente com `/criador-de-enquete adicionar`
 - **Administrador e dono do servidor**: acesso total automático
 - **Usuário comum**: apenas vota por reações
 
@@ -24,9 +24,9 @@ O bot também faz vínculo automático do cargo **Mensalistas** (nome do cargo n
 ### Gerenciar Criadores
 
 ```bash
-/criador adicionar @usuario   # Adiciona permissão administrativa
-/criador remover @usuario     # Remove permissão
-/criador listar               # Lista todos os criadores
+/criador-de-enquete adicionar adicionar @usuario   # Adiciona permissão administrativa
+/criador-de-enquete adicionar remover @usuario     # Remove permissão
+/criador-de-enquete adicionar listar               # Lista todos os criadores
 ```
 
 Ou use o **Context Menu** (botão direito no usuário → Apps → "Add/Del Criador de Enquetes")

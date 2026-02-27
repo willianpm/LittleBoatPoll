@@ -418,9 +418,9 @@ MUDANÇA IMPORTANTE:
 COMO ADICIONAR CRIADORES:
 
 1. Use comandos:
-   /criador adicionar @usuario
-   /criador remover @usuario
-   /criador listar
+   /criador-de-enquete adicionar @usuario
+   /criador-de-enquete remover @usuario
+   /criador-de-enquete listar
 
 2. Ou use Context Menu:
    - Clique direito no usuário
@@ -456,7 +456,7 @@ MIGRAÇÃO DO SISTEMA ANTIGO:
 Se você usava cargos (v1.x):
 
 1. Identifique quem tinha o cargo "Criador de Enquetes"
-2. Adicione-os com /criador adicionar @usuario
+2. Adicione-os com /criador-de-enquete adicionar @usuario
 3. (Opcional) Delete o cargo antigo
 
 Leia mais: docs/MIGRACAO-PERMISSOES-INTERNAS.md
