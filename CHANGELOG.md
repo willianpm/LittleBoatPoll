@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 2.0.1 - 2026-02-27
+## 2.0.1
 
 ### ✨ Mensalistas: vínculo automático por cargo
 
@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Atualizada documentação principal, wiki e docs internas para refletir o novo comportamento de mensalistas por cargo com persistência.
 - Removidas instruções conflitantes sobre dependência/obrigatoriedade de cargos no caso de mensalistas.
 
-## 2.0.0 - 2026-02-27
+## 2.0.0
 
 ### 🚀 BREAKING CHANGES: Sistema de Permissões Interno
 
