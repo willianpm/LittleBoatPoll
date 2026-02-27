@@ -14,18 +14,18 @@ const fs = require('fs');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('criadores')
-    .setDescription('Gerencia os cargos Criador (acesso total ao bot)')
+    .setDescription('Gerencia os cargos "Criador de Enquetes" (acesso total ao bot)')
     .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('adicionar')
-        .setDescription('Adiciona um cargo Criador')
+        .setDescription('Adiciona um cargo "Criador de Enquetes"')
         .addRoleOption((option) => option.setName('cargo').setDescription('Cargo a ser adicionado').setRequired(true)),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('remover')
-        .setDescription('Remove um cargo Criador')
+        .setDescription('Remove um cargo "Criador de Enquetes"')
         .addRoleOption((option) => option.setName('cargo').setDescription('Cargo a ser removido').setRequired(true)),
     )
     .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os cargos Criador')),
@@ -35,7 +35,7 @@ module.exports = {
 
     // =====================================
     // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
-    // Apenas usuários com o cargo Criador podem executar este comando
+    // Apenas usuários com o cargo "Criador de Enquetes" podem executar este comando
     // =====================================
     if (!isCriador(interaction.member)) {
       return await interaction.reply({
@@ -70,7 +70,7 @@ module.exports = {
       data.cargos.push(cargo.id);
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
-      const embed = new EmbedBuilder().setColor('#00FF00').setTitle('✅ Cargo Criador Adicionado!').setDescription(`O cargo **${cargo.name}** agora tem acesso total ao bot.`).setTimestamp();
+      const embed = new EmbedBuilder().setColor('#00FF00').setTitle('✅ Cargo "Criador de Enquetes" Adicionado!').setDescription(`O cargo **${cargo.name}** agora tem acesso total ao bot.`).setTimestamp();
 
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
@@ -93,7 +93,7 @@ module.exports = {
       data.cargos = data.cargos.filter((id) => id !== cargo.id);
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
-      const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Cargo Criador Removido!').setDescription(`O cargo **${cargo.name}** não tem mais acesso total ao bot.`).setTimestamp();
+      const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Cargo "Criador de Enquetes" Removido!').setDescription(`O cargo **${cargo.name}** não tem mais acesso total ao bot.`).setTimestamp();
 
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
@@ -125,7 +125,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor('#4169E1')
-        .setTitle('📋 Cargos Criador (Acesso Total)')
+        .setTitle('📋 Cargos "Criador de Enquetes" (Acesso Total)')
         .setDescription((lista || 'Nenhum cargo encontrado.') + '\n\n_Usuários com estes cargos têm acesso total ao bot._\n_Usuários sem estes cargos podem apenas votar._')
         .setFooter({ text: `Total: ${data.cargos.length} cargo(s)` })
         .setTimestamp();
