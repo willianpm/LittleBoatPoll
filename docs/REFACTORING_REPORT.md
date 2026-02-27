@@ -18,6 +18,8 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 - `saveJsonFile(filePath, data)` - Salva JSON com tratamento de erro
 - `loadMensalistas()` - Carrega lista de mensalistas
 - `saveMensalistas(data)` - Salva lista de mensalistas
+- `loadRoleBindings()` - Carrega mapeamento persistido de cargos de mensalista por servidor
+- `saveRoleBindings(data)` - Salva mapeamento persistido de cargos de mensalista
 - `loadCargos()` - Carrega cargos de criadores
 - `saveCargos(data)` - Salva cargos de criadores
 - `loadVotacoes()` - Carrega histórico de votações
@@ -97,6 +99,8 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 - Substituição de `fs.readFileSync` por `loadJsonFile()`
 - Substituição de `JSON.parse + fs.readFileSync` por `loadMensalistas()`
 - Renomeação de `ensureDataFiles()` para `initDataFiles()` (delegando ao utils)
+- Integração com binding automático de cargo `Mensalistas` por servidor
+- Cálculo de mensalista considerando lista manual e cargo vinculado
 
 **Antes:** 51 linhas de funções file-handler  
 **Depois:** Código reduzido e delegado
@@ -137,10 +141,11 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 
 **Mudanças:**
 
-- Import de `file-handler.js` com `loadMensalistas()`, `loadVotacoes()`, `saveVotacoes()`
+- Import de `file-handler.js` com `loadVotacoes()`, `saveVotacoes()`
 - Remoção de validação local de arquivo em 3 locais
 - Remoção de função `saveActivePolls()` duplicada (agora usa `client.saveActivePolls()`)
 - Simplificação do salvamento de histórico
+- Lista de mensalistas que votaram baseada em quem efetivamente votou com peso 2
 
 **Antes:** Lógica de file I/O dispersa em múltiplos locais  
 **Depois:** Centralizada em file-handler.js
@@ -209,7 +214,7 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 ## FUNCIONALIDADES MANTIDAS
 
 ✓ Sistema de votação com peso para mensalistas  
-✓ Comandos slash (`/enquete`, `/mensalista`, `/criadores`, `/rascunho`)  
+✓ Comandos slash (`/enquete`, `/mensalista`, `/criador`, `/rascunho`)  
 ✓ Context menus (Encerrar Votação, Add/Del Mensalista, Add/Del Criador, Adicionar/Remover da enquete)  
 ✓ Sistema de rascunhos (criar, editar, publicar, deletar, listar)  
 ✓ Sincronização de reações  
@@ -218,6 +223,8 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 ✓ Todas as mensagens e embeds funcionam corretamente
 
 Nenhuma funcionalidade foi quebrada ou alterada no comportamento externo.
+
+> Atualização posterior (v2.0.1): o peso mensalista também pode ser reconhecido automaticamente pelo cargo `Mensalistas`, com persistência em `role-bindings.json`.
 
 ---
 

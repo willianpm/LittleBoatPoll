@@ -3,7 +3,8 @@ const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, 
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const { loadJsonFile, saveJsonFile, loadMensalistas, saveMensalistas, ensureDataFiles } = require('./utils/file-handler');
+const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('./utils/file-handler');
+const { ensureMensalistaRoleBinding } = require('./utils/mensalista-binding');
 
 // Controle de verbosidade de logs (DEBUG=true para logs detalhados)
 const DEBUG_MODE = process.env.DEBUG === 'true';
@@ -14,6 +15,7 @@ const DEBUG_MODE = process.env.DEBUG === 'true';
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds, // Para interagir com servidores
+    GatewayIntentBits.GuildMembers, // Para validar cargos de membros (mensalistas)
     GatewayIntentBits.GuildMessages, // Para ler mensagens
     GatewayIntentBits.MessageContent, // Para ler conteúdo das mensagens
     GatewayIntentBits.DirectMessages, // Para DMs
@@ -58,6 +60,45 @@ function saveDraftPolls() {
 // Exporta funções de persistência via client para uso nos comandos
 client.saveActivePolls = saveActivePolls;
 client.saveDraftPolls = saveDraftPolls;
+
+function getMensalistasSet() {
+  const mensalistasData = loadMensalistas();
+  return new Set(mensalistasData.mensalistas || []);
+}
+
+async function isUserMensalista(guild, userId, mensalistasSet = null) {
+  const isMensalistaManual = (mensalistasSet || getMensalistasSet()).has(userId);
+
+  if (!guild) {
+    return isMensalistaManual;
+  }
+
+  const roleId = await ensureMensalistaRoleBinding(guild);
+  if (!roleId) {
+    return isMensalistaManual;
+  }
+
+  const member = guild.members.cache.get(userId) || (await guild.members.fetch({ user: userId, force: true }).catch(() => null));
+  const isMensalistaByRole = Boolean(member?.roles?.cache?.has(roleId));
+
+  return isMensalistaManual || isMensalistaByRole;
+}
+
+async function bindMensalistasRolesOnStartup() {
+  let vinculados = 0;
+
+  for (const guild of client.guilds.cache.values()) {
+    await guild.roles.fetch().catch(() => null);
+    const roleId = await ensureMensalistaRoleBinding(guild);
+    if (roleId) vinculados++;
+  }
+
+  if (vinculados > 0) {
+    console.log(`✓ Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
+  } else {
+    console.log('ℹ️  Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
+  }
+}
 
 // Carrega votações ativas do arquivo
 function loadActivePolls() {
@@ -132,8 +173,8 @@ async function syncPollReactions() {
   const totalEnquetes = client.activePolls.size;
   console.log(`Sincronizando ${totalEnquetes} enquete(s) ativa(s)...`);
 
-  // Carrega mensalistas uma vez antes do loop (otimização)
-  const mensalistasData = loadMensalistas();
+  // Carrega mensalistas manuais uma vez antes do loop (otimização)
+  const mensalistasSet = getMensalistasSet();
   const enquetesOrfas = [];
   let enquetesProcessadas = 0;
   const startTime = Date.now();
@@ -160,6 +201,8 @@ async function syncPollReactions() {
         enquetesOrfas.push(messageId);
         continue;
       }
+
+      const guild = channel.guild;
 
       // Verifica permissões do bot no canal
       const botMember = channel.guild?.members.me;
@@ -227,7 +270,7 @@ async function syncPollReactions() {
 
           // Inicializa votos do usuário se não existir
           if (!votosAtualizados[user.id]) {
-            const isMensalista = mensalistasData.mensalistas.includes(user.id);
+            const isMensalista = await isUserMensalista(guild, user.id, mensalistasSet);
             const peso = isMensalista && poll.usarPesoMensalista ? 2 : 1;
 
             votosAtualizados[user.id] = {
@@ -489,6 +532,8 @@ client.once('clientReady', async () => {
   console.log(`${client.user.tag} está ONLINE\n`);
   client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 
+  await bindMensalistasRolesOnStartup();
+
   // Deploy de comandos se requisitado via variável de ambiente ou flag
   if (process.env.DEPLOY === 'true' || process.argv.includes('--deploy')) {
     console.log('Registrando comandos...');
@@ -590,9 +635,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
       return;
     }
 
-    // Recarrega os dados de mensalistas
-    const mensalistasData = loadMensalistas();
-    const isMensalista = mensalistasData.mensalistas.includes(user.id);
+    const isMensalista = await isUserMensalista(reaction.message.guild, user.id);
     // Calcula o peso baseado na configuração da enquete
     const peso = isMensalista && poll.usarPesoMensalista ? 2 : 1;
 
@@ -605,6 +648,9 @@ client.on('messageReactionAdd', async (reaction, user) => {
         timestamp: new Date(),
       };
     }
+
+    // Mantém o peso atualizado caso o status de mensalista tenha mudado
+    poll.votos[user.id].peso = peso;
 
     // Verifica se já votou nesta opção
     if (poll.votos[user.id].reacoes.includes(emoji)) {

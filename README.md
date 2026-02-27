@@ -4,13 +4,22 @@ Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripu
 
 ## Permissões
 
-Sistema binário **interno** (não depende de cargos do Discord):
+Sistema binário **interno** para permissões administrativas:
 
 - **Criador de Enquetes**: Usuários adicionados internamente com `/criador adicionar`
 - **Administrador e dono do servidor**: acesso total automático
 - **Usuário comum**: apenas vota por reações
 
-Não existem níveis intermediários. O sistema é 100% gerenciado internamente.
+Não existem níveis intermediários para permissões administrativas. O sistema é gerenciado internamente pelo bot.
+
+### Mensalistas por cargo do servidor
+
+O bot também faz vínculo automático do cargo **Mensalistas** (nome do cargo no Discord) com o papel interno de mensalista:
+
+- Se o cargo existir, qualquer membro com esse cargo é reconhecido como mensalista automaticamente.
+- Não é necessário criar um novo cargo se **Mensalistas** já existir no servidor.
+- O vínculo é salvo em `role-bindings.json` para persistir entre reinícios.
+- Se o cargo não existir, o bot mantém o comportamento padrão atual (lista manual em `mensalistas.json`).
 
 ### Gerenciar Criadores
 

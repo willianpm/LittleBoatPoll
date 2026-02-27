@@ -403,7 +403,7 @@ GUILD_ID=seu_guild_id_aqui
 // ============================================
 
 /\*
-⭐ NOVO: Sistema 100% Interno - Não Depende de Cargos do Discord
+⭐ Sistema Interno de Permissões Administrativas + Vínculo Opcional de Mensalistas
 
 MUDANÇA IMPORTANTE:
 
@@ -411,6 +411,9 @@ MUDANÇA IMPORTANTE:
 - ✅ Permissões gerenciadas internamente pelo bot
 - ✅ Baseado em IDs de usuários, não em cargos
 - ✅ Mais simples, mais seguro, mais flexível
+- ✅ Se já existir cargo "Mensalistas", o bot faz vínculo automático para peso mensalista
+- ✅ Vínculo de mensalistas persistido em `role-bindings.json`
+- ℹ️ Se o cargo "Mensalistas" não existir, o bot usa a lista interna de `mensalistas.json`
 
 COMO ADICIONAR CRIADORES:
 

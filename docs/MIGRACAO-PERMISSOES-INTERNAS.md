@@ -2,7 +2,9 @@
 
 ## 📋 Resumo das Mudanças
 
-O bot migrou de um sistema de permissões baseado em **cargos do Discord** para um sistema **100% interno** baseado em IDs de usuários.
+O bot migrou as permissões administrativas de um sistema baseado em **cargos do Discord** para um sistema interno baseado em IDs de usuários.
+
+> Observação: esta migração se aplica às permissões administrativas (Criador de Enquetes). O sistema de mensalistas agora também suporta vínculo automático opcional com o cargo `Mensalistas`.
 
 ### ⚠️ Breaking Changes
 
@@ -113,6 +115,14 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 ---
 
 ## 🛠️ Detalhes Técnicos
+
+### Mensalistas por cargo (v2.0.1+)
+
+- Se existir um cargo chamado **Mensalistas** no servidor, o bot faz vínculo automático desse cargo com o papel interno de mensalista.
+- O vínculo é resolvido por nome de cargo (case-insensitive) e salvo em `role-bindings.json`.
+- O mapeamento é persistido por servidor (`guildId -> roleId`).
+- Se o cargo não existir, o bot mantém o comportamento padrão usando `mensalistas.json`.
+- O bot não cria nem duplica cargos automaticamente.
 
 ### Arquivos Modificados
 

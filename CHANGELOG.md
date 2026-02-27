@@ -2,11 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.0.1 - 2026-02-27
+
+### ✨ Mensalistas: vínculo automático por cargo
+
+- **Binding automático por nome de cargo:** quando existir um cargo chamado `Mensalistas`, o bot vincula automaticamente esse cargo ao papel interno de mensalista.
+- **Sem duplicação de cargos:** o bot não cria cargo novo quando `Mensalistas` já existe no servidor.
+- **Persistência por servidor:** o mapeamento `guildId -> roleId` é salvo em `role-bindings.json`, evitando reconfiguração após reinício.
+- **Fallback seguro:** se o cargo `Mensalistas` não existir, o bot mantém o comportamento padrão por lista interna (`mensalistas.json`) sem quebrar execução.
+- **Encerramento de votação ajustado:** a seção "Mensalistas que votaram" agora considera quem efetivamente votou com peso 2.
+
+### 📚 Documentação
+
+- Atualizada documentação principal, wiki e docs internas para refletir o novo comportamento de mensalistas por cargo com persistência.
+- Removidas instruções conflitantes sobre dependência/obrigatoriedade de cargos no caso de mensalistas.
+
 ## 2.0.0 - 2026-02-27
 
 ### 🚀 BREAKING CHANGES: Sistema de Permissões Interno
 
-**Migração completa do sistema de permissões de cargos do Discord para gerenciamento 100% interno.**
+**Migração completa das permissões administrativas de cargos do Discord para gerenciamento interno.**
 
 #### ✨ Novidades
 
@@ -16,14 +31,14 @@ All notable changes to this project will be documented in this file.
   - `/criador listar` - Lista todos os criadores cadastrados
 - **Context Menu atualizado**: "Add/Del Criador de Enquetes" agora gerencia permissões internas
 - **Novo arquivo de dados**: `criadores-internos.json` - Armazena IDs de usuários com permissões
-- **Sistema mais simples**: Não requer criação de cargos no Discord
+- **Sistema mais simples**: Não requer criação de cargos no Discord para permissões administrativas
 - **Maior segurança**: Permissões não podem ser deletadas acidentalmente
 - **Proteção inteligente**: Impede remoção do último criador
 
 #### ⚠️ Breaking Changes
 
 - ❌ **Comando `/criadores` descontinuado**: Agora mostra aviso de migração para `/criador`
-- ❌ **Sistema de cargos não é mais usado**: Arquivo `cargos-criadores.json` mantido apenas para compatibilidade
+- ❌ **Cargos de criador não são mais usados**: Arquivo `cargos-criadores.json` mantido apenas para compatibilidade
 - ⚠️ **Requer migração manual**: Usuários com cargo "Criador de Enquetes" devem ser re-adicionados com `/criador adicionar`
 
 #### 📁 Arquivos Modificados
@@ -42,7 +57,7 @@ All notable changes to this project will be documented in this file.
 
 #### ✅ Vantagens do Novo Sistema
 
-- ✅ Não precisa criar cargos no servidor Discord
+- ✅ Não precisa criar cargos no servidor Discord para permissões administrativas
 - ✅ Sem problemas com hierarquia de cargos
 - ✅ Configuração instantânea
 - ✅ Mais controle e flexibilidade

@@ -10,8 +10,8 @@ const { MessageFlags } = require('discord.js');
  *
  * Administradores do Discord e dono do servidor também têm acesso total automaticamente.
  *
- * ⚠️ MUDANÇA IMPORTANTE: Este sistema não depende mais de cargos do Discord.
- * As permissões são gerenciadas 100% internamente pelo bot.
+ * ⚠️ MUDANÇA IMPORTANTE: As permissões administrativas não dependem de cargos do Discord.
+ * O gerenciamento de criadores é 100% interno. (Mensalistas podem usar vínculo opcional por cargo no módulo de votação.)
  */
 
 /**

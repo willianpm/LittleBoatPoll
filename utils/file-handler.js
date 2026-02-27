@@ -51,6 +51,23 @@ function saveMensalistas(data) {
 }
 
 /**
+ * Carrega mapeamento de cargos internos por servidor
+ * @returns {Object} Objeto com bindings por guild
+ */
+function loadRoleBindings() {
+  return loadJsonFile('./role-bindings.json', { mensalistaRoleByGuild: {} });
+}
+
+/**
+ * Salva mapeamento de cargos internos por servidor
+ * @param {Object} data - Dados de bindings
+ * @returns {boolean} true se sucesso
+ */
+function saveRoleBindings(data) {
+  return saveJsonFile('./role-bindings.json', data);
+}
+
+/**
  * Carrega cargos de criadores (DEPRECATED - mantido para compatibilidade)
  * @deprecated Use loadCriadores() para o novo sistema interno
  * @returns {Object} Objeto com array de IDs de cargos
@@ -110,6 +127,7 @@ function saveVotacoes(data) {
 function ensureDataFiles() {
   const files = [
     { path: './mensalistas.json', content: { mensalistas: [] } },
+    { path: './role-bindings.json', content: { mensalistaRoleByGuild: {} } },
     { path: './historico-votacoes.json', content: [] },
     { path: './cargos-criadores.json', content: { cargos: [] } },
     { path: './criadores-internos.json', content: { criadores: [] } },
@@ -129,6 +147,8 @@ module.exports = {
   saveJsonFile,
   loadMensalistas,
   saveMensalistas,
+  loadRoleBindings,
+  saveRoleBindings,
   loadCargos,
   saveCargos,
   loadCriadores,

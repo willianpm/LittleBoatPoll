@@ -1,6 +1,6 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { loadMensalistas, loadVotacoes, saveVotacoes } = require('../utils/file-handler');
+const { loadVotacoes, saveVotacoes } = require('../utils/file-handler');
 
 /**
  * COMANDO DE CONTEXTO: Encerrar Votação
@@ -43,9 +43,6 @@ module.exports = {
       // ====================================
       // CÁLCULO DE VOTOS COM PESOS
       // ====================================
-
-      // Carrega a lista de mensalistas
-      const mensalistasData = loadMensalistas();
 
       // Inicializa contadores para cada opção
       const resultados = poll.opcoes.map((opcao, index) => ({
@@ -99,12 +96,11 @@ module.exports = {
       // Lista de Mensalistas que Votaram
       let mensmentalList = '(nenhum)';
       try {
-        const mensalistasData = loadMensalistas();
         const mensalistasQueVotaram = [];
 
-        // Verifica quais mensalistas votaram
-        for (const userId of mensalistasData.mensalistas) {
-          if (poll.votos[userId]) {
+        // Verifica quem realmente votou com peso 2 nesta enquete
+        for (const [userId, votoData] of Object.entries(poll.votos)) {
+          if (votoData?.peso === 2) {
             mensalistasQueVotaram.push(userId);
           }
         }
