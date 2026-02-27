@@ -1,5 +1,13 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
+const { loadCriadores, saveCriadores } = require('../utils/file-handler');
 
+/**
+ * CONTEXT MENU: Add/Del Criador de Enquetes
+ *
+ * Adiciona ou remove um usuário da lista interna de Criadores de Enquetes.
+ * Sistema 100% interno - não depende de cargos do Discord.
+ */
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Add/Del Criador de Enquetes').setType(ApplicationCommandType.User).setDefaultMemberPermissions(0),
 
@@ -7,7 +15,18 @@ module.exports = {
     try {
       if (!interaction.guild) {
         return await interaction.reply({
-          content: '❌ Este comando so pode ser usado em servidores.',
+          content: '❌ Este comando só pode ser usado em servidores.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      // =====================================
+      // VERIFICAÇÃO DE PERMISSÕES
+      // Apenas Criadores, Administradores ou dono do servidor
+      // =====================================
+      if (!isCriador(interaction.member)) {
+        return await interaction.reply({
+          content: MENSAGEM_PERMISSAO_NEGADA,
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -21,123 +40,55 @@ module.exports = {
 
       if (!targetMember) {
         return await interaction.reply({
-          content: '❌ Nao foi possivel localizar o membro no servidor.',
+          content: '❌ Não foi possível localizar o membro no servidor.',
           flags: MessageFlags.Ephemeral,
         });
       }
 
-      const botMember = interaction.guild.members.me;
-      if (!botMember?.permissions?.has('ManageRoles')) {
-        return await interaction.reply({
-          content: '❌ O bot nao possui permissao para gerenciar cargos.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+      // Carrega lista de criadores
+      let data = loadCriadores();
 
-      let criadorRole = interaction.guild.roles.cache.find((role) => role.name === 'Criador de Enquetes');
-      const legacyCriadorRole = interaction.guild.roles.cache.find((role) => role.name === 'Criador');
+      // Verifica se o usuário já é criador
+      const jaCriador = data.criadores.includes(targetUser.id);
 
-      if (criadorRole && legacyCriadorRole) {
-        if (botMember.roles.highest.comparePositionTo(legacyCriadorRole) <= 0) {
+      if (jaCriador) {
+        // REMOVER criador
+
+        // Proteção: não pode remover a si mesmo se for o último criador
+        const isLastCreator = data.criadores.length === 1;
+        const isSelfRemoval = targetUser.id === interaction.user.id;
+
+        if (isLastCreator && isSelfRemoval) {
           return await interaction.reply({
-            content: '❌ Existe o cargo "Criador" legado, mas o bot nao consegue gerencia-lo.\n' + '➡️ Solucao: mova o cargo do bot para acima de "Criador" e tente novamente para remover o legado.',
+            content: '❌ **Você é o último Criador!** Não é possível se remover.\n_Adicione outro Criador antes de se remover._',
             flags: MessageFlags.Ephemeral,
           });
         }
 
-        await legacyCriadorRole.delete('Remover cargo Criador legado apos renomeacao').catch(() => null);
-      }
+        // Remove da lista
+        data.criadores = data.criadores.filter((id) => id !== targetUser.id);
+        saveCriadores(data);
 
-      if (!criadorRole && legacyCriadorRole) {
-        if (botMember.roles.highest.comparePositionTo(legacyCriadorRole) <= 0) {
-          return await interaction.reply({
-            content: '❌ O cargo "Criador" esta acima do cargo mais alto do bot.\n' + '➡️ Solucao: mova o cargo do bot para acima de "Criador" e tente novamente para renomear.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        criadorRole = await legacyCriadorRole.setName('Criador de Enquetes', 'Renomear cargo Criador para Criador de Enquetes').catch(() => null);
-
-        if (!criadorRole) {
-          return await interaction.reply({
-            content: '❌ Nao foi possivel renomear o cargo "Criador" para "Criador de Enquetes". Ajuste a hierarquia e tente novamente.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-      }
-
-      if (!criadorRole) {
-        const isAdmin = interaction.member?.permissions?.has('Administrator');
-        const isOwner = interaction.member?.id === interaction.guild.ownerId;
-
-        if (!isAdmin && !isOwner) {
-          return await interaction.reply({
-            content: '❌ Cargo "Criador de Enquetes" nao encontrado. Apenas Administradores ou o dono do servidor podem cria-lo automaticamente.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        const desiredPosition = botMember.roles.highest.position - 1;
-        const roleOptions = {
-          name: 'Criador de Enquetes',
-          reason: 'Criacao automatica do cargo Criador de Enquetes para o context menu',
-        };
-
-        if (desiredPosition > 0) {
-          roleOptions.position = desiredPosition;
-        }
-
-        criadorRole = await interaction.guild.roles.create(roleOptions).catch(() => null);
-
-        if (!criadorRole) {
-          return await interaction.reply({
-            content: '❌ Cargo "Criador de Enquetes" nao encontrado e nao foi possivel cria-lo automaticamente.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-      }
-
-      // =====================================
-      // VERIFICACAO DE PERMISSOES
-      // Apenas usuarios com o cargo "Criador de Enquetes" podem executar este comando
-      // =====================================
-      const isAdmin = interaction.member?.permissions?.has('Administrator');
-      const isOwner = interaction.member?.id === interaction.guild.ownerId;
-      const hasCriadorRole = interaction.member?.roles?.cache?.has(criadorRole.id);
-
-      if (!hasCriadorRole && !isAdmin && !isOwner) {
-        return await interaction.reply({
-          content: '❌ Permissao negada! Apenas usuarios com o cargo "Criador de Enquetes", Administradores ou o dono do servidor podem executar este comando.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      if (botMember.roles.highest.comparePositionTo(criadorRole) <= 0) {
-        return await interaction.reply({
-          content: '❌ O cargo "Criador de Enquetes" esta acima do cargo mais alto do bot.\n' + '➡️ Solucao: mova o cargo do bot para acima de "Criador de Enquetes" ou mova "Criador de Enquetes" para baixo na hierarquia.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetHasCriadorRole = targetMember.roles.cache.has(criadorRole.id);
-
-      if (targetHasCriadorRole) {
-        await targetMember.roles.remove(criadorRole, 'Context menu: Remover Criador de Enquetes');
         await interaction.reply({
-          content: `✅ Cargo "Criador de Enquetes" removido de ${targetUser.username}.`,
+          content: `✅ **${targetUser.username}** foi removido(a) da lista de Criadores de Enquetes.\n_O usuário continua podendo votar normalmente._`,
           flags: MessageFlags.Ephemeral,
         });
-        console.log(`❌ Criador de Enquetes removido (contexto): ${targetUser.username} (${targetUser.id})`);
+        console.log(`❌ Criador removido (contexto): ${targetUser.username} (${targetUser.id})`);
       } else {
-        await targetMember.roles.add(criadorRole, 'Context menu: Adicionar Criador de Enquetes');
+        // ADICIONAR criador
+
+        // Adiciona à lista
+        data.criadores.push(targetUser.id);
+        saveCriadores(data);
+
         await interaction.reply({
-          content: `✅ Cargo "Criador de Enquetes" adicionado a ${targetUser.username}.`,
+          content: `✅ **${targetUser.username}** foi adicionado(a) como Criador de Enquetes!\n_O usuário agora tem acesso administrativo total ao bot._`,
           flags: MessageFlags.Ephemeral,
         });
-        console.log(`✅ Criador de Enquetes adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
+        console.log(`✅ Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
       }
     } catch (error) {
-      console.error('❌ Erro ao alternar cargo Criador de Enquetes (contexto):', error);
+      console.error('❌ Erro ao alternar Criador de Enquetes (contexto):', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao processar o comando.',
