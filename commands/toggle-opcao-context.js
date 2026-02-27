@@ -1,5 +1,7 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
+const { getLatestUserDraft, canEditDraft } = require('../utils/draft-handler');
+const { COLORS } = require('../utils/constants');
 
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(0),
@@ -51,18 +53,14 @@ module.exports = {
       }
 
       // Busca o último rascunho do usuário
-      const userDrafts = Array.from(client.draftPolls.values())
-        .filter((draft) => draft.criadorId === interaction.user.id)
-        .sort((a, b) => new Date(b.editadoEm || b.criadoEm) - new Date(a.editadoEm || a.criadoEm));
+      const rascunho = getLatestUserDraft(client.draftPolls, interaction.user.id);
 
-      if (userDrafts.length === 0) {
+      if (!rascunho) {
         return await interaction.reply({
           content: '❌ Você não possui rascunhos! Crie um com `/rascunho criar`.',
           flags: MessageFlags.Ephemeral,
         });
       }
-
-      const rascunho = userDrafts[0];
 
       // Validação extra de segurança
       if (!rascunho || !rascunho.opcoes || !Array.isArray(rascunho.opcoes)) {
@@ -80,7 +78,7 @@ module.exports = {
       let cor = '';
 
       if (opcaoExistente !== -1) {
-        // REMOVER opção existente
+        // Remover opção existente
         rascunho.opcoes.splice(opcaoExistente, 1);
 
         // Valida que ainda tem pelo menos 2 opções
@@ -97,9 +95,9 @@ module.exports = {
         }
 
         acao = 'REMOVIDA';
-        cor = '#FF6600';
+        cor = COLORS.WARNING;
       } else {
-        // ADICIONAR nova opção
+        // Adicionar nova opção
         if (rascunho.opcoes.length >= 20) {
           return await interaction.reply({
             content: '❌ Limite atingido! O rascunho já possui 20 opções (máximo permitido).',
@@ -109,7 +107,7 @@ module.exports = {
 
         rascunho.opcoes.push(textoSelecionado);
         acao = 'ADICIONADA';
-        cor = '#00FF00';
+        cor = COLORS.SUCCESS;
       }
 
       // Atualiza timestamp

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const fs = require('fs');
+const { loadMensalistas, saveMensalistas } = require('../utils/file-handler');
 
 /**
  * COMANDO: /mensalista
@@ -34,7 +34,6 @@ module.exports = {
 
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();
-    const mensalistasFilePath = './mensalistas.json';
 
     try {
       // =====================================
@@ -49,13 +48,7 @@ module.exports = {
       }
 
       // Lê o arquivo de mensalistas
-      let mensalistasData = {
-        mensalistas: [],
-      };
-
-      if (fs.existsSync(mensalistasFilePath)) {
-        mensalistasData = JSON.parse(fs.readFileSync(mensalistasFilePath, 'utf8'));
-      }
+      let mensalistasData = loadMensalistas();
 
       // ====================================
       // SUBCOMANDO: ADICIONAR
@@ -73,7 +66,7 @@ module.exports = {
 
         // Adiciona o usuário
         mensalistasData.mensalistas.push(usuario.id);
-        fs.writeFileSync(mensalistasFilePath, JSON.stringify(mensalistasData, null, 2));
+        saveMensalistas(mensalistasData);
 
         const addEmbed = new EmbedBuilder()
           .setColor('#00FF00')
@@ -109,7 +102,7 @@ module.exports = {
 
         // Remove o usuário
         mensalistasData.mensalistas.splice(index, 1);
-        fs.writeFileSync(mensalistasFilePath, JSON.stringify(mensalistasData, null, 2));
+        saveMensalistas(mensalistasData);
 
         const removeEmbed = new EmbedBuilder()
           .setColor('#FF6600')

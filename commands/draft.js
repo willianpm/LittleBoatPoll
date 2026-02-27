@@ -2,6 +2,9 @@ const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js'
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
 const fs = require('fs');
 const crypto = require('crypto');
+const { validatePollOptions, parseOptions } = require('../utils/validators');
+const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../utils/constants');
+const { getUserDrafts, getDraftById, canEditDraft } = require('../utils/draft-handler');
 
 /**
  * COMANDO: /rascunho
@@ -129,31 +132,13 @@ async function handleCriar(interaction, client) {
   const usarPesoMensalista = pesoMensalistaOption === 'sim';
 
   // Processa as opções
-  const opcoes = opcoesString
-    .split(',')
-    .map((op) => op.trim())
-    .filter((op) => op.length > 0);
+  const opcoes = parseOptions(opcoesString);
 
-  // Valida número de opções
-  if (opcoes.length < 2) {
+  // Valida opções
+  const validation = validatePollOptions(opcoes, maxVotos);
+  if (!validation.valid) {
     return await interaction.reply({
-      content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções.',
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  // Valida max_votos
-  if (maxVotos > opcoes.length) {
-    return await interaction.reply({
-      content: `❌ **Erro!** O número máximo de votos (${maxVotos}) não pode ser maior que o número de opções (${opcoes.length}).`,
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  // Valida número de opções (Discord limita a 20 reações)
-  if (opcoes.length > 20) {
-    return await interaction.reply({
-      content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
+      content: `❌ **Erro!** ${validation.error}`,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -183,7 +168,7 @@ async function handleCriar(interaction, client) {
 
   // Cria o embed de confirmação
   const confirmEmbed = new EmbedBuilder()
-    .setColor('#87CEEB')
+    .setColor(COLORS.NEUTRAL)
     .setTitle('✅ Rascunho Criado com Sucesso!')
     .addFields(
       { name: 'ID do Rascunho', value: `\`${draftId}\`` },
@@ -292,8 +277,8 @@ async function handleEditar(interaction, client) {
 
   // Cria o embed de confirmação
   const updateEmbed = new EmbedBuilder()
-    .setColor('#FFD700')
-    .setTitle('✅ Rascunho Atualizado!')
+    .setColor(COLORS.GOLD)
+    .setTitle('Rascunho Atualizado!')
     .addFields({ name: 'ID', value: `\`${draftId}\`` }, { name: 'Título', value: draft.titulo }, { name: 'Opções', value: draft.opcoes.join(', ') }, { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true }, { name: 'Peso Mensalista', value: draft.usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true })
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
@@ -333,8 +318,8 @@ async function handleListar(interaction, client) {
   });
 
   const listEmbed = new EmbedBuilder()
-    .setColor('#87CEEB')
-    .setTitle(`📝 Rascunhos de Enquetes (${draftsArray.length})`)
+    .setColor(COLORS.NEUTRAL)
+    .setTitle(`Rascunhos de Enquetes (${draftsArray.length})`)
     .setDescription(descricao || 'Nenhum rascunho encontrado')
     .setFooter({ text: `Exibindo ${draftsToShow.length} de ${draftsArray.length}` })
     .setTimestamp();
@@ -365,8 +350,8 @@ async function handleExibir(interaction, client) {
   const pesoInfo = draft.usarPesoMensalista ? 'Mensalistas têm peso 2 nos votos' : 'Todos têm o mesmo peso';
 
   const detailEmbed = new EmbedBuilder()
-    .setColor('#87CEEB')
-    .setTitle(`📝 ${draft.titulo}`)
+    .setColor(COLORS.NEUTRAL)
+    .setTitle(`${draft.titulo}`)
     .setDescription(descricao)
     .addFields({ name: 'ID do Rascunho', value: `\`${draftId}\`` }, { name: 'Criador', value: `<@${draft.criadorId}>`, inline: true }, { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true }, { name: 'Peso Mensalista', value: pesoInfo, inline: true }, { name: 'Criado em', value: `<t:${Math.floor(new Date(draft.criadoEm).getTime() / 1000)}:f>` }, { name: 'Editado em', value: `<t:${Math.floor(new Date(draft.editadoEm).getTime() / 1000)}:f>` }, { name: 'Status', value: '📝 Rascunho (não publicado)' })
     .setFooter({ text: `Total de opções: ${draft.opcoes.length}` })
@@ -407,8 +392,7 @@ async function handlePublicar(interaction, client) {
     const targetChannel = canalEscolhido || interaction.channel;
 
     // Emojis para as opções
-    const emojisDisponiveis = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹'];
-    const emojiNumeros = emojisDisponiveis.slice(0, draft.opcoes.length);
+    const emojiNumeros = EMOJIS_DISPONIVEIS.slice(0, draft.opcoes.length);
 
     // Constrói a descrição com as opções
     let descricaoPoll = `Selecione até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}:\n\n`;
@@ -419,8 +403,8 @@ async function handlePublicar(interaction, client) {
     // Cria o embed da enquete
     const pesoInfo = draft.usarPesoMensalista ? 'Mensalistas têm peso 2 nos votos' : 'Todos têm o mesmo peso';
     const pollEmbed = new EmbedBuilder()
-      .setColor('#FFD700')
-      .setTitle(`${draft.titulo} 📚`)
+      .setColor(COLORS.GOLD)
+      .setTitle(`${draft.titulo} `)
       .setDescription(descricaoPoll)
       .addFields({ name: '\u200B', value: '\u200B', inline: false }, { name: 'Regras 📊', value: `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`, inline: false })
       .setFooter({ text: `${draft.opcoes.length} opções disponíveis` })
@@ -465,8 +449,8 @@ async function handlePublicar(interaction, client) {
 
     // Confirmação
     const publishEmbed = new EmbedBuilder()
-      .setColor('#00FF00')
-      .setTitle('✅ Enquete Publicada com Sucesso!')
+      .setColor(COLORS.SUCCESS)
+      .setTitle('Enquete Publicada com Sucesso!')
       .addFields({ name: 'Título', value: draft.titulo }, { name: 'Canal', value: `${targetChannel}` }, { name: 'Link para Votação', value: `[Clique aqui](https://discord.com/channels/${interaction.guildId}/${targetChannel.id}/${msg.id})` })
       .setFooter({ text: 'A enquete está ativa e aceitando votos' })
       .setTimestamp();
@@ -512,8 +496,8 @@ async function handleDeletar(interaction, client) {
 
   // Confirmação
   const deleteEmbed = new EmbedBuilder()
-    .setColor('#FF0000')
-    .setTitle('✅ Rascunho Deletado')
+    .setColor(COLORS.ERROR)
+    .setTitle('Rascunho Deletado')
     .addFields({ name: 'Título', value: draft.titulo }, { name: 'ID', value: `\`${draftId}\`` })
     .setFooter({ text: 'O rascunho foi permanentemente removido' })
     .setTimestamp();
@@ -596,8 +580,8 @@ async function handleAdicionarOpcao(interaction, client) {
 
   // Cria o embed de confirmação
   const updateEmbed = new EmbedBuilder()
-    .setColor('#00FF00')
-    .setTitle('✅ Opções Adicionadas!')
+    .setColor(COLORS.SUCCESS)
+    .setTitle('Opções Adicionadas!')
     .addFields({ name: 'ID', value: `\`${draftId}\`` }, { name: 'Título', value: draft.titulo }, { name: 'Opções Adicionadas', value: novasOpcoes.join(', ') }, { name: 'Total de Opções', value: `${draft.opcoes.length}` }, { name: 'Todas as Opções', value: draft.opcoes.join(', ') })
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
@@ -680,8 +664,8 @@ async function handleRemoverOpcao(interaction, client) {
 
   // Cria o embed de confirmação
   const updateEmbed = new EmbedBuilder()
-    .setColor('#FFA500')
-    .setTitle('✅ Opção Removida!')
+    .setColor(COLORS.WARNING)
+    .setTitle('Opção Removida!')
     .addFields({ name: 'ID', value: `\`${draftId}\`` }, { name: 'Título', value: draft.titulo }, { name: 'Opção Removida', value: opcaoRemovida }, { name: 'Total de Opções', value: `${draft.opcoes.length}` }, { name: 'Opções Restantes', value: draft.opcoes.join(', ') })
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();

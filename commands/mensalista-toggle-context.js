@@ -1,19 +1,15 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const fs = require('fs');
+const { loadMensalistas, saveMensalistas } = require('../utils/file-handler');
 
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Add/Del Mensalistas').setType(ApplicationCommandType.User).setDefaultMemberPermissions(0),
 
   async execute(interaction, client) {
-    const mensalistasFilePath = './mensalistas.json';
     const usuario = interaction.targetUser;
 
     try {
-      // =====================================
-      // VERIFICAÇÃO DE PERMISSÕES
-      // Apenas usuários com o cargo Criador de Enquetes podem executar este comando
-      // =====================================
+      // Verifica permissões
       if (!isCriador(interaction.member)) {
         return await interaction.reply({
           content: MENSAGEM_PERMISSAO_NEGADA,
@@ -21,10 +17,7 @@ module.exports = {
         });
       }
 
-      let mensalistasData = { mensalistas: [] };
-      if (fs.existsSync(mensalistasFilePath)) {
-        mensalistasData = JSON.parse(fs.readFileSync(mensalistasFilePath, 'utf8'));
-      }
+      let mensalistasData = loadMensalistas();
 
       // Verifica se o usuário já é mensalista
       const isMensalista = mensalistasData.mensalistas.includes(usuario.id);
@@ -32,7 +25,7 @@ module.exports = {
       if (isMensalista) {
         // Remove mensalista
         mensalistasData.mensalistas = mensalistasData.mensalistas.filter((id) => id !== usuario.id);
-        fs.writeFileSync(mensalistasFilePath, JSON.stringify(mensalistasData, null, 2));
+        saveMensalistas(mensalistasData);
 
         const removeEmbed = new EmbedBuilder()
           .setColor('#FF6600')
@@ -50,7 +43,7 @@ module.exports = {
       } else {
         // Adiciona mensalista
         mensalistasData.mensalistas.push(usuario.id);
-        fs.writeFileSync(mensalistasFilePath, JSON.stringify(mensalistasData, null, 2));
+        saveMensalistas(mensalistasData);
 
         const addEmbed = new EmbedBuilder()
           .setColor('#00FF00')

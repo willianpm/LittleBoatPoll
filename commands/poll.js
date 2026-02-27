@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
+const { validatePollOptions, parseOptions } = require('../utils/validators');
+const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../utils/constants');
 
 /**
  * COMANDO: /enquete
@@ -29,24 +31,14 @@ module.exports = {
     const pesoMensalistaOption = interaction.options.getString('peso_mensalista');
     const usarPesoMensalista = pesoMensalistaOption === 'sim';
 
-    // Processa as opções (separa por vírgula e limpa espaços)
-    const opcoes = opcoesString
-      .split(',')
-      .map((op) => op.trim())
-      .filter((op) => op.length > 0);
+    // Processa as opções
+    const opcoes = parseOptions(opcoesString);
 
-    // Valida número de opções
-    if (opcoes.length < 2) {
+    // Valida opções
+    const validation = validatePollOptions(opcoes, maxVotos);
+    if (!validation.valid) {
       return await interaction.reply({
-        content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções.',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    // Valida max_votos
-    if (maxVotos > opcoes.length) {
-      return await interaction.reply({
-        content: `❌ **Erro!** O número máximo de votos (${maxVotos}) não pode ser maior que o número de opções (${opcoes.length}).`,
+        content: `❌ **Erro!** ${validation.error}`,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -68,17 +60,15 @@ module.exports = {
     try {
       // Emojis para as opções (letras circuladas)
       // Discord limita a 20 reações por mensagem
-      const emojisDisponiveis = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹'];
+      const emojiNumeros = EMOJIS_DISPONIVEIS.slice(0, opcoes.length);
 
       // Verifica se há emojis suficientes (limite do Discord: 20 reações)
-      if (opcoes.length > 20) {
+      if (opcoes.length > LIMITS.MAX_OPTIONS) {
         return await interaction.reply({
-          content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
+          content: `❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: ${LIMITS.MAX_OPTIONS} opções por enquete.`,
           flags: MessageFlags.Ephemeral,
         });
       }
-
-      const emojiNumeros = emojisDisponiveis.slice(0, opcoes.length);
 
       // Constrói a descrição com as opções
       let descricao = `Selecione até ${maxVotos} opç${maxVotos > 1 ? 'ões' : 'ão'}:\n\n`;
@@ -89,8 +79,8 @@ module.exports = {
       // Cria um Embed bonito para a enquete
       const pesoInfo = usarPesoMensalista ? 'Mensalistas têm peso 2 nos votos' : 'Todos têm o mesmo peso';
       const pollEmbed = new EmbedBuilder()
-        .setColor('#FFD700') // Ouro
-        .setTitle(`${titulo} 📚`)
+        .setColor(COLORS.GOLD)
+        .setTitle(`${titulo} `)
         .setDescription(descricao)
         .addFields({ name: '\u200B', value: '\u200B', inline: false }, { name: 'Regras 📊', value: `• Você pode votar em até ${maxVotos} opç${maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`, inline: false })
         .setFooter({ text: `${opcoes.length} opções disponíveis` })

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const fs = require('fs');
+const { loadCargos, saveCargos } = require('../utils/file-handler');
 
 /**
  * COMANDO: /criadores
@@ -47,10 +47,7 @@ module.exports = {
     const filePath = './cargos-criadores.json';
 
     // Carrega ou inicializa o arquivo JSON
-    let data = { cargos: [] };
-    if (fs.existsSync(filePath)) {
-      data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    }
+    let data = loadCargos();
 
     // =====================================
     // SUBCOMANDO: ADICIONAR
@@ -68,7 +65,7 @@ module.exports = {
 
       // Adiciona à lista
       data.cargos.push(cargo.id);
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+      saveCargos(data);
 
       const embed = new EmbedBuilder().setColor('#00FF00').setTitle('✅ Cargo "Criador de Enquetes" Adicionado!').setDescription(`O cargo **${cargo.name}** agora tem acesso total ao bot.`).setTimestamp();
 
@@ -91,7 +88,7 @@ module.exports = {
 
       // Remove da lista
       data.cargos = data.cargos.filter((id) => id !== cargo.id);
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+      saveCargos(data);
 
       const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Cargo "Criador de Enquetes" Removido!').setDescription(`O cargo **${cargo.name}** não tem mais acesso total ao bot.`).setTimestamp();
 
