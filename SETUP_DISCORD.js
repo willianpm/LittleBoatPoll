@@ -384,4 +384,4 @@ CLIENT_ID=seu_client_id_aqui
 GUILD_ID=seu_guild_id_aqui
 */
 
-console.log('📚 Guia de Setup Discord carregado!');
+console.log('Guia de Setup Discord carregado!');
