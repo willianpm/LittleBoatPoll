@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.0 - 2026-02-27
+
+### Testing Infrastructure
+- **Add automated testing:** Implemented comprehensive test suite using Jest.
+  - 59 unit tests covering 100% of utility modules
+  - Tests run in ~1.3s with 70% coverage threshold
+  - Test scripts: `npm test`, `npm run test:watch`, `npm run test:coverage`
+- **Test documentation:** Added detailed README in tests directory.
+
+### Performance Improvements
+- **Optimize poll reaction sync:** Parallelized reaction fetching to reduce startup time by ~50-70%.
+  - Eliminated duplicate API calls to Discord
+  - Cache reaction users to avoid redundant fetches
+  - Load mensalistas data once instead of per-poll
+- **Enhanced logging:** Added progress indicators, timing info, and visual status emojis.
+
+### Documentation
+- **Update README:** Reflect new testing capabilities and scripts.
+- **Refactoring report:** Consolidated technical documentation in `/docs`.
+
+### Consolidation
+- Includes all architectural improvements from v1.3.0 (utility modules, code deduplication).
+
 ## 1.3.0 - 2026-02-27
 
 ### Code Quality & Refactoring
