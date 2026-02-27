@@ -3,7 +3,7 @@ const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions')
 const { loadCriadores, saveCriadores } = require('../utils/file-handler');
 
 /**
- * COMANDO: /criador
+ * COMANDO: /criador-de-enquete
  * Gerencia os criadores de enquetes (acesso total ao bot) - SISTEMA INTERNO
  *
  * Este comando substitui o antigo sistema de cargos do Discord.
@@ -16,7 +16,7 @@ const { loadCriadores, saveCriadores } = require('../utils/file-handler');
  */
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('criador')
+    .setName('criador-de-enquete')
     .setDescription('Gerencia os Criadores de Enquetes (acesso administrativo interno)')
     .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
@@ -122,7 +122,7 @@ module.exports = {
     // =====================================
     if (subcommand === 'listar') {
       if (data.criadores.length === 0) {
-        const embed = new EmbedBuilder().setColor('#FFA500').setTitle('📋 Criadores de Enquetes').setDescription('Nenhum Criador cadastrado internamente ainda.\n\n_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n_Use `/criador adicionar` para cadastrar um usuário._').setTimestamp();
+        const embed = new EmbedBuilder().setColor('#FFA500').setTitle('📋 Criadores de Enquetes').setDescription('Nenhum Criador cadastrado internamente ainda.\n\n_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n_Use `/criador-de-enquete adicionar` para cadastrar um usuário._').setTimestamp();
 
         return await interaction.reply({ embeds: [embed], ephemeral: false });
       }

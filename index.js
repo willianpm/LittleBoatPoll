@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes, Partials, PermissionFlagsBits } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes, Partials, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -533,7 +533,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao executar o comando!',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -556,7 +556,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao executar o comando!',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
