@@ -4,14 +4,14 @@ const fs = require('fs');
  * SISTEMA DE PERMISSÕES BINÁRIO
  *
  * O bot opera com um modelo de permissões binário:
- * - CRIADOR: Usuários com o cargo "Criador" têm acesso total a todas as funcionalidades
- * - USUÁRIO COMUM: Usuários sem o cargo "Criador" podem apenas votar em enquetes ativas
+ * - CRIADOR DE ENQUETES: Usuários com o cargo "Criador de Enquetes" têm acesso total a todas as funcionalidades
+ * - USUÁRIO COMUM: Usuários sem o cargo "Criador de Enquetes" podem apenas votar em enquetes ativas
  *
  * Não há níveis intermediários, hierarquias ou permissões parciais.
  */
 
 /**
- * Verifica se um usuário possui acesso total (Criador/Admin/Dono do servidor)
+ * Verifica se um usuário possui acesso total (Criador de Enquetes/Admin/Dono do servidor)
  * @param {GuildMember} member - O membro do servidor a verificar
  * @returns {boolean} true se o usuário possui acesso total, false caso contrário
  */
@@ -25,7 +25,7 @@ function isCriador(member) {
     return true;
   }
 
-  // Carrega os cargos Criador do arquivo
+  // Carrega os cargos Criador de Enquetes do arquivo
   let cargosCriadores = [];
   if (fs.existsSync('./cargos-criadores.json')) {
     try {
@@ -37,14 +37,14 @@ function isCriador(member) {
     }
   }
 
-  // Verifica se o usuário tem algum cargo Criador
+  // Verifica se o usuário tem algum cargo Criador de Enquetes
   return member.roles.cache.some((role) => cargosCriadores.includes(role.id));
 }
 
 /**
  * Mensagem padrão de permissão negada
  */
-const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas Criadores, Administradores ou o dono do servidor podem executar este comando.';
+const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas usuários com o cargo "Criador de Enquetes", Administradores ou o dono do servidor podem executar este comando.';
 
 module.exports = {
   isCriador,
