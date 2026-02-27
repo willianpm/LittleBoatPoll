@@ -51,7 +51,8 @@ function saveMensalistas(data) {
 }
 
 /**
- * Carrega cargos de criadores
+ * Carrega cargos de criadores (DEPRECATED - mantido para compatibilidade)
+ * @deprecated Use loadCriadores() para o novo sistema interno
  * @returns {Object} Objeto com array de IDs de cargos
  */
 function loadCargos() {
@@ -59,12 +60,30 @@ function loadCargos() {
 }
 
 /**
- * Salva cargos de criadores
+ * Salva cargos de criadores (DEPRECATED - mantido para compatibilidade)
+ * @deprecated Use saveCriadores() para o novo sistema interno
  * @param {Object} data - Dados com array de cargos
  * @returns {boolean} true se sucesso
  */
 function saveCargos(data) {
   return saveJsonFile('./cargos-criadores.json', data);
+}
+
+/**
+ * Carrega lista de criadores internos (IDs de usuários)
+ * @returns {Object} Objeto com array de IDs de usuários
+ */
+function loadCriadores() {
+  return loadJsonFile('./criadores-internos.json', { criadores: [] });
+}
+
+/**
+ * Salva lista de criadores internos
+ * @param {Object} data - Dados com array de criadores
+ * @returns {boolean} true se sucesso
+ */
+function saveCriadores(data) {
+  return saveJsonFile('./criadores-internos.json', data);
 }
 
 /**
@@ -93,6 +112,7 @@ function ensureDataFiles() {
     { path: './mensalistas.json', content: { mensalistas: [] } },
     { path: './historico-votacoes.json', content: [] },
     { path: './cargos-criadores.json', content: { cargos: [] } },
+    { path: './criadores-internos.json', content: { criadores: [] } },
     { path: './draft-polls.json', content: [] },
   ];
 
@@ -111,6 +131,8 @@ module.exports = {
   saveMensalistas,
   loadCargos,
   saveCargos,
+  loadCriadores,
+  saveCriadores,
   loadVotacoes,
   saveVotacoes,
   ensureDataFiles,

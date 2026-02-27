@@ -2,13 +2,16 @@ const fs = require('fs');
 const { MessageFlags } = require('discord.js');
 
 /**
- * SISTEMA DE PERMISSÕES BINÁRIO
+ * SISTEMA DE PERMISSÕES BINÁRIO - VERSÃO INTERNA
  *
- * O bot opera com um modelo de permissões binário:
- * - CRIADOR DE ENQUETES: Usuários com o cargo "Criador de Enquetes" têm acesso total a todas as funcionalidades
- * - USUÁRIO COMUM: Usuários sem o cargo "Criador de Enquetes" podem apenas votar em enquetes ativas
+ * O bot opera com um modelo de permissões binário INTERNO:
+ * - CRIADOR DE ENQUETES: Usuários adicionados internamente no arquivo criadores-internos.json
+ * - USUÁRIO COMUM: Usuários não cadastrados podem apenas votar em enquetes ativas
  *
- * Não há níveis intermediários, hierarquias ou permissões parciais.
+ * Administradores do Discord e dono do servidor também têm acesso total automaticamente.
+ *
+ * ⚠️ MUDANÇA IMPORTANTE: Este sistema não depende mais de cargos do Discord.
+ * As permissões são gerenciadas 100% internamente pelo bot.
  */
 
 /**
@@ -26,26 +29,26 @@ function isCriador(member) {
     return true;
   }
 
-  // Carrega os cargos Criador de Enquetes do arquivo
-  let cargosCriadores = [];
-  if (fs.existsSync('./cargos-criadores.json')) {
+  // Carrega os criadores internos do arquivo
+  let criadores = [];
+  if (fs.existsSync('./criadores-internos.json')) {
     try {
-      const data = JSON.parse(fs.readFileSync('./cargos-criadores.json', 'utf8'));
-      cargosCriadores = data.cargos || [];
+      const data = JSON.parse(fs.readFileSync('./criadores-internos.json', 'utf8'));
+      criadores = data.criadores || [];
     } catch (error) {
-      console.error('❌ Erro ao ler cargos-criadores.json:', error);
+      console.error('❌ Erro ao ler criadores-internos.json:', error);
       return false;
     }
   }
 
-  // Verifica se o usuário tem algum cargo Criador de Enquetes
-  return member.roles.cache.some((role) => cargosCriadores.includes(role.id));
+  // Verifica se o ID do usuário está na lista interna de criadores
+  return criadores.includes(member.id);
 }
 
 /**
  * Mensagem padrão de permissão negada
  */
-const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas usuários com o cargo "Criador de Enquetes", Administradores ou o dono do servidor podem executar este comando.';
+const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas Criadores de Enquetes, Administradores ou o dono do servidor podem executar este comando.';
 
 /**
  * Verifica permissão e responde automaticamente se negado
