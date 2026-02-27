@@ -407,7 +407,9 @@ async function enforceVoteLimits() {
 // CARREGAMENTO DE COMANDOS
 // =====================================
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+// Filtra e carrega apenas arquivos válidos, excluindo contextos unificados obsoletos
+const excludedFiles = ['mensalista-add-context.js', 'mensalista-remove-context.js'];
+const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js') && !excludedFiles.includes(file));
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
