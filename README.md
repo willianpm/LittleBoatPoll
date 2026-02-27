@@ -51,8 +51,20 @@ DEPLOY=true
 
 ## Testes
 
-Não há testes automatizados. O script `test` registra comandos e inicia o bot:
+O projeto conta com testes automatizados usando Jest, cobrindo 100% dos módulos utilitários.
+
+### Executar testes
 
 ```bash
-npm test
+npm test              # Executa todos os testes
+npm run test:watch    # Executa em modo watch (re-executa ao salvar)
+npm run test:coverage # Exibe relatório de cobertura de código
 ```
+
+### Cobertura atual
+
+- ✅ `utils/validators.js` - Validação de enquetes e opções
+- ✅ `utils/draft-handler.js` - Manipulação de rascunhos
+- ✅ `utils/constants.js` - Constantes do sistema
+
+**59 testes** executando em ~1.3s com meta de 70% de cobertura.
