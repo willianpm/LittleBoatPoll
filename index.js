@@ -3,6 +3,7 @@ const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, 
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const { loadJsonFile, saveJsonFile, loadMensalistas, saveMensalistas, ensureDataFiles } = require('./utils/file-handler');
 
 // Controle de verbosidade de logs (DEBUG=true para logs detalhados)
 const DEBUG_MODE = process.env.DEBUG === 'true';
@@ -38,9 +39,9 @@ client.draftPolls = new Map();
 function saveActivePolls() {
   try {
     const pollsArray = Array.from(client.activePolls.entries());
-    fs.writeFileSync('./active-polls.json', JSON.stringify(pollsArray, null, 2));
+    saveJsonFile('./active-polls.json', pollsArray);
   } catch (error) {
-    console.error('❌ Erro ao salvar votações ativas:', error);
+    console.error('Erro ao salvar votações ativas:', error);
   }
 }
 
@@ -48,9 +49,9 @@ function saveActivePolls() {
 function saveDraftPolls() {
   try {
     const draftsArray = Array.from(client.draftPolls.values());
-    fs.writeFileSync('./draft-polls.json', JSON.stringify(draftsArray, null, 2));
+    saveJsonFile('./draft-polls.json', draftsArray);
   } catch (error) {
-    console.error('❌ Erro ao salvar rascunhos:', error);
+    console.error('Erro ao salvar rascunhos:', error);
   }
 }
 
@@ -62,7 +63,7 @@ client.saveDraftPolls = saveDraftPolls;
 function loadActivePolls() {
   try {
     if (fs.existsSync('./active-polls.json')) {
-      const pollsArray = JSON.parse(fs.readFileSync('./active-polls.json', 'utf8'));
+      const pollsArray = loadJsonFile('./active-polls.json', []);
 
       // Normaliza os dados para garantir compatibilidade com enquetes antigas
       const normalizedPolls = pollsArray.map(([id, poll]) => {
@@ -70,8 +71,8 @@ function loadActivePolls() {
           id,
           {
             ...poll,
-            channelId: poll.channelId || null, // Garante que channelId existe
-            maxVotos: poll.maxVotos || 1, // Garante que maxVotos existe
+            channelId: poll.channelId || null,
+            maxVotos: poll.maxVotos || 1,
             usarPesoMensalista: poll.usarPesoMensalista !== undefined ? poll.usarPesoMensalista : false,
             votos: poll.votos || {},
             status: poll.status || 'ativa',
@@ -83,42 +84,20 @@ function loadActivePolls() {
       console.log(`${normalizedPolls.length} votação(ões) ativa(s) carregada(s)`);
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar votações ativas:', error);
+    console.error('Erro ao carregar votações ativas:', error);
   }
 }
 
-// Garante que arquivos essenciais existam
-function ensureDataFiles() {
-  // mensalistas.json
-  if (!fs.existsSync('./mensalistas.json')) {
-    fs.writeFileSync('./mensalistas.json', JSON.stringify({ mensalistas: [] }, null, 2));
-    console.log('Arquivo mensalistas.json criado');
-  }
-
-  // historico-votacoes.json
-  if (!fs.existsSync('./historico-votacoes.json')) {
-    fs.writeFileSync('./historico-votacoes.json', JSON.stringify({ votacoes: [] }, null, 2));
-    console.log('Arquivo historico-votacoes.json criado');
-  }
-
-  // cargos-criadores.json
-  if (!fs.existsSync('./cargos-criadores.json')) {
-    fs.writeFileSync('./cargos-criadores.json', JSON.stringify({ cargos: [] }, null, 2));
-    console.log('Arquivo cargos-criadores.json criado');
-  }
-
-  // draft-polls.json
-  if (!fs.existsSync('./draft-polls.json')) {
-    fs.writeFileSync('./draft-polls.json', JSON.stringify([], null, 2));
-    console.log('Arquivo draft-polls.json criado');
-  }
+// Inicializa arquivos essenciais usando file-handler
+function initDataFiles() {
+  ensureDataFiles();
 }
 
 // Carrega rascunhos de enquetes do arquivo
 function loadDraftPolls() {
   try {
     if (fs.existsSync('./draft-polls.json')) {
-      const draftsArray = JSON.parse(fs.readFileSync('./draft-polls.json', 'utf8'));
+      const draftsArray = loadJsonFile('./draft-polls.json', []);
 
       // Normaliza os dados
       const normalizedDrafts = draftsArray.map((draft) => {
@@ -139,12 +118,12 @@ function loadDraftPolls() {
       console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar rascunhos:', error);
+    console.error('Erro ao carregar rascunhos:', error);
   }
 }
 
 // Inicializa arquivos de dados
-ensureDataFiles();
+initDataFiles();
 loadActivePolls();
 loadDraftPolls();
 
@@ -205,12 +184,8 @@ async function syncPollReactions() {
       }
 
       // Carrega mensalistas
-      let mensalistasData = { mensalistas: [] };
-      if (fs.existsSync('./mensalistas.json')) {
-        mensalistasData = JSON.parse(fs.readFileSync('./mensalistas.json', 'utf8'));
-      }
+      const mensalistasData = loadMensalistas();
 
-      // Reseta os votos para reconstruir baseado nas reações reais
       const votosAtualizados = {};
 
       // Para cada reação na mensagem
@@ -589,10 +564,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     }
 
     // Recarrega os dados de mensalistas
-    let mensalistasData = { mensalistas: [] };
-    if (fs.existsSync('./mensalistas.json')) {
-      mensalistasData = JSON.parse(fs.readFileSync('./mensalistas.json', 'utf8'));
-    }
+    const mensalistasData = loadMensalistas();
     const isMensalista = mensalistasData.mensalistas.includes(user.id);
     // Calcula o peso baseado na configuração da enquete
     const peso = isMensalista && poll.usarPesoMensalista ? 2 : 1;
