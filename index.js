@@ -129,25 +129,34 @@ loadDraftPolls();
 
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
-  console.log('Sincronizando reações das enquetes ativas...');
+  const totalEnquetes = client.activePolls.size;
+  console.log(`Sincronizando ${totalEnquetes} enquete(s) ativa(s)...`);
 
+  // Carrega mensalistas uma vez antes do loop (otimização)
+  const mensalistasData = loadMensalistas();
   const enquetesOrfas = [];
+  let enquetesProcessadas = 0;
+  const startTime = Date.now();
 
   for (const [messageId, poll] of client.activePolls.entries()) {
     try {
+      enquetesProcessadas++;
+
       // Se não tiver channelId, pula (enquetes antigas antes da atualização)
       if (!poll.channelId) {
-        console.log(`Enquete "${poll.titulo}" sem channelId - pulando`);
+        console.log(`[${enquetesProcessadas}/${totalEnquetes}] "${poll.titulo}" sem channelId - pulando`);
         continue;
       }
 
+      console.log(`[${enquetesProcessadas}/${totalEnquetes}] Sincronizando "${poll.titulo}"...`);
+
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`Erro ao buscar canal ${poll.channelId}: ${err.message}`);
+        console.log(`  ⚠️  Erro ao buscar canal: ${err.message}`);
         return null;
       });
       if (!channel) {
-        console.log(`Canal não encontrado para enquete "${poll.titulo}" - marcando para remoção`);
+        console.log(`  ❌ Canal não encontrado - marcando para remoção`);
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -159,13 +168,13 @@ async function syncPollReactions() {
         const canRead = permissions?.has('ReadMessageHistory');
 
         if (!canRead) {
-          console.log(`"${poll.titulo}" (${channel.name}): Falta permissão "Ler Histórico"`);
+          console.log(`  ⚠️  Falta permissão "Ler Histórico" em ${channel.name}`);
         }
       }
 
       // Tenta buscar a mensagem
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`"${poll.titulo}": ${err.message} (${err.code})`);
+        console.log(`  ❌ Mensagem não encontrada: ${err.message}`);
         return null;
       });
       if (!message) {
@@ -173,30 +182,45 @@ async function syncPollReactions() {
         continue;
       }
 
-      // Fetch todas as reações para garantir cache completo
+      // Fetch todas as reações para garantir cache completo (paralelizado)
       // Isso é crucial para detectar votos feitos enquanto o bot estava offline
+      const reactionFetches = [];
       for (const reaction of message.reactions.cache.values()) {
         if (reaction.partial) {
-          await reaction.fetch().catch(() => null);
+          reactionFetches.push(reaction.fetch().catch(() => null));
         }
-        // Força fetch de todos os usuários para cada reação
-        await reaction.users.fetch().catch(() => null);
       }
+      await Promise.all(reactionFetches);
 
-      // Carrega mensalistas
-      const mensalistasData = loadMensalistas();
+      // Fetch de usuários para cada reação (paralelizado)
+      // Cache dos usuários por reação para evitar fetch duplicado
+      const userFetches = [];
+      const reactionUsersMap = new Map();
+
+      for (const reaction of message.reactions.cache.values()) {
+        const fetchPromise = reaction.users
+          .fetch()
+          .then((users) => {
+            reactionUsersMap.set(reaction.emoji.name, users);
+            return users;
+          })
+          .catch(() => null);
+        userFetches.push(fetchPromise);
+      }
+      await Promise.all(userFetches);
 
       const votosAtualizados = {};
 
-      // Para cada reação na mensagem
+      // Para cada reação na mensagem (usando dados já cacheados)
       for (const reaction of message.reactions.cache.values()) {
         const emoji = reaction.emoji.name;
 
         // Só processa emojis válidos da enquete
         if (!poll.emojiNumeros.includes(emoji)) continue;
 
-        // Busca todos os usuários que reagiram
-        const users = await reaction.users.fetch();
+        // Usa os usuários já cacheados (sem fetch adicional)
+        const users = reactionUsersMap.get(emoji);
+        if (!users) continue;
 
         for (const user of users.values()) {
           if (user.bot) continue; // Ignora bot
@@ -224,15 +248,16 @@ async function syncPollReactions() {
       // Atualiza os votos da enquete
       poll.votos = votosAtualizados;
 
-      // Sincronização silenciosa - sucesso
+      const totalVotos = Object.keys(votosAtualizados).length;
+      console.log(`  ✓ ${totalVotos} voto(s) sincronizado(s)`);
     } catch (error) {
-      console.error(`❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+      console.error(`  ❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
     }
   }
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`\n⚠️  Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -241,11 +266,13 @@ async function syncPollReactions() {
   // Salva após sincronizar
   saveActivePolls();
 
-  const totalEnquetes = client.activePolls.size;
-  if (totalEnquetes > 0) {
-    console.log(`${totalEnquetes} enquete(s) sincronizada(s)\n`);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  const enquetesAtivas = client.activePolls.size;
+
+  if (enquetesAtivas > 0) {
+    console.log(`\n✓ ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
   } else {
-    console.log('Sincronização concluída\n');
+    console.log(`\n✓ Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
   }
 }
 
