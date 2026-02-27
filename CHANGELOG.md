@@ -21,6 +21,14 @@ All notable changes to this project will be documented in this file.
 
 - Add context menu to toggle the "Criador" role for a user.
 
+## 1.2.2 - 2026-02-27
+
+- Rename "Criador" to "Criador de Enquetes" for clarity across the entire project.
+- Unify mensalista context menus: combine "Adicionar Mensalista" and "Remover Mensalista" into a single "Add/Del Mensalistas" context menu with toggle functionality.
+- Unify criador context menus into "Add/Del Criador de Enquetes" for consistency.
+- Use shortened "Add/Del" prefix for context menus to comply with Discord's 32-character name limit.
+- Refactor context menu architecture to reduce duplication and improve maintainability.
+
 ## 1.1.0 - 2026-02-25
 
 - Add draft poll system (create, edit, list, show, publish, delete).
