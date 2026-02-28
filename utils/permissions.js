@@ -110,35 +110,22 @@ function hasAuthorizedAdminRole(member, guildIdOverride) {
   const guildId = resolveGuildId(member, guildIdOverride);
   const authorizedRoleIds = getAuthorizedAdminRoleIds(guildId);
 
-  console.log('🔍 [ROLE CHECK] Verificando cargos autorizados...');
-  console.log('   Guild ID:', guildId);
-  console.log('   Cargos autorizados para esta guild:', authorizedRoleIds);
-
   if (!authorizedRoleIds.length) {
-    console.log('⚠️ [ROLE CHECK] Nenhum cargo autorizado configurado para esta guild');
     return false;
   }
 
   const memberId = getMemberId(member);
   const memberRoleIds = getMemberRoleIds(member);
 
-  console.log('   Cargos do usuário:', memberRoleIds);
-
   if (!memberRoleIds.length) {
-    console.log(`⚠️ [ROLE CHECK] Membro ${memberId || 'desconhecido'} sem cargos carregados`);
+    console.log(`[PERMISSIONS] ⚠️ Membro ${memberId || 'desconhecido'} sem cargos carregados`);
     return false;
   }
 
   const memberRoleIdSet = new Set(memberRoleIds);
   const hasRole = authorizedRoleIds.some((roleId) => memberRoleIdSet.has(roleId));
-  
-  if (hasRole) {
-    const matchingRoles = authorizedRoleIds.filter((roleId) => memberRoleIdSet.has(roleId));
-    console.log(`✅ [ROLE CHECK] Membro tem cargo autorizado:`, matchingRoles);
-  } else {
-    console.log(`❌ [ROLE CHECK] Membro ${memberId || 'desconhecido'} não tem cargo autorizado.`);
-    console.log(`   Esperado: ${authorizedRoleIds.join(', ')}`);
-    console.log(`   Possui: ${memberRoleIds.join(', ')}`);
+  if (!hasRole) {
+    console.log(`[PERMISSIONS] ❌ Membro ${memberId || 'desconhecido'} não tem cargo autorizado. Esperado: ${authorizedRoleIds.join(', ')}`);
   }
 
   return hasRole;
@@ -150,63 +137,31 @@ function hasAuthorizedAdminRole(member, guildIdOverride) {
  * @returns {boolean} true se o usuário possui acesso total, false caso contrário
  */
 function isCriador(member, guildIdOverride) {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🔍 [PERMISSION CHECK] isCriador iniciado');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
   if (!member) {
-    console.log('❌ [PERMISSION] member é null/undefined');
     return false;
   }
 
-  const memberId = getMemberId(member);
-  const memberTag = member.user?.tag || member.user?.username || 'Desconhecido';
-  
-  console.log('👤 Usuário:', memberTag);
-  console.log('🆔 User ID:', memberId);
-  console.log('🏰 Guild ID:', member.guild?.id || guildIdOverride);
-
   // Administrador ou dono do servidor tem acesso total
   if (hasAdministratorPermission(member)) {
-    console.log('✅ [PERMISSION] Usuário é ADMINISTRADOR do Discord');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return true;
   }
 
+  const memberId = getMemberId(member);
+
   if (member.guild?.ownerId && memberId && memberId === member.guild.ownerId) {
-    console.log('✅ [PERMISSION] Usuário é DONO DO SERVIDOR');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return true;
   }
 
   // Carrega os criadores internos do arquivo (via file-handler)
   const criadoresData = loadCriadores();
   const criadores = criadoresData.criadores || [];
-  
-  console.log('📋 Lista de Criadores Internos:', criadores);
-  console.log('🔍 Verificando se', memberId, 'está na lista...');
 
   // Verifica se o ID do usuário está na lista interna de criadores
   if (memberId && criadores.includes(memberId)) {
-    console.log('✅ [PERMISSION] Usuário está na lista de CRIADORES INTERNOS');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return true;
-  } else {
-    console.log('⚠️ [PERMISSION] Usuário NÃO está na lista de criadores internos');
   }
 
-  // Verifica cargos autorizados
-  const hasRole = hasAuthorizedAdminRole(member, guildIdOverride);
-  
-  if (hasRole) {
-    console.log('✅ [PERMISSION] Usuário tem CARGO AUTORIZADO');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  } else {
-    console.log('❌ [PERMISSION] PERMISSÃO NEGADA - Usuário não atende nenhum critério');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  }
-  
-  return hasRole;
+  return hasAuthorizedAdminRole(member, guildIdOverride);
 }
 
 /**
