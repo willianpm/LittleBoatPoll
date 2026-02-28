@@ -4,7 +4,7 @@ const { getLatestUserDraft, canEditDraft } = require('../utils/draft-handler');
 const { COLORS } = require('../utils/constants');
 
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(0),
+  data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message),
 
   async execute(interaction, client) {
     try {

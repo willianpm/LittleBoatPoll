@@ -8,7 +8,7 @@ const { loadVotacoes, saveVotacoes } = require('../utils/file-handler');
  * Encerra a votação se for uma enquete ativa
  */
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Encerrar Votação').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(0),
+  data: new ContextMenuCommandBuilder().setName('Encerrar Votação').setType(ApplicationCommandType.Message),
 
   async execute(interaction, client) {
     const message = interaction.targetMessage;
