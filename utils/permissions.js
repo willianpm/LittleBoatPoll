@@ -73,63 +73,10 @@ function resolveGuildId(member, guildIdOverride) {
  *
  * O bot opera com um modelo de permissões binário INTERNO:
  * - CRIADOR DE ENQUETES: Usuários adicionados internamente no arquivo criadores-internos.json
- * - CARGOS AUTORIZADOS: Cargos por servidor cadastrados em role-bindings.json
  * - USUÁRIO COMUM: Usuários não cadastrados podem apenas votar em enquetes ativas
  *
  * Administradores do Discord e dono do servidor também têm acesso total automaticamente.
- *
- * ⚠️ MUDANÇA IMPORTANTE: As permissões administrativas não dependem de cargos do Discord.
- * O gerenciamento principal continua interno por usuários, com suporte opcional a cargos autorizados por servidor.
  */
-
-/**
- * Retorna IDs dos cargos autorizados para acesso administrativo em uma guild
- * @param {string} guildId - ID do servidor
- * @returns {string[]} lista de IDs de cargos autorizados
- */
-function getAuthorizedAdminRoleIds(guildId) {
-  if (!guildId) return [];
-
-  const roleBindings = loadRoleBindings();
-  const adminRoleIdsByGuild = roleBindings.adminRoleIdsByGuild && typeof roleBindings.adminRoleIdsByGuild === 'object' ? roleBindings.adminRoleIdsByGuild : {};
-  const roleIds = adminRoleIdsByGuild[guildId];
-
-  if (!Array.isArray(roleIds)) {
-    return [];
-  }
-
-  return [...new Set(roleIds.map((roleId) => extractSnowflake(roleId)).filter(Boolean))];
-}
-
-/**
- * Verifica se o membro possui ao menos um cargo autorizado para acesso administrativo
- * @param {GuildMember} member - Membro do servidor
- * @returns {boolean} true se possui cargo autorizado
- */
-function hasAuthorizedAdminRole(member, guildIdOverride) {
-  const guildId = resolveGuildId(member, guildIdOverride);
-  const authorizedRoleIds = getAuthorizedAdminRoleIds(guildId);
-
-  if (!authorizedRoleIds.length) {
-    return false;
-  }
-
-  const memberId = getMemberId(member);
-  const memberRoleIds = getMemberRoleIds(member);
-
-  if (!memberRoleIds.length) {
-    console.log(`[PERMISSIONS] ⚠️ Membro ${memberId || 'desconhecido'} sem cargos carregados`);
-    return false;
-  }
-
-  const memberRoleIdSet = new Set(memberRoleIds);
-  const hasRole = authorizedRoleIds.some((roleId) => memberRoleIdSet.has(roleId));
-  if (!hasRole) {
-    console.log(`[PERMISSIONS] ❌ Membro ${memberId || 'desconhecido'} não tem cargo autorizado. Esperado: ${authorizedRoleIds.join(', ')}`);
-  }
-
-  return hasRole;
-}
 
 /**
  * Verifica se um usuário possui acesso total (Criador de Enquetes/Admin/Dono do servidor)
@@ -161,13 +108,13 @@ function isCriador(member, guildIdOverride) {
     return true;
   }
 
-  return hasAuthorizedAdminRole(member, guildIdOverride);
+  return false;
 }
 
 /**
  * Mensagem padrão de permissão negada
  */
-const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas Criadores de Enquetes, membros com cargo autorizado, Administradores ou o dono do servidor podem executar este comando.';
+const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas Criadores de Enquetes, Administradores ou o dono do servidor podem executar este comando.';
 
 /**
  * Verifica permissão e responde automaticamente se negado
@@ -188,8 +135,6 @@ async function checkPermissionReply(interaction, member) {
 
 module.exports = {
   isCriador,
-  getAuthorizedAdminRoleIds,
-  hasAuthorizedAdminRole,
   MENSAGEM_PERMISSAO_NEGADA,
   checkPermissionReply,
 };

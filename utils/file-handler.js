@@ -4,7 +4,6 @@ const { DATA_FILES, DATA_DIR } = require('./config');
 
 const DEFAULT_ROLE_BINDINGS = {
   mensalistaRoleByGuild: {},
-  adminRoleIdsByGuild: {},
 };
 
 function normalizeSnowflakeId(value) {
@@ -37,26 +36,8 @@ function normalizeSnowflakeId(value) {
 function normalizeRoleBindings(data = {}) {
   const mensalistaRoleByGuild = data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object' ? data.mensalistaRoleByGuild : {};
 
-  const rawAdminRoleIds = data?.adminRoleIdsByGuild && typeof data.adminRoleIdsByGuild === 'object' ? data.adminRoleIdsByGuild : {};
-
-  const adminRoleIdsByGuild = Object.fromEntries(
-    Object.entries(rawAdminRoleIds).map(([guildId, roleIds]) => {
-      if (Array.isArray(roleIds)) {
-        return [guildId, [...new Set(roleIds.map((roleId) => normalizeSnowflakeId(roleId)).filter(Boolean))]];
-      }
-
-      const normalizedSingleRoleId = normalizeSnowflakeId(roleIds);
-      if (normalizedSingleRoleId) {
-        return [guildId, [normalizedSingleRoleId]];
-      }
-
-      return [guildId, []];
-    }),
-  );
-
   return {
     mensalistaRoleByGuild,
-    adminRoleIdsByGuild,
   };
 }
 
