@@ -19,6 +19,7 @@
     "deploy:staging": "npx cross-env APP_ENV=staging node index.js --deploy",
     "dev": "node index.js",
     "migrate:data": "node scripts/migrate-data.js",
+    "add:creator": "node scripts/add-creator.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

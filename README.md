@@ -62,6 +62,8 @@ O bot também faz vínculo automático do cargo **Mensalistas** (nome do cargo n
 
 ### Gerenciar Criadores
 
+**Via Discord:**
+
 ```bash
 /criador-de-enquete adicionar @usuario   # Adiciona permissão administrativa
 /criador-de-enquete remover @usuario     # Remove permissão
@@ -69,6 +71,13 @@ O bot também faz vínculo automático do cargo **Mensalistas** (nome do cargo n
 ```
 
 Ou use o **Context Menu** (botão direito no usuário → Apps → "Add/Del Criador de Enquetes")
+
+**Via terminal (servidor/instância):**
+
+```bash
+npm run add:creator 123456789012345678   # Adiciona criador via CLI
+node scripts/add-creator.js <MEMBER_ID>  # Forma alternativa
+```
 
 📖 **Leia mais:** [Documentação de Migração](docs/MIGRACAO-PERMISSOES-INTERNAS.md)
 
