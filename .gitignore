@@ -11,7 +11,14 @@ node_modules/
 test-bot/.env.test
 
 # Dados persistentes isolados por ambiente
-data/
+# Mantém dados de runtime fora do Git, mas permite versionar bindings de permissão
+data/*
+!data/prod/
+!data/staging/
+data/prod/*
+data/staging/*
+!data/prod/role-bindings.json
+!data/staging/role-bindings.json
 
 # Dados legados na raiz (mantidos por retrocompatibilidade)
 vips.json
@@ -22,7 +29,7 @@ cargos-criadores.json
 active-polls.json
 draft-polls.json
 criadores-internos.json
-role-bindings.json
+/role-bindings.json
 
 # Logs
 *.log
