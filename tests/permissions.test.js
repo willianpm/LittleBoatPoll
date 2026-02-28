@@ -5,21 +5,9 @@ jest.mock('../utils/file-handler', () => ({
 
 const { MessageFlags } = require('discord.js');
 const { loadCriadores, loadRoleBindings } = require('../utils/file-handler');
-const {
-  isCriador,
-  hasAuthorizedAdminRole,
-  getAuthorizedAdminRoleIds,
-  MENSAGEM_PERMISSAO_NEGADA,
-  checkPermissionReply,
-} = require('../utils/permissions');
+const { isCriador, hasAuthorizedAdminRole, getAuthorizedAdminRoleIds, MENSAGEM_PERMISSAO_NEGADA, checkPermissionReply } = require('../utils/permissions');
 
-function createMember({
-  memberId = 'member-1',
-  ownerId = 'owner-1',
-  guildId = 'guild-1',
-  isAdmin = false,
-  roleIds = [],
-} = {}) {
+function createMember({ memberId = 'member-1', ownerId = 'owner-1', guildId = 'guild-1', isAdmin = false, roleIds = [] } = {}) {
   const roleCache = new Map(roleIds.map((roleId) => [roleId, { id: roleId }]));
 
   return {

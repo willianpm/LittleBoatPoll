@@ -133,13 +133,13 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 
 ### Arquivos Modificados
 
-| Arquivo                              | Mudanças                                                  |
-| ------------------------------------ | --------------------------------------------------------- |
+| Arquivo                              | Mudanças                                                   |
+| ------------------------------------ | ---------------------------------------------------------- |
 | `utils/permissions.js`               | Verifica criadores internos e cargos autorizados por guild |
-| `utils/file-handler.js`              | Adicionadas funções `loadCriadores()` e `saveCriadores()` |
-| `commands/criador-de-enquete.js`     | **NOVO** - Gerencia criadores por ID                      |
-| `commands/criadores.js`              | **DESCONTINUADO** - Mostra aviso de migração              |
-| `commands/criador-toggle-context.js` | Atualizado para sistema interno                           |
+| `utils/file-handler.js`              | Adicionadas funções `loadCriadores()` e `saveCriadores()`  |
+| `commands/criador-de-enquete.js`     | **NOVO** - Gerencia criadores por ID                       |
+| `commands/criadores.js`              | **DESCONTINUADO** - Mostra aviso de migração               |
+| `commands/criador-toggle-context.js` | Atualizado para sistema interno                            |
 
 ### Novo Arquivo de Dados
 

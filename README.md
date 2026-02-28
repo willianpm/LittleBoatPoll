@@ -37,12 +37,12 @@ Se você quiser autorizar um cargo do Discord sem usar comando, edite o arquivo 
 
 ```json
 {
-	"mensalistaRoleByGuild": {
-		"771368260633362473": "1476256860293304330"
-	},
-	"adminRoleIdsByGuild": {
-		"771368260633362473": ["123456789012345678", "987654321098765432"]
-	}
+  "mensalistaRoleByGuild": {
+    "771368260633362473": "1476256860293304330"
+  },
+  "adminRoleIdsByGuild": {
+    "771368260633362473": ["123456789012345678", "987654321098765432"]
+  }
 }
 ```
 

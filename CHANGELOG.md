@@ -41,10 +41,7 @@ All notable changes to this project will be documented in this file.
 ```json
 {
   "adminRoleIdsByGuild": {
-    "771368260633362473": [
-      "1325882022522130606",
-      "9876543210987654321"
-    ]
+    "771368260633362473": ["1325882022522130606", "9876543210987654321"]
   }
 }
 ```
