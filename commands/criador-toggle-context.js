@@ -9,7 +9,7 @@ const { loadCriadores, saveCriadores } = require('../utils/file-handler');
  * Sistema 100% interno - não depende de cargos do Discord.
  */
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Add/Del Criador de Enquetes').setType(ApplicationCommandType.User),
+  data: new ContextMenuCommandBuilder().setName('Add/Del Criador de Enquetes').setType(ApplicationCommandType.User).setDefaultMemberPermissions(0),
 
   async execute(interaction) {
     try {

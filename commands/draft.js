@@ -24,6 +24,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('rascunho')
     .setDescription('Gerencia rascunhos de enquetes para futuras votações')
+    .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('criar')

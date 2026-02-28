@@ -18,6 +18,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('criador-de-enquete')
     .setDescription('Gerencia os Criadores de Enquetes (acesso administrativo interno)')
+    .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('adicionar')
