@@ -3,7 +3,7 @@ const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions')
 const { loadMensalistas, saveMensalistas } = require('../utils/file-handler');
 
 module.exports = {
-  data: new ContextMenuCommandBuilder().setName('Add/Del Mensalistas').setType(ApplicationCommandType.User).setDefaultMemberPermissions(0),
+  data: new ContextMenuCommandBuilder().setName('Add/Del Mensalistas').setType(ApplicationCommandType.User),
 
   async execute(interaction, client) {
     const usuario = interaction.targetUser;
