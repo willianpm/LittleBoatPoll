@@ -17,7 +17,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('enquete')
     .setDescription('Cria uma enquete para votação do Clube do Livro')
-    .setDefaultMemberPermissions(0)
     .addStringOption((option) => option.setName('nome-da-enquete').setDescription('Nome/Título da enquete').setRequired(true))
     .addStringOption((option) => option.setName('opcoes').setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)').setRequired(true))
     .addIntegerOption((option) => option.setName('max_votos').setDescription('Número máximo de votos por pessoa').setRequired(true).setMinValue(1))

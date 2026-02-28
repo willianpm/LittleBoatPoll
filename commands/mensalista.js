@@ -17,7 +17,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('mensalista')
     .setDescription('Gerencia a lista de mensalistas do Clube do Livro')
-    .setDefaultMemberPermissions(0)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('adicionar')
