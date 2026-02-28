@@ -64,6 +64,10 @@ function getMemberRoleIds(member) {
   return [];
 }
 
+function resolveGuildId(member, guildIdOverride) {
+  return extractSnowflake(guildIdOverride) || extractSnowflake(member?.guild?.id);
+}
+
 /**
  * SISTEMA DE PERMISSÕES BINÁRIO - VERSÃO INTERNA
  *
@@ -102,8 +106,8 @@ function getAuthorizedAdminRoleIds(guildId) {
  * @param {GuildMember} member - Membro do servidor
  * @returns {boolean} true se possui cargo autorizado
  */
-function hasAuthorizedAdminRole(member) {
-  const guildId = extractSnowflake(member?.guild?.id);
+function hasAuthorizedAdminRole(member, guildIdOverride) {
+  const guildId = resolveGuildId(member, guildIdOverride);
   const authorizedRoleIds = getAuthorizedAdminRoleIds(guildId);
 
   if (!authorizedRoleIds.length) {
@@ -132,7 +136,7 @@ function hasAuthorizedAdminRole(member) {
  * @param {GuildMember} member - O membro do servidor a verificar
  * @returns {boolean} true se o usuário possui acesso total, false caso contrário
  */
-function isCriador(member) {
+function isCriador(member, guildIdOverride) {
   if (!member) {
     return false;
   }
@@ -157,7 +161,7 @@ function isCriador(member) {
     return true;
   }
 
-  return hasAuthorizedAdminRole(member);
+  return hasAuthorizedAdminRole(member, guildIdOverride);
 }
 
 /**
@@ -172,7 +176,7 @@ const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas Criadores d
  * @returns {Promise<boolean>} true se tem permissão, false caso contrário (já responde a interação)
  */
 async function checkPermissionReply(interaction, member) {
-  if (!isCriador(member)) {
+  if (!isCriador(member, interaction?.guildId)) {
     await interaction.reply({
       content: MENSAGEM_PERMISSAO_NEGADA,
       flags: MessageFlags.Ephemeral,

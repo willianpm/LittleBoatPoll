@@ -88,7 +88,7 @@ module.exports = {
     // =====================================
 
     // Todos os subcomandos exigem cargo Criador
-    if (!isCriador(interaction.member)) {
+    if (!isCriador(interaction.member, interaction.guildId)) {
       return await interaction.reply({
         content: MENSAGEM_PERMISSAO_NEGADA,
         flags: MessageFlags.Ephemeral,
@@ -209,7 +209,7 @@ async function handleEditar(interaction, client) {
   }
 
   // Verifica se o usuário é o criador ou tem cargo Criador
-  const temCargoCriador = isCriador(interaction.member);
+  const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
@@ -376,7 +376,7 @@ async function handlePublicar(interaction, client) {
   }
 
   // Verifica se o usuário é o criador ou tem cargo Criador
-  const temCargoCriador = isCriador(interaction.member);
+  const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem publicar este rascunho.',
@@ -480,7 +480,7 @@ async function handleDeletar(interaction, client) {
   }
 
   // Verifica se o usuário é o criador ou tem cargo Criador
-  const temCargoCriador = isCriador(interaction.member);
+  const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem deletar este rascunho.',
@@ -523,7 +523,7 @@ async function handleAdicionarOpcao(interaction, client) {
   }
 
   // Verifica se o usuário é o criador ou tem cargo Criador
-  const temCargoCriador = isCriador(interaction.member);
+  const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
@@ -607,7 +607,7 @@ async function handleRemoverOpcao(interaction, client) {
   }
 
   // Verifica se o usuário é o criador ou tem cargo Criador
-  const temCargoCriador = isCriador(interaction.member);
+  const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',

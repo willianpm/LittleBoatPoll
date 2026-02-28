@@ -50,7 +50,7 @@ module.exports = {
       // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
       // Apenas usuários com o cargo Criador podem executar este comando
       // =====================================
-      if (!isCriador(interaction.member)) {
+      if (!isCriador(interaction.member, interaction.guildId)) {
         return await interaction.editReply({
           content: MENSAGEM_PERMISSAO_NEGADA,
         });

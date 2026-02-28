@@ -88,6 +88,22 @@ describe('permissions - authorization checks', () => {
     expect(isCriador(apiMember)).toBe(true);
   });
 
+  test('deve autorizar cargo para APIInteractionGuildMember sem guild quando guildId é informado', () => {
+    loadRoleBindings.mockReturnValue({
+      mensalistaRoleByGuild: {},
+      adminRoleIdsByGuild: { '771368260633362473': ['1325882022522130606'] },
+    });
+
+    const apiMemberSemGuild = {
+      user: { id: 'member-1' },
+      permissions: '0',
+      roles: ['1325882022522130606'],
+    };
+
+    expect(hasAuthorizedAdminRole(apiMemberSemGuild, '771368260633362473')).toBe(true);
+    expect(isCriador(apiMemberSemGuild, '771368260633362473')).toBe(true);
+  });
+
   test('getAuthorizedAdminRoleIds deve retornar lista vazia sem guildId', () => {
     expect(getAuthorizedAdminRoleIds()).toEqual([]);
   });

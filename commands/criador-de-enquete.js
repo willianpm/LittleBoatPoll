@@ -40,7 +40,7 @@ module.exports = {
     // VERIFICAÇÃO DE PERMISSÕES
     // Apenas Criadores, Administradores ou dono do servidor
     // =====================================
-    if (!isCriador(interaction.member)) {
+    if (!isCriador(interaction.member, interaction.guildId)) {
       return await interaction.reply({
         content: MENSAGEM_PERMISSAO_NEGADA,
         flags: MessageFlags.Ephemeral,
