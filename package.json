@@ -14,11 +14,16 @@
   "scripts": {
     "start": "node index.js",
     "start:quick": "node index.js",
+    "start:staging": "npx cross-env APP_ENV=staging node index.js",
     "deploy": "node index.js --deploy",
+    "deploy:staging": "npx cross-env APP_ENV=staging node index.js --deploy",
     "dev": "node index.js",
+    "migrate:data": "node scripts/migrate-data.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:automation": "node test-bot/test-runner.js",
+    "test:full": "node test-bot/run-full-tests.js"
   },
   "keywords": [
     "discord",

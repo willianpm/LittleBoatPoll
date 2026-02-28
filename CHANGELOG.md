@@ -2,6 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.1.0
+
+### ✨ Autorização Administrativa Remota por Cargo
+
+- **Novo campo `adminRoleIdsByGuild`:** possibilidade de autorizar cargos do Discord para acesso administrativo total via arquivo `role-bindings.json`.
+- **Configuração remota:** adicione IDs de cargos sem necessidade de comando ou reinicialização do bot.
+- **Múltiplos cargos por servidor:** suporte a lista de cargos autorizados por `guildId`.
+- **Precedência clara:** sistema verifica na ordem: Admin Discord → Dono do servidor → Criador interno (`criadores-internos.json`) → Cargo autorizado (`adminRoleIdsByGuild`).
+- **Sem breaking changes:** toda a funcionalidade anterior mantida; novo campo é opcional.
+
+### 🔧 Melhorias Técnicas
+
+- **`utils/file-handler.js`:** adicionada função `normalizeRoleBindings()` para validação e merge seguro de bindings.
+- **`utils/permissions.js`:** adicionadas funções `getAuthorizedAdminRoleIds()` e `hasAuthorizedAdminRole()` para verificação de cargos autorizados.
+- **Validação automática:** IDs vazios, duplicados e inválidos são filtrados automaticamente ao carregar dados.
+- **Merge não-destrutivo:** `saveRoleBindings()` agora mescla dados novos com existentes, evitando perda de configuração entre features.
+
+### 🧪 Testes
+
+- **Novo arquivo:** `tests/permissions.test.js` com 9 novos testes unitários cobrindo:
+  - Autorização por cargo administrativo
+  - Fallback para criadorinterno e admin/dono
+  - Negação para usuários não autorizados
+  - Edge cases (guildId vazio, cache de roles inválido)
+- **Suite completa:** 69 testes unitários passando (zero regressões).
+- **Testes de integração:** 14 cenários end-to-end validados (100% sucesso).
+
+### 📖 Documentação
+
+- Atualizado `README.md` com instruções de como encontrar IDs de cargo e servidor no Discord.
+- Adicionados comentários detalhados em `data/prod/role-bindings.json` e `data/staging/role-bindings.json`.
+- Atualizada wiki `permissoes.md` com novo método de autorização (Método 4).
+- Atualizado `docs/MIGRACAO-PERMISSOES-INTERNAS.md` com detalhes técnicos da feature v2.1.
+
+### 📋 Exemplos de Uso
+
+```json
+{
+  "adminRoleIdsByGuild": {
+    "771368260633362473": ["1325882022522130606", "9876543210987654321"]
+  }
+}
+```
+
+Membros com qualquer um desses cargos terão **acesso administrativo total** ao bot.
+
+## 2.0.2
+
+### 🏗️ Estrutura: Condensação e Reorganização
+
+- **`test-bot` refatorado em layout plano:** removidas três camadas de subpastas (`config/`, `scripts/`, `automation/`) e centralizados todos os arquivos em `test-bot/`, simplificando a hierarquia.
+- **Paths e referências atualizadas:** sincronizados `.gitignore`, `README.md`, `test-bot/README.md`, `test-bot/AUTOMATION.md`, `.github/workflows/test.yml.example` e `package.json` scripts para apontar para novos caminhos.
+- **Documentação redundante eliminada:** removido `docs/IMPLEMENTACAO-STAGING.md` (sumário de implementação), mantendo `docs/staging-bot.md` como guia canônico.
+
+### 📖 Documentação: Padronização de Guias de Teste
+
+- **Conversão de formato:** transformados `docs/test-draft-polls.js` e `docs/test-new-commands.js` para `.md` (markdown nativo).
+- **Limpeza de código legado:** removidos marcadores de comentário (`//`, `/* */`), blocos wrapper e linhas `console.log`.
+- **Padronização visual:** headings e rótulos (`**Comando:**`, `**Resultado:**`, `**Passos:**`) alinhados ao padrão da pasta `docs`.
+- **Navegação adicionada:** índices rápidos no topo de ambos os documentos com links para seções de teste.
+
+### 🔧 Código: Refatoração e Deduplicação
+
+- **`test-bot/test-runner.js`:** extração de helpers para polling de enquete, sincronização de reações e provisioning automático.
+- **`index.js`:** consolidação de lógica duplicada em vote-limit normalization, reaction payload hydration e command execution paths.
+- **Preservação de comportamento:** refatorações mantiveram 100% de compatibilidade — testes unitários passando (60/60).
+
 ## 2.0.1
 
 ### ✨ Mensalistas: vínculo automático por cargo
@@ -77,79 +144,79 @@ Para migrar de servidores existentes:
 
 ## 1.4.0
 
-### Testing Infrastructure
+### Infraestrutura de Testes
 
-- **Add automated testing:** Implemented comprehensive test suite using Jest.
-  - 59 unit tests covering 100% of utility modules
-  - Tests run in ~1.3s with 70% coverage threshold
-  - Test scripts: `npm test`, `npm run test:watch`, `npm run test:coverage`
-- **Test documentation:** Added detailed README in tests directory.
+- **Adicionar testes automatizados:** Implementada suíte de testes abrangente usando Jest.
+  - 59 testes unitários cobrindo 100% dos módulos utilitários
+  - Testes executados em ~1,3s com limite de cobertura de 70%
+  - Scripts de teste: `npm test`, `npm run test:watch`, `npm run test:coverage`
+- **Documentação de testes:** Adicionado README detalhado no diretório de testes.
 
-### Performance Improvements
+### Melhorias de Desempenho
 
-- **Optimize poll reaction sync:** Parallelized reaction fetching to reduce startup time by ~50-70%.
-  - Eliminated duplicate API calls to Discord
-  - Cache reaction users to avoid redundant fetches
-  - Load mensalistas data once instead of per-poll
-- **Enhanced logging:** Added progress indicators, timing info, and visual status emojis.
+- **Otimizar sincronização de reações de enquete:** Paralelizado o carregamento de reações para reduzir tempo de inicialização em ~50-70%.
+  - Eliminadas chamadas duplicadas de API ao Discord
+  - Cache de usuários de reação para evitar buscas redundantes
+  - Carregar dados de mensalistas uma vez em vez de por enquete
+- **Registro melhorado:** Adicionados indicadores de progresso, informações de tempo e emojis de status visuais.
 
-### Documentation
+### Documentação
 
-- **Update README:** Reflect new testing capabilities and scripts.
-- **Refactoring report:** Consolidated technical documentation in `/docs`.
+- **Atualizar README:** Refletir as novas capacidades e scripts de teste.
+- **Relatório de refatoração:** Consolidada documentação técnica em `/docs`.
 
-### Consolidation
+### Consolidação
 
-- Includes all architectural improvements from v1.3.0 (utility modules, code deduplication).
+- Inclui todas as melhorias arquitetônicas da v1.3.0 (módulos utilitários, deduplicação de código).
 
 ## 1.3.0
 
-### Code Quality & Refactoring
+### Qualidade de Código e Refatoração
 
-- **Major refactoring:** Reduced code duplication by 75-87% across the entire codebase.
-- **Created utility modules:**
-  - `utils/file-handler.js`: Centralized all JSON file I/O operations (9 functions).
-  - `utils/validators.js`: Centralized poll validation logic (duplicate checks, option limits).
-  - `utils/constants.js`: Shared constants for emojis, colors, and limits.
-  - `utils/draft-handler.js`: Draft manipulation helpers.
-  - `utils/error-handler.js`: Standardized error handling.
-- **Refactored files:** Updated 9 files to use new utility modules (index.js, all command files).
-- **Improved maintainability:** Eliminated duplicated file I/O patterns, validation logic, and emoji lists.
-- **Documentation:** Added comprehensive technical refactoring report.
+- **Refatoração importante:** Reduzida duplicação de código em 75-87% em toda a base de código.
+- **Módulos utilitários criados:**
+  - `utils/file-handler.js`: Centraliza todas as operações de entrada/saída de arquivo JSON (9 funções).
+  - `utils/validators.js`: Centraliza lógica de validação de enquete (verificação de duplicatas, limites de opções).
+  - `utils/constants.js`: Constantes compartilhadas para emojis, cores e limites.
+  - `utils/draft-handler.js`: Auxiliares de manipulação de rascunhos.
+  - `utils/error-handler.js`: Tratamento de erros padronizado.
+- **Arquivos refatorados:** Atualizados 9 arquivos para usar os novos módulos utilitários (index.js, todos os arquivos de comando).
+- **Manutenibilidade melhorada:** Eliminados padrões duplicados de entrada/saída de arquivo, lógica de validação e listas de emojis.
+- **Documentação:** Adicionado relatório de refatoração técnico abrangente.
 
 ## 1.2.2
 
-- Rename "Criador" to "Criador de Enquetes" for clarity across the entire project.
-- Unify mensalista context menus: combine "Adicionar Mensalista" and "Remover Mensalista" into a single "Add/Del Mensalistas" context menu with toggle functionality.
-- Unify criador context menus into "Add/Del Criador de Enquetes" for consistency.
-- Use shortened "Add/Del" prefix for context menus to comply with Discord's 32-character name limit.
-- Refactor context menu architecture to reduce duplication and improve maintainability.
+- Renomear "Criador" para "Criador de Enquetes" para maior clareza em todo o projeto.
+- Unificar menus de contexto de mensalista: combinar "Adicionar Mensalista" e "Remover Mensalista" em um único menu de contexto "Adicionar/Remover Mensalistas" com funcionalidade de alternância.
+- Unificar menus de contexto de criador em "Adicionar/Remover Criador de Enquetes" para manter consistência.
+- Usar prefixo abreviado "Adicionar/Remover" para menus de contexto para estar em conformidade com o limite de 32 caracteres do Discord.
+- Refatorar arquitetura de menu de contexto para reduzir duplicação e melhorar manutenibilidade.
 
 ## 1.2.1
 
-- Add context menu to toggle the "Criador" role for a user.
+- Adicionar menu de contexto para alternar a função "Criador de Enquetes" para um usuário.
 
 ## 1.2.0
 
-- Add draft poll option management (add/remove options without retyping all options).
-- Improve draft validations (duplicates, limits, max votes adjustments).
-- Fix interaction timeouts for slower commands.
-- Centralize draft persistence helpers.
-- Add context menus: "Adicionar Mensalista", "Remover Mensalista", and "Adicionar/Remover da enquete".
-- Make mensalista add/remove responses ephemeral (private to command executor).
-- Fix Discord.js deprecation warning: migrate from `ephemeral: true` to `flags: MessageFlags.Ephemeral`.
-- **Integrate deploy-commands.js into index.js:** Commands are now registered as part of the main bot startup process.
-  - Use `npm run deploy` or `node index.js --deploy` to register commands
-  - Deploy process is automatic on first startup if `DEPLOY=true` environment variable is set
-- **Auto-deploy on start:** `npm start` now always deploys commands before starting the bot, ensuring commands are always up-to-date.
-  - Use `npm run start:quick` to skip deployment for faster startup when commands haven't changed.
+- Adicionar gerenciamento de opções de enquete em rascunho (adicionar/remover opções sem digitar todas as opções novamente).
+- Melhorar validações de rascunho (duplicatas, limites, ajustes de votos máximos).
+- Corrigir tempos limite de interação para comandos mais lentos.
+- Centralizar auxiliares de persistência de rascunho.
+- Adicionar menus de contexto: "Adicionar Mensalista", "Remover Mensalista" e "Adicionar/Remover da enquete".
+- Tornar respostas de adição/remoção de mensalista efêmeras (privadas para executor de comando).
+- Corrigir aviso de descontinuação do Discord.js: migrar de `ephemeral: true` para `flags: MessageFlags.Ephemeral`.
+- **Integrar deploy-commands.js em index.js:** Comandos agora são registrados como parte do processo de inicialização do bot principal.
+  - Use `npm run deploy` ou `node index.js --deploy` para registrar comandos
+  - Processo de implantação é automático na primeira inicialização se a variável de ambiente `DEPLOY=true` estiver configurada
+- **Implantação automática ao iniciar:** `npm start` agora sempre implanta comandos antes de iniciar o bot, garantindo que os comandos estejam sempre atualizados.
+  - Use `npm run start:quick` para pular a implantação para inicialização mais rápida quando os comandos não foram alterados.
 
 ## 1.1.0
 
-- Add draft poll system (create, edit, list, show, publish, delete).
-- Persist draft polls to disk.
-- Add preview before publishing.
+- Adicionar sistema de enquete em rascunho (criar, editar, listar, mostrar, publicar, deletar).
+- Persistir enquetes em rascunho no disco.
+- Adicionar visualização antes de publicar.
 
 ## 1.0.0
 
-- Initial release with direct polls, weighted votes, and results summary.
+- Lançamento inicial com enquetes diretas, votos ponderados e resumo de resultados.

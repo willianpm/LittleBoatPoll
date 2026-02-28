@@ -1,13 +1,20 @@
-require('dotenv').config();
+// Carrega arquivo .env correto baseado em APP_ENV
+const envFile = process.env.APP_ENV === 'staging' ? '.env.staging' : '.env';
+require('dotenv').config({ path: envFile });
+
 const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes, Partials, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const config = require('./utils/config');
 const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('./utils/file-handler');
 const { ensureMensalistaRoleBinding } = require('./utils/mensalista-binding');
 
+// Exibe configuração na inicialização
+config.logConfig();
+
 // Controle de verbosidade de logs (DEBUG=true para logs detalhados)
-const DEBUG_MODE = process.env.DEBUG === 'true';
+const DEBUG_MODE = config.DEBUG_MODE;
 
 // =====================================
 // CONFIGURAÇÃO DO CLIENTE DISCORD
@@ -41,7 +48,7 @@ client.draftPolls = new Map();
 function saveActivePolls() {
   try {
     const pollsArray = Array.from(client.activePolls.entries());
-    saveJsonFile('./active-polls.json', pollsArray);
+    saveJsonFile(config.DATA_FILES.activePolls, pollsArray);
   } catch (error) {
     console.error('Erro ao salvar votações ativas:', error);
   }
@@ -51,9 +58,63 @@ function saveActivePolls() {
 function saveDraftPolls() {
   try {
     const draftsArray = Array.from(client.draftPolls.values());
-    saveJsonFile('./draft-polls.json', draftsArray);
+    saveJsonFile(config.DATA_FILES.draftPolls, draftsArray);
   } catch (error) {
     console.error('Erro ao salvar rascunhos:', error);
+  }
+}
+
+function normalizePollMaxVotos(poll) {
+  const maxVotos = Number(poll.maxVotos);
+  const maxVotosValido = Number.isFinite(maxVotos) && maxVotos > 0 ? maxVotos : 1;
+  const changed = poll.maxVotos !== maxVotosValido;
+
+  if (changed) {
+    poll.maxVotos = maxVotosValido;
+  }
+
+  return { maxVotosValido, changed };
+}
+
+async function hydrateReactionPayload(reaction) {
+  if (reaction.partial) {
+    await reaction.fetch().catch(() => null);
+  }
+  if (reaction.message && reaction.message.partial) {
+    await reaction.message.fetch().catch(() => null);
+  }
+}
+
+async function replyInteractionExecutionError(interaction) {
+  try {
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: '❌ Erro ao executar o comando!',
+        flags: MessageFlags.Ephemeral,
+      });
+    } else if (interaction.deferred) {
+      await interaction.editReply({
+        content: '❌ Erro ao executar o comando!',
+      });
+    }
+  } catch (replyError) {
+    console.error('❌ Não foi possível responder à interação:', replyError.message);
+  }
+}
+
+async function executeInteractionCommand(interaction, commandTypeLabel, notFoundLabel) {
+  const command = client.commands.get(interaction.commandName);
+
+  if (!command) {
+    console.error(`❌ ${notFoundLabel}: ${interaction.commandName}`);
+    return;
+  }
+
+  try {
+    await command.execute(interaction, client);
+  } catch (error) {
+    console.error(`❌ Erro ao executar o comando${commandTypeLabel}:`, error);
+    await replyInteractionExecutionError(interaction);
   }
 }
 
@@ -103,8 +164,8 @@ async function bindMensalistasRolesOnStartup() {
 // Carrega votações ativas do arquivo
 function loadActivePolls() {
   try {
-    if (fs.existsSync('./active-polls.json')) {
-      const pollsArray = loadJsonFile('./active-polls.json', []);
+    if (fs.existsSync(config.DATA_FILES.activePolls)) {
+      const pollsArray = loadJsonFile(config.DATA_FILES.activePolls, []);
 
       // Normaliza os dados para garantir compatibilidade com enquetes antigas
       const normalizedPolls = pollsArray.map(([id, poll]) => {
@@ -137,8 +198,8 @@ function initDataFiles() {
 // Carrega rascunhos de enquetes do arquivo
 function loadDraftPolls() {
   try {
-    if (fs.existsSync('./draft-polls.json')) {
-      const draftsArray = loadJsonFile('./draft-polls.json', []);
+    if (fs.existsSync(config.DATA_FILES.draftPolls)) {
+      const draftsArray = loadJsonFile(config.DATA_FILES.draftPolls, []);
 
       // Normaliza os dados
       const normalizedDrafts = draftsArray.map((draft) => {
@@ -369,11 +430,7 @@ async function enforceVoteLimits() {
       }
 
       // Normaliza maxVotos para garantir que seja um número válido
-      const maxVotos = Number(poll.maxVotos);
-      const maxVotosValido = Number.isFinite(maxVotos) && maxVotos > 0 ? maxVotos : 1;
-      if (poll.maxVotos !== maxVotosValido) {
-        poll.maxVotos = maxVotosValido;
-      }
+      normalizePollMaxVotos(poll);
 
       let violacoesSencontradas = 0;
 
@@ -495,10 +552,10 @@ async function deployCommands() {
     }
 
     // Cria a instância REST para comunicar com a API do Discord
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+    const rest = new REST({ version: '10' }).setToken(config.TOKEN);
 
     // Verifica se CLIENT_ID está definido
-    const clientId = process.env.CLIENT_ID;
+    const clientId = config.CLIENT_ID;
 
     if (!clientId) {
       console.error('❌ ERRO: CLIENT_ID não está definido no arquivo .env');
@@ -530,7 +587,7 @@ client.once('clientReady', async () => {
   await bindMensalistasRolesOnStartup();
 
   // Deploy de comandos se requisitado via variável de ambiente ou flag
-  if (process.env.DEPLOY === 'true' || process.argv.includes('--deploy')) {
+  if (config.DEPLOY) {
     console.log('Registrando comandos...');
     const deploySuccess = await deployCommands();
     if (deploySuccess) {
@@ -558,48 +615,12 @@ client.once('clientReady', async () => {
 client.on('interactionCreate', async (interaction) => {
   // Processa comandos slash
   if (interaction.isChatInputCommand()) {
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) {
-      console.error('❌ Comando não encontrado: ' + interaction.commandName);
-      return;
-    }
-
-    try {
-      // Comando executado
-      await command.execute(interaction, client);
-    } catch (error) {
-      console.error('❌ Erro ao executar o comando:', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ Erro ao executar o comando!',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
+    await executeInteractionCommand(interaction, '', 'Comando não encontrado');
   }
 
   // Processa comandos de contexto (clique direito)
   if (interaction.isContextMenuCommand()) {
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) {
-      console.error('❌ Comando de contexto não encontrado: ' + interaction.commandName);
-      return;
-    }
-
-    try {
-      // Comando de contexto executado
-      await command.execute(interaction, client);
-    } catch (error) {
-      console.error('❌ Erro ao executar o comando de contexto:', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ Erro ao executar o comando!',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
+    await executeInteractionCommand(interaction, ' de contexto', 'Comando de contexto não encontrado');
   }
 });
 
@@ -610,12 +631,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
 
     // Garante acesso a dados completos em mensagens/reacoes nao cacheadas
-    if (reaction.partial) {
-      await reaction.fetch().catch(() => null);
-    }
-    if (reaction.message && reaction.message.partial) {
-      await reaction.message.fetch().catch(() => null);
-    }
+    await hydrateReactionPayload(reaction);
 
     // Busca a votação ativa para esta mensagem
     const poll = client.activePolls.get(reaction.message.id);
@@ -653,19 +669,17 @@ client.on('messageReactionAdd', async (reaction, user) => {
     }
 
     // Normaliza maxVotos
-    const maxVotos = Number(poll.maxVotos);
-    const maxVotosValido = Number.isFinite(maxVotos) && maxVotos > 0 ? maxVotos : 1;
-    if (poll.maxVotos !== maxVotosValido) {
-      poll.maxVotos = maxVotosValido;
+    const { maxVotosValido, changed } = normalizePollMaxVotos(poll);
+    if (changed) {
       saveActivePolls();
     }
 
     // Verifica se atingiu o limite de votos
-    if (poll.votos[user.id].reacoes.length >= poll.maxVotos) {
+    if (poll.votos[user.id].reacoes.length >= maxVotosValido) {
       // Remove a reação e notifica (se possível)
       await reaction.users.remove(user.id).catch(() => null);
       try {
-        await user.send(`❌ Você já atingiu o limite de **${poll.maxVotos}** voto(s) nesta enquete: "${poll.titulo}"`);
+        await user.send(`❌ Você já atingiu o limite de **${maxVotosValido}** voto(s) nesta enquete: "${poll.titulo}"`);
       } catch (e) {
         // DM bloqueada ou desativada
       }
@@ -690,12 +704,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (user.bot) return;
 
     // Garante acesso a dados completos em mensagens/reacoes nao cacheadas
-    if (reaction.partial) {
-      await reaction.fetch().catch(() => null);
-    }
-    if (reaction.message && reaction.message.partial) {
-      await reaction.message.fetch().catch(() => null);
-    }
+    await hydrateReactionPayload(reaction);
 
     const poll = client.activePolls.get(reaction.message.id);
     if (!poll) return;
@@ -728,9 +737,9 @@ client.on('messageReactionRemove', async (reaction, user) => {
 // SERVIDOR WEB (MANTER BOT ATIVO)
 // =====================================
 const app = express();
-const port = process.env.PORT || 8000; // O Koyeb injeta a porta automaticamente
+const port = config.PORT; // O Koyeb injeta a porta automaticamente
 
-app.get('/', (req, res) => res.send('Bot Online!'));
+app.get('/', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
 
 app.listen(port, () => {
   console.log(`Keep-alive rodando na porta ${port}`);
@@ -739,4 +748,4 @@ app.listen(port, () => {
 // =====================================
 // LOGIN DO BOT
 // =====================================
-client.login(process.env.TOKEN);
+client.login(config.TOKEN);

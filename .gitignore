@@ -5,14 +5,24 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.staging
+.env.prod
+.env.test
+test-bot/.env.test
 
-# Dados persistentes (backup manual recomendado)
+# Dados persistentes isolados por ambiente
+data/
+
+# Dados legados na raiz (mantidos por retrocompatibilidade)
 vips.json
 votos.json
 historico-votacoes.json
 mensalistas.json
 cargos-criadores.json
 active-polls.json
+draft-polls.json
+criadores-internos.json
+role-bindings.json
 
 # Logs
 *.log

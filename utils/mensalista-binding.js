@@ -49,7 +49,7 @@ async function ensureMensalistaRoleBinding(guild) {
   if (currentRoleId !== mensalistasRole.id) {
     mensalistaRoleByGuild[guild.id] = mensalistasRole.id;
     saveRoleBindings({ mensalistaRoleByGuild });
-    console.log(`✓ Cargo \"${mensalistasRole.name}\" vinculado ao papel interno mensalista no servidor ${guild.name}`);
+    console.log(`✓ Cargo "${mensalistasRole.name}" associado ao sistema de mensalista no servidor "${guild.name}".`);
   }
 
   return mensalistasRole.id;

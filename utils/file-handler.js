@@ -1,4 +1,51 @@
 const fs = require('fs');
+const path = require('path');
+const { DATA_FILES, DATA_DIR } = require('./config');
+
+const DEFAULT_ROLE_BINDINGS = {
+  mensalistaRoleByGuild: {},
+  adminRoleIdsByGuild: {},
+};
+
+/**
+ * Normaliza estrutura de role-bindings para formato esperado
+ * @param {Object} data - Dados brutos carregados do JSON
+ * @returns {Object} Estrutura normalizada
+ */
+function normalizeRoleBindings(data = {}) {
+  const mensalistaRoleByGuild = data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object' ? data.mensalistaRoleByGuild : {};
+
+  const rawAdminRoleIds = data?.adminRoleIdsByGuild && typeof data.adminRoleIdsByGuild === 'object' ? data.adminRoleIdsByGuild : {};
+
+  const adminRoleIdsByGuild = Object.fromEntries(
+    Object.entries(rawAdminRoleIds).map(([guildId, roleIds]) => {
+      if (Array.isArray(roleIds)) {
+        return [guildId, [...new Set(roleIds.filter((roleId) => typeof roleId === 'string' && roleId.trim().length > 0))]];
+      }
+
+      if (typeof roleIds === 'string' && roleIds.trim().length > 0) {
+        return [guildId, [roleIds]];
+      }
+
+      return [guildId, []];
+    }),
+  );
+
+  return {
+    mensalistaRoleByGuild,
+    adminRoleIdsByGuild,
+  };
+}
+
+/**
+ * Garante que o diretório existe, criando se necessário
+ * @param {string} dirPath - Caminho do diretório
+ */
+function ensureDirectoryExists(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
 
 /**
  * Carrega um arquivo JSON com valor padrão em caso de erro
@@ -8,6 +55,9 @@ const fs = require('fs');
  */
 function loadJsonFile(filePath, defaultValue = {}) {
   try {
+    // Garante que o diretório existe
+    ensureDirectoryExists(path.dirname(filePath));
+
     if (fs.existsSync(filePath)) {
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
@@ -25,6 +75,9 @@ function loadJsonFile(filePath, defaultValue = {}) {
  */
 function saveJsonFile(filePath, data) {
   try {
+    // Garante que o diretório existe
+    ensureDirectoryExists(path.dirname(filePath));
+
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
@@ -38,7 +91,7 @@ function saveJsonFile(filePath, data) {
  * @returns {Object} Objeto com array de IDs
  */
 function loadMensalistas() {
-  return loadJsonFile('./mensalistas.json', { mensalistas: [] });
+  return loadJsonFile(DATA_FILES.mensalistas, { mensalistas: [] });
 }
 
 /**
@@ -47,7 +100,7 @@ function loadMensalistas() {
  * @returns {boolean} true se sucesso
  */
 function saveMensalistas(data) {
-  return saveJsonFile('./mensalistas.json', data);
+  return saveJsonFile(DATA_FILES.mensalistas, data);
 }
 
 /**
@@ -55,7 +108,8 @@ function saveMensalistas(data) {
  * @returns {Object} Objeto com bindings por guild
  */
 function loadRoleBindings() {
-  return loadJsonFile('./role-bindings.json', { mensalistaRoleByGuild: {} });
+  const rawBindings = loadJsonFile(DATA_FILES.roleBindings, DEFAULT_ROLE_BINDINGS);
+  return normalizeRoleBindings(rawBindings);
 }
 
 /**
@@ -64,7 +118,13 @@ function loadRoleBindings() {
  * @returns {boolean} true se sucesso
  */
 function saveRoleBindings(data) {
-  return saveJsonFile('./role-bindings.json', data);
+  const currentData = loadRoleBindings();
+  const nextData = normalizeRoleBindings({
+    ...currentData,
+    ...(data && typeof data === 'object' ? data : {}),
+  });
+
+  return saveJsonFile(DATA_FILES.roleBindings, nextData);
 }
 
 /**
@@ -72,7 +132,7 @@ function saveRoleBindings(data) {
  * @returns {Object} Objeto com array de IDs de usuários
  */
 function loadCriadores() {
-  return loadJsonFile('./criadores-internos.json', { criadores: [] });
+  return loadJsonFile(DATA_FILES.criadores, { criadores: [] });
 }
 
 /**
@@ -81,7 +141,7 @@ function loadCriadores() {
  * @returns {boolean} true se sucesso
  */
 function saveCriadores(data) {
-  return saveJsonFile('./criadores-internos.json', data);
+  return saveJsonFile(DATA_FILES.criadores, data);
 }
 
 /**
@@ -89,7 +149,7 @@ function saveCriadores(data) {
  * @returns {Array} Array de votações históricas
  */
 function loadVotacoes() {
-  const data = loadJsonFile('./historico-votacoes.json', {});
+  const data = loadJsonFile(DATA_FILES.historico, {});
   return Array.isArray(data) ? data : data.votacoes || [];
 }
 
@@ -99,25 +159,29 @@ function loadVotacoes() {
  * @returns {boolean} true se sucesso
  */
 function saveVotacoes(data) {
-  return saveJsonFile('./historico-votacoes.json', data);
+  return saveJsonFile(DATA_FILES.historico, data);
 }
 
 /**
  * Garante que arquivos essenciais existam
  */
 function ensureDataFiles() {
+  // Garante que o diretório de dados existe
+  ensureDirectoryExists(DATA_DIR);
+
   const files = [
-    { path: './mensalistas.json', content: { mensalistas: [] } },
-    { path: './role-bindings.json', content: { mensalistaRoleByGuild: {} } },
-    { path: './historico-votacoes.json', content: [] },
-    { path: './criadores-internos.json', content: { criadores: [] } },
-    { path: './draft-polls.json', content: [] },
+    { path: DATA_FILES.mensalistas, content: { mensalistas: [] } },
+    { path: DATA_FILES.roleBindings, content: DEFAULT_ROLE_BINDINGS },
+    { path: DATA_FILES.historico, content: [] },
+    { path: DATA_FILES.criadores, content: { criadores: [] } },
+    { path: DATA_FILES.draftPolls, content: [] },
+    { path: DATA_FILES.activePolls, content: [] },
   ];
 
-  files.forEach(({ path, content }) => {
-    if (!fs.existsSync(path)) {
-      saveJsonFile(path, content);
-      console.log(`Arquivo ${path} criado`);
+  files.forEach(({ path: filePath, content }) => {
+    if (!fs.existsSync(filePath)) {
+      saveJsonFile(filePath, content);
+      console.log(`✓ Arquivo criado: ${path.relative(DATA_DIR, filePath)}`);
     }
   });
 }
@@ -129,7 +193,9 @@ module.exports = {
   saveMensalistas,
   loadRoleBindings,
   saveRoleBindings,
+  normalizeRoleBindings,
   loadCriadores,
+  ensureDirectoryExists,
   saveCriadores,
   loadVotacoes,
   saveVotacoes,

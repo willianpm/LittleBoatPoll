@@ -1,0 +1,181 @@
+# Exemplo: GitHub Actions CI/CD com Testes Automatizados
+# 
+# Este arquivo é um EXEMPLO de como configurar CI/CD.
+# Para usar, renomeie para .github/workflows/test.yml
+
+name: Test Staging Bot
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  # Job 1: Testes Unitários (rápido)
+  unit-tests:
+    name: Testes Unitários
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Instalar dependências
+        run: npm ci
+      
+      - name: Executar testes unitários
+        run: npm test
+      
+      - name: Verificar cobertura
+        run: npm run test:coverage
+
+  # Job 2: Testes Automatizados de Integração (requer Discord)
+  integration-tests:
+    name: Testes de Integração (Discord)
+    runs-on: ubuntu-latest
+    needs: unit-tests  # Só roda se testes unitários passarem
+    
+    # Nota: Este job requer secrets configurados no GitHub:
+    # - TEST_BOT_TOKEN
+    # - STAGING_BOT_ID  
+    # - TEST_CHANNEL_ID
+    # - TEST_GUILD_ID
+    # - STAGING_TOKEN
+    # - STAGING_CLIENT_ID
+    
+    # Descomente 'if' abaixo se quiser rodar apenas em branches específicas
+    # if: github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Instalar dependências
+        run: npm ci
+      
+      - name: Criar .env.staging
+        run: |
+          cat > .env.staging << EOF
+          TOKEN=${{ secrets.STAGING_TOKEN }}
+          CLIENT_ID=${{ secrets.STAGING_CLIENT_ID }}
+          APP_ENV=staging
+          INSTANCE_ID=ci-${{ github.run_number }}
+          DEBUG_MODE=true
+          DEPLOY=true
+          EOF
+      
+      - name: Criar test-bot/.env.test
+        run: |
+          mkdir -p test-bot
+          cat > test-bot/.env.test << EOF
+          TEST_BOT_TOKEN=${{ secrets.TEST_BOT_TOKEN }}
+          STAGING_BOT_ID=${{ secrets.STAGING_BOT_ID }}
+          TEST_CHANNEL_ID=${{ secrets.TEST_CHANNEL_ID }}
+          TEST_GUILD_ID=${{ secrets.TEST_GUILD_ID }}
+          EOF
+      
+      - name: Iniciar bot staging em background
+        run: |
+          npm run start:staging > staging.log 2>&1 &
+          echo $! > staging.pid
+          echo "Bot staging iniciado (PID: $(cat staging.pid))"
+      
+      - name: Aguardar bot ficar online
+        run: |
+          echo "Aguardando bot conectar ao Discord..."
+          sleep 15
+          
+          # Verifica se processo ainda está rodando
+          if ! kill -0 $(cat staging.pid) 2>/dev/null; then
+            echo "❌ Bot staging não está rodando!"
+            cat staging.log
+            exit 1
+          fi
+          
+          # Verifica se "ONLINE" aparece nos logs
+          if grep -q "está ONLINE" staging.log; then
+            echo "✓ Bot staging está ONLINE"
+          else
+            echo "⚠️ Bot pode não estar online ainda"
+            cat staging.log
+          fi
+      
+      - name: Executar testes automatizados
+        run: npm run test:automation
+        timeout-minutes: 5
+      
+      - name: Salvar logs em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-logs
+          path: |
+            staging.log
+            data/staging/*.json
+      
+      - name: Parar bot staging
+        if: always()
+        run: |
+          if [ -f staging.pid ]; then
+            kill $(cat staging.pid) || true
+            echo "Bot staging parado"
+          fi
+      
+      - name: Mostrar logs do bot (se falhou)
+        if: failure()
+        run: |
+          echo "=== Logs do Bot Staging ==="
+          cat staging.log
+          echo "=== Fim dos Logs ==="
+
+  # Job 3: Análise de Código (opcional)
+  code-quality:
+    name: Qualidade de Código
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Instalar dependências
+        run: npm ci
+      
+      # Se tiver ESLint configurado:
+      # - name: Run ESLint
+      #   run: npm run lint
+      
+      - name: Verificar formatação (se tiver Prettier)
+        run: |
+          if [ -f .prettierrc ]; then
+            npx prettier --check "**/*.js"
+          else
+            echo "Prettier não configurado, pulando..."
+          fi
+
+# Configurar Secrets no GitHub:
+# 1. Vá em Settings → Secrets and variables → Actions
+# 2. Adicione os seguintes secrets:
+#    - TEST_BOT_TOKEN: Token do bot de teste
+#    - STAGING_BOT_ID: ID do bot staging
+#    - TEST_CHANNEL_ID: ID do canal de testes
+#    - TEST_GUILD_ID: ID do servidor
+#    - STAGING_TOKEN: Token do bot staging
+#    - STAGING_CLIENT_ID: Client ID do bot staging
