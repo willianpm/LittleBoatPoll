@@ -99,7 +99,7 @@ function main() {
     console.log(`   Ambiente: ${APP_ENV}`);
     console.log(`   Arquivo: ${CRIADORES_FILE}`);
     console.log(`   Total de criadores: ${nextData.criadores.length}`);
-    console.log('\n💡 Reinicie o bot para aplicar as mudanças se ele já estiver rodando.');
+    console.log('\n✓ Mudanças aplicadas imediatamente. Não é necessário reiniciar o bot.');
     process.exit(0);
   } catch (error) {
     console.error('❌ Erro ao processar operação:', error.message);
