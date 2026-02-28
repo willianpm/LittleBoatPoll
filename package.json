@@ -24,7 +24,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:automation": "node test-bot/test-runner.js",
-    "test:full": "node test-bot/run-full-tests.js"
+    "test:full": "node test-bot/run-full-tests.js",
+    "test:permissions": "node test-bot/test-permissions-debug.js"
   },
   "keywords": [
     "discord",
