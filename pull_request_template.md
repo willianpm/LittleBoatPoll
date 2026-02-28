@@ -1,6 +1,6 @@
 ## Issue Relacionada
-**Importante:** Este PR fecha qual issue?
-- [ ] Resolvido: # (Coloque o número da issue aqui, ex: #10)
+**Importante:** Este PR fecha qual issue? Use palavras‑chave como `Closes #10` ou `Fixes #10` para fechar automaticamente.
+- [ ] Closes #10 *(substitui `10` pelo número da issue correspondente)*
 
 ---
 ## Checklist de Lançamento
