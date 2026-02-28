@@ -153,7 +153,7 @@ module.exports = {
           .setFooter({ text: 'Peso 2 = Votos valem o dobro' })
           .setTimestamp();
 
-        await interaction.reply({ embeds: [listEmbed] });
+        await interaction.reply({ embeds: [listEmbed], flags: MessageFlags.Ephemeral });
         console.log(`📋 Lista de mensalistas solicitada: ${mensalistasData.mensalistas.length} membros`);
       }
     } catch (error) {

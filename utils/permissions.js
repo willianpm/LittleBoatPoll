@@ -45,10 +45,16 @@ function hasAuthorizedAdminRole(member) {
 
   const roleCache = member?.roles?.cache;
   if (!roleCache) {
+    console.log(`[PERMISSIONS] ⚠️ Membro ${member.id} sem cache de cargos`);
     return false;
   }
 
-  return authorizedRoleIds.some((roleId) => roleCache.has(roleId));
+  const hasRole = authorizedRoleIds.some((roleId) => roleCache.has(roleId));
+  if (!hasRole) {
+    console.log(`[PERMISSIONS] ❌ Membro ${member.id} não tem cargo autorizado. Esperado: ${authorizedRoleIds.join(', ')}`);
+  }
+
+  return hasRole;
 }
 
 /**

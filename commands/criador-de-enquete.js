@@ -124,7 +124,7 @@ module.exports = {
       if (data.criadores.length === 0) {
         const embed = new EmbedBuilder().setColor('#FFA500').setTitle('📋 Criadores de Enquetes').setDescription('Nenhum Criador cadastrado internamente ainda.\n\n_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n_Use `/criador-de-enquete adicionar` para cadastrar um usuário._').setTimestamp();
 
-        return await interaction.reply({ embeds: [embed], ephemeral: false });
+        return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       }
 
       // Busca informações dos usuários
@@ -160,7 +160,7 @@ module.exports = {
         });
       }
 
-      return await interaction.reply({ embeds: [embed], ephemeral: false });
+      return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
   },
 };
