@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.1.0
+
+### ✨ Autorização Administrativa Remota por Cargo
+
+- **Novo campo `adminRoleIdsByGuild`:** possibilidade de autorizar cargos do Discord para acesso administrativo total via arquivo `role-bindings.json`.
+- **Configuração remota:** adicione IDs de cargos sem necessidade de comando ou reinicialização do bot.
+- **Múltiplos cargos por servidor:** suporte a lista de cargos autorizados por `guildId`.
+- **Precedência clara:** sistema verifica na ordem: Admin Discord → Dono do servidor → Criador interno (`criadores-internos.json`) → Cargo autorizado (`adminRoleIdsByGuild`).
+- **Sem breaking changes:** toda a funcionalidade anterior mantida; novo campo é opcional.
+
+### 🔧 Melhorias Técnicas
+
+- **`utils/file-handler.js`:** adicionada função `normalizeRoleBindings()` para validação e merge seguro de bindings.
+- **`utils/permissions.js`:** adicionadas funções `getAuthorizedAdminRoleIds()` e `hasAuthorizedAdminRole()` para verificação de cargos autorizados.
+- **Validação automática:** IDs vazios, duplicados e inválidos são filtrados automaticamente ao carregar dados.
+- **Merge não-destrutivo:** `saveRoleBindings()` agora mescla dados novos com existentes, evitando perda de configuração entre features.
+
+### 🧪 Testes
+
+- **Novo arquivo:** `tests/permissions.test.js` com 9 novos testes unitários cobrindo:
+  - Autorização por cargo administrativo
+  - Fallback para criadorinterno e admin/dono
+  - Negação para usuários não autorizados
+  - Edge cases (guildId vazio, cache de roles inválido)
+- **Suite completa:** 69 testes unitários passando (zero regressões).
+- **Testes de integração:** 14 cenários end-to-end validados (100% sucesso).
+
+### 📖 Documentação
+
+- Atualizado `README.md` com instruções de como encontrar IDs de cargo e servidor no Discord.
+- Adicionados comentários detalhados em `data/prod/role-bindings.json` e `data/staging/role-bindings.json`.
+- Atualizada wiki `permissoes.md` com novo método de autorização (Método 4).
+- Atualizado `docs/MIGRACAO-PERMISSOES-INTERNAS.md` com detalhes técnicos da feature v2.1.
+
+### 📋 Exemplos de Uso
+
+```json
+{
+  "adminRoleIdsByGuild": {
+    "771368260633362473": [
+      "1325882022522130606",
+      "9876543210987654321"
+    ]
+  }
+}
+```
+
+Membros com qualquer um desses cargos terão **acesso administrativo total** ao bot.
+
 ## 2.0.2
 
 ### 🏗️ Estrutura: Condensação e Reorganização

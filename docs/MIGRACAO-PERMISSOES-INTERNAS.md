@@ -2,9 +2,9 @@
 
 ## 📋 Resumo das Mudanças
 
-O bot migrou as permissões administrativas de um sistema baseado em **cargos do Discord** para um sistema interno baseado em IDs de usuários.
+O bot migrou as permissões administrativas de um sistema baseado em **cargos do Discord** para um sistema interno baseado em IDs de usuários, com suporte opcional de autorização por cargo configurada via JSON.
 
-> Observação: esta migração se aplica às permissões administrativas (Criador de Enquetes). O sistema de mensalistas agora também suporta vínculo automático opcional com o cargo `Mensalistas`.
+> Observação: esta migração se aplica às permissões administrativas (Criador de Enquetes). O sistema de mensalistas suporta vínculo automático opcional com o cargo `Mensalistas`, e o sistema administrativo suporta cargos autorizados opcionais em `role-bindings.json > adminRoleIdsByGuild`.
 
 ### ⚠️ Breaking Changes
 
@@ -77,7 +77,8 @@ O bot verifica permissões na seguinte ordem:
 1. ✅ **Administrador do Discord?** → Acesso total
 2. ✅ **Dono do servidor?** → Acesso total
 3. ✅ **ID está em `criadores-internos.json`?** → Acesso total
-4. ❌ **Se nenhum dos acima:** → Apenas pode votar
+4. ✅ **Possui cargo autorizado em `role-bindings.json > adminRoleIdsByGuild`?** → Acesso total
+5. ❌ **Se nenhum dos acima:** → Apenas pode votar
 
 ---
 
@@ -124,11 +125,17 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 - Se o cargo não existir, o bot mantém o comportamento padrão usando `mensalistas.json`.
 - O bot não cria nem duplica cargos automaticamente.
 
+### Cargos administrativos autorizados (v2.1+)
+
+- É possível autorizar cargos por servidor para operar comandos administrativos.
+- O mapeamento é persistido em `role-bindings.json` no formato `guildId -> [roleId, roleId, ...]` dentro de `adminRoleIdsByGuild`.
+- Este modo é opcional: criadores internos, administradores e dono continuam funcionando sem configuração adicional.
+
 ### Arquivos Modificados
 
 | Arquivo                              | Mudanças                                                  |
 | ------------------------------------ | --------------------------------------------------------- |
-| `utils/permissions.js`               | Agora verifica `criadores-internos.json`                  |
+| `utils/permissions.js`               | Verifica criadores internos e cargos autorizados por guild |
 | `utils/file-handler.js`              | Adicionadas funções `loadCriadores()` e `saveCriadores()` |
 | `commands/criador-de-enquete.js`     | **NOVO** - Gerencia criadores por ID                      |
 | `commands/criadores.js`              | **DESCONTINUADO** - Mostra aviso de migração              |

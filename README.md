@@ -7,10 +7,49 @@ Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripu
 Sistema binário **interno** para permissões administrativas:
 
 - **Criador de Enquetes**: Usuários adicionados internamente com `/criador-de-enquete adicionar`
+- **Cargo autorizado por servidor (opcional)**: cargos cadastrados em `role-bindings.json` dentro de `adminRoleIdsByGuild`
 - **Administrador e dono do servidor**: acesso total automático
 - **Usuário comum**: apenas vota por reações
 
 Não existem níveis intermediários para permissões administrativas. O sistema é gerenciado internamente pelo bot.
+
+### Autorização administrativa remota por cargo (JSON)
+
+Se você quiser autorizar um cargo do Discord sem usar comando, edite o arquivo do ambiente em uso:
+
+- Produção: `data/prod/role-bindings.json`
+- Staging: `data/staging/role-bindings.json`
+
+**Como encontrar os IDs:**
+
+1. **ID do servidor (Guild ID):**
+   - Abra o servidor Discord
+   - Clique com botão direito no nome do servidor (canto superior esquerdo)
+   - Selecione "Copiar ID do Servidor"
+
+2. **ID do cargo (Role ID):**
+   - Ative "Modo Desenvolvedor" em Discord (User Settings → App Settings → Developer Mode)
+   - Abra Configurações do Servidor → Cargos
+   - Clique com botão direito no cargo desejado
+   - Selecione "Copiar ID do Role"
+
+**Estrutura do arquivo:**
+
+```json
+{
+	"mensalistaRoleByGuild": {
+		"771368260633362473": "1476256860293304330"
+	},
+	"adminRoleIdsByGuild": {
+		"771368260633362473": ["123456789012345678", "987654321098765432"]
+	}
+}
+```
+
+- **adminRoleIdsByGuild**: objeto onde a chave é `guildId` e o valor é uma lista de IDs de cargos.
+- Membros com qualquer um desses cargos terão **acesso administrativo total** ao bot.
+- Mudança é aplicada na próxima interação (não exige reinicialização).
+- Veja os comentários no arquivo `role-bindings.json` para instruções detalhadas.
 
 ### Mensalistas por cargo do servidor
 
@@ -115,7 +154,7 @@ O bot de staging permite validar funcionalidades "em loco" (no Discord real) sem
 Cobertura automática de 100% dos módulos utilitários usando Jest:
 
 ```bash
-npm test              # Executa todos os 60 testes
+npm test              # Executa todos os testes unitários
 npm run test:watch    # Modo watch (re-executa ao salvar)
 npm run test:coverage # Relatório de cobertura de código
 ```

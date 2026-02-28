@@ -2,6 +2,41 @@ const fs = require('fs');
 const path = require('path');
 const { DATA_FILES, DATA_DIR } = require('./config');
 
+const DEFAULT_ROLE_BINDINGS = {
+  mensalistaRoleByGuild: {},
+  adminRoleIdsByGuild: {},
+};
+
+/**
+ * Normaliza estrutura de role-bindings para formato esperado
+ * @param {Object} data - Dados brutos carregados do JSON
+ * @returns {Object} Estrutura normalizada
+ */
+function normalizeRoleBindings(data = {}) {
+  const mensalistaRoleByGuild = data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object' ? data.mensalistaRoleByGuild : {};
+
+  const rawAdminRoleIds = data?.adminRoleIdsByGuild && typeof data.adminRoleIdsByGuild === 'object' ? data.adminRoleIdsByGuild : {};
+
+  const adminRoleIdsByGuild = Object.fromEntries(
+    Object.entries(rawAdminRoleIds).map(([guildId, roleIds]) => {
+      if (Array.isArray(roleIds)) {
+        return [guildId, [...new Set(roleIds.filter((roleId) => typeof roleId === 'string' && roleId.trim().length > 0))]];
+      }
+
+      if (typeof roleIds === 'string' && roleIds.trim().length > 0) {
+        return [guildId, [roleIds]];
+      }
+
+      return [guildId, []];
+    }),
+  );
+
+  return {
+    mensalistaRoleByGuild,
+    adminRoleIdsByGuild,
+  };
+}
+
 /**
  * Garante que o diretório existe, criando se necessário
  * @param {string} dirPath - Caminho do diretório
@@ -73,7 +108,8 @@ function saveMensalistas(data) {
  * @returns {Object} Objeto com bindings por guild
  */
 function loadRoleBindings() {
-  return loadJsonFile(DATA_FILES.roleBindings, { mensalistaRoleByGuild: {} });
+  const rawBindings = loadJsonFile(DATA_FILES.roleBindings, DEFAULT_ROLE_BINDINGS);
+  return normalizeRoleBindings(rawBindings);
 }
 
 /**
@@ -82,7 +118,13 @@ function loadRoleBindings() {
  * @returns {boolean} true se sucesso
  */
 function saveRoleBindings(data) {
-  return saveJsonFile(DATA_FILES.roleBindings, data);
+  const currentData = loadRoleBindings();
+  const nextData = normalizeRoleBindings({
+    ...currentData,
+    ...(data && typeof data === 'object' ? data : {}),
+  });
+
+  return saveJsonFile(DATA_FILES.roleBindings, nextData);
 }
 
 /**
@@ -129,7 +171,7 @@ function ensureDataFiles() {
 
   const files = [
     { path: DATA_FILES.mensalistas, content: { mensalistas: [] } },
-    { path: DATA_FILES.roleBindings, content: { mensalistaRoleByGuild: {} } },
+    { path: DATA_FILES.roleBindings, content: DEFAULT_ROLE_BINDINGS },
     { path: DATA_FILES.historico, content: [] },
     { path: DATA_FILES.criadores, content: { criadores: [] } },
     { path: DATA_FILES.draftPolls, content: [] },
@@ -151,6 +193,7 @@ module.exports = {
   saveMensalistas,
   loadRoleBindings,
   saveRoleBindings,
+  normalizeRoleBindings,
   loadCriadores,
   ensureDirectoryExists,
   saveCriadores,
