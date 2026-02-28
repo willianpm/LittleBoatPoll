@@ -116,6 +116,20 @@ O projeto suporta execução em dois ambientes isolados:
 - **Produção** (`APP_ENV=prod`) - Bot principal com dados em `data/prod/`
 - **Staging** (`APP_ENV=staging`) - Bot de testes com dados em `data/staging/`
 
+### 📁 Arquivos de dados por ambiente
+
+Cada ambiente usa a mesma estrutura de arquivos, mudando apenas a pasta (`data/prod/` ou `data/staging/`):
+
+- `active-polls.json`
+- `draft-polls.json`
+- `mensalistas.json`
+- `criadores-internos.json`
+- `historico-votacoes.json`
+- `role-bindings.json` (**inclui `adminRoleIdsByGuild` para autorização por cargo**)
+
+> ✅ Em produção, edite os arquivos em `data/prod/`.
+> ✅ Em homologação, edite os arquivos em `data/staging/`.
+
 ### Executar bot de staging
 
 **Todas as plataformas (Windows/Linux/Mac):**
