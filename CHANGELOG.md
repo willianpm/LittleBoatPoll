@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.1.1
+
+### 🐛 Correção: autorização administrativa remota por cargo
+
+- **Corrigido bug em `adminRoleIdsByGuild`:** membros com cargo autorizado voltaram a receber acesso administrativo corretamente em todos os comandos.
+- **Compatibilidade ampliada com `interaction.member`:** a verificação de permissões agora aceita tanto `GuildMember` quanto payload de API (`APIInteractionGuildMember`).
+- **Permissão de admin robusta:** suporte à leitura de permissões por bitfield (`permissions` string/bigint), além de `member.permissions.has(...)`.
+- **Normalização de IDs:** IDs de cargo e usuário agora são normalizados antes da comparação (incluindo casos com menção de cargo), evitando falso negativo.
+- **Regressão coberta em teste:** adicionados testes para membro no formato de API e para admin via bitfield.
+
+### ✅ Validação
+
+- Suite completa passando: **71/71 testes**.
+
 ## 2.1.0
 
 ### ✨ Autorização Administrativa Remota por Cargo

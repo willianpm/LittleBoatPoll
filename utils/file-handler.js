@@ -7,6 +7,28 @@ const DEFAULT_ROLE_BINDINGS = {
   adminRoleIdsByGuild: {},
 };
 
+function normalizeSnowflakeId(value) {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const match = trimmed.match(/\d{5,}/);
+    return match ? match[0] : trimmed;
+  }
+
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(Math.trunc(value));
+  }
+
+  return null;
+}
+
 /**
  * Normaliza estrutura de role-bindings para formato esperado
  * @param {Object} data - Dados brutos carregados do JSON
@@ -20,11 +42,12 @@ function normalizeRoleBindings(data = {}) {
   const adminRoleIdsByGuild = Object.fromEntries(
     Object.entries(rawAdminRoleIds).map(([guildId, roleIds]) => {
       if (Array.isArray(roleIds)) {
-        return [guildId, [...new Set(roleIds.filter((roleId) => typeof roleId === 'string' && roleId.trim().length > 0))]];
+        return [guildId, [...new Set(roleIds.map((roleId) => normalizeSnowflakeId(roleId)).filter(Boolean))]];
       }
 
-      if (typeof roleIds === 'string' && roleIds.trim().length > 0) {
-        return [guildId, [roleIds]];
+      const normalizedSingleRoleId = normalizeSnowflakeId(roleIds);
+      if (normalizedSingleRoleId) {
+        return [guildId, [normalizedSingleRoleId]];
       }
 
       return [guildId, []];

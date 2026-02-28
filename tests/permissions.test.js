@@ -3,7 +3,7 @@ jest.mock('../utils/file-handler', () => ({
   loadRoleBindings: jest.fn(),
 }));
 
-const { MessageFlags } = require('discord.js');
+const { MessageFlags, PermissionFlagsBits } = require('discord.js');
 const { loadCriadores, loadRoleBindings } = require('../utils/file-handler');
 const { isCriador, hasAuthorizedAdminRole, getAuthorizedAdminRoleIds, MENSAGEM_PERMISSAO_NEGADA, checkPermissionReply } = require('../utils/permissions');
 
@@ -14,7 +14,7 @@ function createMember({ memberId = 'member-1', ownerId = 'owner-1', guildId = 'g
     id: memberId,
     guild: { id: guildId, ownerId },
     permissions: {
-      has: jest.fn((permission) => permission === 'Administrator' && isAdmin),
+      has: jest.fn((permission) => permission === PermissionFlagsBits.Administrator && isAdmin),
     },
     roles: {
       cache: roleCache,
@@ -59,6 +59,33 @@ describe('permissions - authorization checks', () => {
   test('deve retornar false para usuário sem regras de acesso', () => {
     const member = createMember({ memberId: 'common-user', roleIds: ['role-comum'] });
     expect(isCriador(member)).toBe(false);
+  });
+
+  test('deve retornar true para membro em formato APIInteractionGuildMember com cargo autorizado', () => {
+    loadRoleBindings.mockReturnValue({
+      mensalistaRoleByGuild: {},
+      adminRoleIdsByGuild: { '771368260633362473': ['1325882022522130606'] },
+    });
+
+    const apiMember = {
+      user: { id: 'member-1' },
+      guild: { id: '771368260633362473', ownerId: 'owner-1' },
+      permissions: '0',
+      roles: ['1325882022522130606'],
+    };
+
+    expect(isCriador(apiMember)).toBe(true);
+  });
+
+  test('deve reconhecer admin via bitfield string no formato APIInteractionGuildMember', () => {
+    const apiMember = {
+      user: { id: 'member-1' },
+      guild: { id: 'guild-1', ownerId: 'owner-1' },
+      permissions: PermissionFlagsBits.Administrator.toString(),
+      roles: [],
+    };
+
+    expect(isCriador(apiMember)).toBe(true);
   });
 
   test('getAuthorizedAdminRoleIds deve retornar lista vazia sem guildId', () => {

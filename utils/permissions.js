@@ -1,5 +1,68 @@
-const { MessageFlags } = require('discord.js');
+const { MessageFlags, PermissionFlagsBits } = require('discord.js');
 const { loadCriadores, loadRoleBindings } = require('./file-handler');
+
+function extractSnowflake(value) {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const match = trimmed.match(/\d{5,}/);
+    return match ? match[0] : trimmed;
+  }
+
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(Math.trunc(value));
+  }
+
+  return null;
+}
+
+function getMemberId(member) {
+  return extractSnowflake(member?.id) || extractSnowflake(member?.user?.id);
+}
+
+function hasAdministratorPermission(member) {
+  if (!member) return false;
+
+  if (typeof member.permissions?.has === 'function') {
+    return member.permissions.has(PermissionFlagsBits.Administrator);
+  }
+
+  const rawPermissions = member.permissions;
+  if (rawPermissions === null || rawPermissions === undefined) {
+    return false;
+  }
+
+  try {
+    const permissionBits = typeof rawPermissions === 'bigint' ? rawPermissions : BigInt(rawPermissions);
+    return (permissionBits & PermissionFlagsBits.Administrator) === PermissionFlagsBits.Administrator;
+  } catch {
+    return false;
+  }
+}
+
+function getMemberRoleIds(member) {
+  const roleCache = member?.roles?.cache;
+  if (roleCache && typeof roleCache.has === 'function' && typeof roleCache.keys === 'function') {
+    return Array.from(roleCache.keys());
+  }
+
+  if (Array.isArray(member?.roles)) {
+    return member.roles.map((roleId) => extractSnowflake(roleId)).filter(Boolean);
+  }
+
+  if (Array.isArray(member?._roles)) {
+    return member._roles.map((roleId) => extractSnowflake(roleId)).filter(Boolean);
+  }
+
+  return [];
+}
 
 /**
  * SISTEMA DE PERMISSÕES BINÁRIO - VERSÃO INTERNA
@@ -27,7 +90,11 @@ function getAuthorizedAdminRoleIds(guildId) {
   const adminRoleIdsByGuild = roleBindings.adminRoleIdsByGuild && typeof roleBindings.adminRoleIdsByGuild === 'object' ? roleBindings.adminRoleIdsByGuild : {};
   const roleIds = adminRoleIdsByGuild[guildId];
 
-  return Array.isArray(roleIds) ? roleIds : [];
+  if (!Array.isArray(roleIds)) {
+    return [];
+  }
+
+  return [...new Set(roleIds.map((roleId) => extractSnowflake(roleId)).filter(Boolean))];
 }
 
 /**
@@ -36,22 +103,25 @@ function getAuthorizedAdminRoleIds(guildId) {
  * @returns {boolean} true se possui cargo autorizado
  */
 function hasAuthorizedAdminRole(member) {
-  const guildId = member?.guild?.id;
+  const guildId = extractSnowflake(member?.guild?.id);
   const authorizedRoleIds = getAuthorizedAdminRoleIds(guildId);
 
   if (!authorizedRoleIds.length) {
     return false;
   }
 
-  const roleCache = member?.roles?.cache;
-  if (!roleCache) {
-    console.log(`[PERMISSIONS] ⚠️ Membro ${member.id} sem cache de cargos`);
+  const memberId = getMemberId(member);
+  const memberRoleIds = getMemberRoleIds(member);
+
+  if (!memberRoleIds.length) {
+    console.log(`[PERMISSIONS] ⚠️ Membro ${memberId || 'desconhecido'} sem cargos carregados`);
     return false;
   }
 
-  const hasRole = authorizedRoleIds.some((roleId) => roleCache.has(roleId));
+  const memberRoleIdSet = new Set(memberRoleIds);
+  const hasRole = authorizedRoleIds.some((roleId) => memberRoleIdSet.has(roleId));
   if (!hasRole) {
-    console.log(`[PERMISSIONS] ❌ Membro ${member.id} não tem cargo autorizado. Esperado: ${authorizedRoleIds.join(', ')}`);
+    console.log(`[PERMISSIONS] ❌ Membro ${memberId || 'desconhecido'} não tem cargo autorizado. Esperado: ${authorizedRoleIds.join(', ')}`);
   }
 
   return hasRole;
@@ -68,11 +138,13 @@ function isCriador(member) {
   }
 
   // Administrador ou dono do servidor tem acesso total
-  if (member.permissions?.has('Administrator')) {
+  if (hasAdministratorPermission(member)) {
     return true;
   }
 
-  if (member.guild?.ownerId && member.id === member.guild.ownerId) {
+  const memberId = getMemberId(member);
+
+  if (member.guild?.ownerId && memberId && memberId === member.guild.ownerId) {
     return true;
   }
 
@@ -81,7 +153,7 @@ function isCriador(member) {
   const criadores = criadoresData.criadores || [];
 
   // Verifica se o ID do usuário está na lista interna de criadores
-  if (criadores.includes(member.id)) {
+  if (memberId && criadores.includes(memberId)) {
     return true;
   }
 
