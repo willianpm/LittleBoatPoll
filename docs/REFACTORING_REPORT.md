@@ -4,7 +4,7 @@ Data: 27 de Fevereiro de 2026
 
 ### Resumo Executivo
 
-Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação, consolidando todo o código duplicado em funções utilitárias centralizadas. O projeto agora tem uma base mais limpa, organizada e mantível, sem quebra de funcionalidades.
+Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação, consolidando todo o código duplicado em funções utilitárias centralizadas. O projeto agora tem uma base mais limpa e organizada, sem quebra de funcionalidades.
 
 ---
 
