@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.0.2
+
+### 🏗️ Estrutura: Condensação e Reorganização
+
+- **`test-bot` refatorado em layout plano:** removidas três camadas de subpastas (`config/`, `scripts/`, `automation/`) e centralizados todos os arquivos em `test-bot/`, simplificando a hierarquia.
+- **Paths e referências atualizadas:** sincronizados `.gitignore`, `README.md`, `test-bot/README.md`, `test-bot/AUTOMATION.md`, `.github/workflows/test.yml.example` e `package.json` scripts para apontar para novos caminhos.
+- **Documentação redundante eliminada:** removido `docs/IMPLEMENTACAO-STAGING.md` (sumário de implementação), mantendo `docs/staging-bot.md` como guia canônico.
+
+### 📖 Documentação: Padronização de Guias de Teste
+
+- **Conversão de formato:** transformados `docs/test-draft-polls.js` e `docs/test-new-commands.js` para `.md` (markdown nativo).
+- **Limpeza de código legado:** removidos marcadores de comentário (`//`, `/* */`), blocos wrapper e linhas `console.log`.
+- **Padronização visual:** headings e rótulos (`**Comando:**`, `**Resultado:**`, `**Passos:**`) alinhados ao padrão da pasta `docs`.
+- **Navegação adicionada:** índices rápidos no topo de ambos os documentos com links para seções de teste.
+
+### 🔧 Código: Refatoração e Deduplicação
+
+- **`test-bot/test-runner.js`:** extração de helpers para polling de enquete, sincronização de reações e provisioning automático.
+- **`index.js`:** consolidação de lógica duplicada em vote-limit normalization, reaction payload hydration e command execution paths.
+- **Preservação de comportamento:** refatorações mantiveram 100% de compatibilidade — testes unitários passando (60/60).
+
 ## 2.0.1
 
 ### ✨ Mensalistas: vínculo automático por cargo

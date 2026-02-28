@@ -24,9 +24,9 @@ O bot também faz vínculo automático do cargo **Mensalistas** (nome do cargo n
 ### Gerenciar Criadores
 
 ```bash
-/criador-de-enquete adicionar adicionar @usuario   # Adiciona permissão administrativa
-/criador-de-enquete adicionar remover @usuario     # Remove permissão
-/criador-de-enquete adicionar listar               # Lista todos os criadores
+/criador-de-enquete adicionar @usuario   # Adiciona permissão administrativa
+/criador-de-enquete remover @usuario     # Remove permissão
+/criador-de-enquete listar               # Lista todos os criadores
 ```
 
 Ou use o **Context Menu** (botão direito no usuário → Apps → "Add/Del Criador de Enquetes")
@@ -70,22 +70,83 @@ Registrar comandos automaticamente na inicialização:
 DEPLOY=true
 ```
 
-## Testes
+## 🧪 Bot de Homologação (Staging)
 
-O projeto conta com testes automatizados usando Jest, cobrindo 100% dos módulos utilitários.
+O projeto suporta execução em dois ambientes isolados:
 
-### Executar testes
+- **Produção** (`APP_ENV=prod`) - Bot principal com dados em `data/prod/`
+- **Staging** (`APP_ENV=staging`) - Bot de testes com dados em `data/staging/`
+
+### Executar bot de staging
+
+**Todas as plataformas (Windows/Linux/Mac):**
 
 ```bash
-npm test              # Executa todos os testes
-npm run test:watch    # Executa em modo watch (re-executa ao salvar)
-npm run test:coverage # Exibe relatório de cobertura de código
+npm run start:staging
 ```
 
-### Cobertura atual
+**Ou manualmente:**
 
-- ✅ `utils/validators.js` - Validação de enquetes e opções
-- ✅ `utils/draft-handler.js` - Manipulação de rascunhos
-- ✅ `utils/constants.js` - Constantes do sistema
+Windows (PowerShell):
 
-**59 testes** executando em ~1.3s com meta de 70% de cobertura.
+```powershell
+$env:APP_ENV="staging"; npm start
+```
+
+Linux/Mac:
+
+```bash
+APP_ENV=staging npm start
+```
+
+O bot de staging permite validar funcionalidades "em loco" (no Discord real) sem afetar produção:
+
+- ✅ Mesmo código-fonte, zero duplicação
+- ✅ Dados completamente isolados por ambiente
+- ✅ Token/Client ID próprios (crie segundo bot no Discord Developer Portal)
+- ✅ Execução sob demanda, apenas quando necessário
+
+📖 **Guia completo:** [Bot de Homologação](docs/staging-bot.md)
+
+## Testes
+
+### Testes Unitários
+
+Cobertura automática de 100% dos módulos utilitários usando Jest:
+
+```bash
+npm test              # Executa todos os 60 testes
+npm run test:watch    # Modo watch (re-executa ao salvar)
+npm run test:coverage # Relatório de cobertura de código
+```
+
+**Módulos testados:**
+
+- `utils/validators.js` - Validação de enquetes e opções
+- `utils/draft-handler.js` - Manipulação de rascunhos
+- `utils/constants.js` - Constantes do sistema
+- `utils/mensalista-binding.js` - Vínculo automático de mensalistas
+
+### Testes de Integração (Automatizados)
+
+Suite que simula usuários reais interagindo com o bot staging, validando funcionalidades fim-a-fim:
+
+```bash
+npm run test:full     # Forma recomendada (inicia bot, testa, para bot)
+```
+
+**Ou manualmente (2 terminais):**
+
+```bash
+npm run start:staging # Terminal 1: Inicia bot staging
+npm run test:automation # Terminal 2: Executa testes
+```
+
+Cenários validados:
+
+- ✅ Criação de enquetes
+- ✅ Votação (adicionar/remover votos)
+- ✅ Limites de votação e reações
+- ✅ Permissões administrativas
+
+📖 **Documentação completa:** [Testes Automatizados](test-bot/AUTOMATION.md)

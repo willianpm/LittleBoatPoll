@@ -1,71 +1,74 @@
-/**
- * GUIA DE TESTE - SISTEMA DE RASCUNHOS DE ENQUETES
- *
- * Este arquivo documenta como testar a funcionalidade de rascunhos
- * Use os comandos abaixo para testara nova feature
- */
+# Guia de Teste - Sistema de Rascunhos de Enquetes
 
-// =====================================
-// EXEMPLO 1: Criar um Rascunho Simples
-// =====================================
+Este arquivo documenta como testar a funcionalidade de rascunhos.
+Use os comandos abaixo para testar a nova feature.
 
-/*
-COMANDO:
+## Índice
+
+- [Exemplo 1: Criar um Rascunho Simples](#exemplo-1-criar-um-rascunho-simples)
+- [Exemplo 2: Editar o Rascunho](#exemplo-2-editar-o-rascunho)
+- [Exemplo 3: Visualizar Detalhes](#exemplo-3-visualizar-detalhes)
+- [Exemplo 4: Listar Todos os Rascunhos](#exemplo-4-listar-todos-os-rascunhos)
+- [Exemplo 5: Publicar o Rascunho](#exemplo-5-publicar-o-rascunho)
+- [Exemplo 6: Deletar um Rascunho](#exemplo-6-deletar-um-rascunho)
+- [Fluxo Completo de Teste](#fluxo-completo-de-teste)
+- [Estrutura de Arquivos Criados](#estrutura-de-arquivos-criados)
+- [Possíveis Erros e Soluções](#possíveis-erros-e-soluções)
+- [Dicas Importantes](#dicas-importantes)
+- [Performance e Limites](#performance-e-limites)
+- [Dados Salvos](#dados-salvos)
+
+## Exemplo 1: Criar um Rascunho Simples
+
+**Comando:**
 /rascunho criar
-  titulo: "Qual é o melhor livro de Machado de Assis?"
-  opcoes: "Brás Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó"
-  max_votos: 1
-  peso_mensalista: Não
+titulo: "Qual é o melhor livro de Machado de Assis?"
+opcoes: "Brás Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó"
+max_votos: 1
+peso_mensalista: Não
 
-RESULTADO ESPERADO:
+**Resultado Esperado:**
 ✅ Rascunho Criado com Sucesso!
 ID do Rascunho: `A1B2C3D4` (exemplo)
 Próximos Passos:
 • Use /rascunho editar para fazer alterações
 • Use /rascunho exibir para visualizar os detalhes
 • Use /rascunho publicar para ativar a enquete para votação
-*/
 
-// =====================================
-// EXEMPLO 2: Editar o Rascunho
-// =====================================
+## Exemplo 2: Editar o Rascunho
 
-/*
-COMANDOS (nessa ordem):
+**Comandos (Nessa Ordem):**
 
 1. Mudar o título:
    /rascunho editar
-     id: A1B2C3D4
-     titulo: "Votação: Qual obra de Machado você prefere?"
+   id: A1B2C3D4
+   titulo: "Votação: Qual obra de Machado você prefere?"
 
-   RESULTADO: Apenas o título é atualizado, resto mantém-se igual
+   **Resultado:** Apenas o título é atualizado, resto mantém-se igual
 
 2. Mudar max_votos e peso:
    /rascunho editar
-     id: A1B2C3D4
-     max_votos: 2
-     peso_mensalista: Sim
+   id: A1B2C3D4
+   max_votos: 2
+   peso_mensalista: Sim
 
-   RESULTADO: max_votos virou 2, peso agora tem 2x para mensalistas
+   **Resultado:** max_votos virou 2, peso agora tem 2x para mensalistas
 
 3. Adicionar mais uma opção:
    /rascunho editar
-     id: A1B2C3D4
-     opcoes: "Brás Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó, Memórias Póstumas de Brás Cubas"
+   id: A1B2C3D4
+   opcoes: "Brás Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó, Memórias Póstumas de Brás Cubas"
 
-   RESULTADO: Agora tem 5 opções em vez de 4
-*/
+   **Resultado:** Agora tem 5 opções em vez de 4
 
-// =====================================
-// EXEMPLO 3: Visualizar Detalhes
-// =====================================
+## Exemplo 3: Visualizar Detalhes
 
-/*
-COMANDO:
+**Comando:**
 /rascunho exibir
-  id: A1B2C3D4
+id: A1B2C3D4
 
-RESULTADO ESPERADO (Embed com):
+**Resultado Esperado (Embed):**
+
 - Título: "Votação: Qual obra de Machado você prefere?"
 - Opções listadas (1. Brás Cubas, 2. Dom Casmurro, etc)
 - ID: `A1B2C3D4`
@@ -75,17 +78,13 @@ RESULTADO ESPERADO (Embed com):
 - Criado em: [data/hora]
 - Editado em: [data/hora - atualizado]
 - Status: 📝 Rascunho (não publicado)
-*/
 
-// =====================================
-// EXEMPLO 4: Listar Todos os Rascunhos
-// =====================================
+## Exemplo 4: Listar Todos os Rascunhos
 
-/*
-COMANDO:
+**Comando:**
 /rascunho listar
 
-RESULTADO ESPERADO (Embed com):
+**Resultado Esperado (Embed):**
 📝 Rascunhos de Enquetes (3)
 
 ID: `A1B2C3D4`
@@ -93,6 +92,7 @@ Título: Votação: Qual obra de Machado você prefere?
 Opções: 5
 Criador: @Usuario1
 Criado em: 26 de fevereiro de 2026 às 10:30
+
 ---
 
 ID: `X9Y8Z7W6`
@@ -100,22 +100,20 @@ Título: Qual episódio da série assistir?
 Opções: 3
 Criador: @Usuario2
 Criado em: 25 de fevereiro de 2026 às 15:45
+
 ---
 
 [etc...]
-*/
 
-// =====================================
-// EXEMPLO 5: Publicar o Rascunho
-// =====================================
+## Exemplo 5: Publicar o Rascunho
 
-/*
-COMANDO:
+**Comando:**
 /rascunho publicar
-  id: A1B2C3D4
-  canal: #votações
+id: A1B2C3D4
+canal: #votações
 
-O QUE ACONTECE:
+**O Que Acontece:**
+
 1. Bot envia a enquete para o canal #votações
 2. Reações (🇦 🇧 🇨 🇩 🇪) são adicionadas automaticamente
 3. A enquete começa a aceitar votos
@@ -138,25 +136,23 @@ Selecione até 2 opções:
 🇪 Memórias Póstumas de Brás Cubas
 
 ---
+
 Regras 📊
 • Você pode votar em até 2 opções
 • Mensalistas têm peso 2 nos votos
+
 ---
 
 ID: [mensagem_id]
 5 opções disponíveis
-*/
 
-// =====================================
-// EXEMPLO 6: Deletar um Rascunho
-// =====================================
+## Exemplo 6: Deletar um Rascunho
 
-/*
-COMANDO:
+**Comando:**
 /rascunho deletar
-  id: A1B2C3D4
+id: A1B2C3D4
 
-RESULTADO ESPERADO:
+**Resultado Esperado:**
 ✅ Rascunho Deletado
 
 Título: Votação: Qual obra de Machado você prefere?
@@ -165,21 +161,17 @@ ID: `A1B2C3D4`
 O rascunho foi permanentemente removido
 
 ⚠️ AVISO: Não pode ser recuperado!
-*/
 
-// =====================================
-// FLUXO COMPLETO DE TESTE
-// =====================================
+## Fluxo Completo de Teste
 
-/*
-PASSO A PASSO PARA TESTAR TUDO:
+**Passo a Passo para Testar Tudo:**
 
 1. /rascunho criar
    titulo: "Votação de Livros"
    opcoes: "Livro A, Livro B, Livro C"
    max_votos: 1
    peso_mensalista: Não
-   
+
    [Bot retorna ID: ABC12345]
 
 2. /rascunho listar
@@ -210,14 +202,10 @@ PASSO A PASSO PARA TESTAR TUDO:
 
 8. /rascunho listar
    [ABC12345 não aparece mais - foi publicado]
-*/
 
-// =====================================
-// ESTRUTURA DE ARQUIVOS CRIADOS
-// =====================================
+## Estrutura de Arquivos Criados
 
-/*
-ARQUIVOS NOVOS OU MODIFICADOS:
+**Arquivos Novos ou Modificados:**
 
 1. commands/draft.js
    - Novo arquivo com todos os subcomandos
@@ -243,37 +231,30 @@ ARQUIVOS NOVOS OU MODIFICADOS:
 5. CHANGELOG_v1.1.md
    - Histórico de mudanças
    - Detalhes da implementação
-*/
 
-// =====================================
-// POSSÍVEIS ERROS E SOLUÇÕES
-// =====================================
+## Possíveis Erros e Soluções
 
-/*
-ERRO: "Rascunho com ID não encontrado"
+**Erro:** "Rascunho com ID não encontrado"
 → Verifique o ID com /rascunho listar
 → IDs são case-sensitive
 
-ERRO: "A enquete precisa ter pelo menos 2 opções"
+**Erro:** "A enquete precisa ter pelo menos 2 opções"
 → Adicione mais opções ou corrija a separação por vírgula
 
-ERRO: "O número máximo de votos não pode ser maior que o número de opções"
+**Erro:** "O número máximo de votos não pode ser maior que o número de opções"
 → Aumente opções ou diminua max_votos
 
-ERRO: "Permissão negada"
+**Erro:** "Permissão negada"
 → Verifique se possui o cargo Criador
 → Use /criadores listar para ver os cargos Criador
 
-ERRO: "Discord limita a 20 reações por mensagem"
+**Erro:** "Discord limita a 20 reações por mensagem"
 → Use máximo 20 opções por enquete
-*/
 
-// =====================================
-// DICAS IMPORTANTES
-// =====================================
+## Dicas Importantes
 
-/*
 ✅ BOA PRÁTICA:
+
 1. Sempre use /rascunho exibir antes de publicar
 2. Crie rascunhos durante a semana
 3. Publique quando tudo estiver pronto
@@ -281,59 +262,49 @@ ERRO: "Discord limita a 20 reações por mensagem"
 5. Mantenha backup dos rascunhos importantes
 
 ❌ EVITE:
+
 1. Deletar sem ter certeza
 2. Publicar sem revisar
 3. Esquecete nomes dos rascunhos
 4. Mudar configurações depois de publicado
    (nesse caso, crie um novo rascunho)
-*/
 
-// =====================================
-// PERFORMANCE E LIMITES
-// =====================================
+## Performance e Limites
 
-/*
-LIMITES:
+**Limites:**
+
 - Opções por enquete: 2-20 (limitação do Discord)
 - Máximo de votos: 1-19 (máximo = opções - 1)
 - Rascunhos simultâneos: Ilimitado
 - Tamanho do titulo: até 256 caracteres
 - Tamanho de cada opção: até 256 caracteres
 
-PERFORMANCE:
+**Performance:**
+
 - Carregar rascunhos: ~10ms (para 1000 rascunhos)
 - Criar rascunho: ~5ms
 - Editar rascunho: ~5ms
 - Publicar rascunho: ~1000ms (enviar mensagem + reações)
-*/
 
-// =====================================
-// DADOS SALVOS
-// =====================================
+## Dados Salvos
 
-/*
-EXEMPLO DE draft-polls.json COM UM RASCUNHO:
+**Exemplo de `draft-polls.json` com um Rascunho:**
 
 [
-  {
-    "id": "ABC12345",
-    "titulo": "Votação Oficial de Livros - Fevereiro 2026",
-    "opcoes": [
-      "Livro A",
-      "Livro B",
-      "Livro C"
-    ],
-    "maxVotos": 2,
-    "usarPesoMensalista": false,
-    "criadorId": "123456789012345678",
-    "criadorNome": "NomeDoUsuário",
-    "criadoEm": "2026-02-26T10:30:00.000Z",
-    "editadoEm": "2026-02-26T11:45:00.000Z",
-    "status": "rascunho"
-  }
+{
+"id": "ABC12345",
+"titulo": "Votação Oficial de Livros - Fevereiro 2026",
+"opcoes": [
+"Livro A",
+"Livro B",
+"Livro C"
+],
+"maxVotos": 2,
+"usarPesoMensalista": false,
+"criadorId": "123456789012345678",
+"criadorNome": "NomeDoUsuário",
+"criadoEm": "2026-02-26T10:30:00.000Z",
+"editadoEm": "2026-02-26T11:45:00.000Z",
+"status": "rascunho"
+}
 ]
-*/
-
-console.log('✅ Guia de Teste Criado - Veja acima para instruções detalhadas');
-console.log('📝 Para mais informações, consulte: DRAFT_POLLS_GUIDE.md');
-console.log('📋 Para histórico de mudanças, consulte: CHANGELOG_v1.1.md');

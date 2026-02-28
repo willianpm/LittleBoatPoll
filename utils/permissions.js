@@ -1,5 +1,5 @@
-const fs = require('fs');
 const { MessageFlags } = require('discord.js');
+const { loadCriadores } = require('./file-handler');
 
 /**
  * SISTEMA DE PERMISSÕES BINÁRIO - VERSÃO INTERNA
@@ -29,17 +29,9 @@ function isCriador(member) {
     return true;
   }
 
-  // Carrega os criadores internos do arquivo
-  let criadores = [];
-  if (fs.existsSync('./criadores-internos.json')) {
-    try {
-      const data = JSON.parse(fs.readFileSync('./criadores-internos.json', 'utf8'));
-      criadores = data.criadores || [];
-    } catch (error) {
-      console.error('❌ Erro ao ler criadores-internos.json:', error);
-      return false;
-    }
-  }
+  // Carrega os criadores internos do arquivo (via file-handler)
+  const criadoresData = loadCriadores();
+  const criadores = criadoresData.criadores || [];
 
   // Verifica se o ID do usuário está na lista interna de criadores
   return criadores.includes(member.id);
