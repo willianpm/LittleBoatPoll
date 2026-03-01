@@ -268,7 +268,11 @@ async function syncPollReactions() {
         return null;
       });
       if (!channel) {
+<<<<<<< HEAD:src/core/index.js
         console.log('Canal não encontrado - marcando para remoção');
+=======
+        console.log(`Canal não encontrado - marcando para remoção`);
+>>>>>>> 9bc9aac (conformity update: removes unicode characters from console output in 'index.js'):index.js
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -468,11 +472,15 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
+<<<<<<< HEAD:src/core/index.js
                     console.error(
                       'Sem permissão para remover reação de ' +
                         userVotes.usuario +
                         '. O bot precisa de "Gerenciar Mensagens"',
                     );
+=======
+                    console.error('Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
+>>>>>>> 9bc9aac (conformity update: removes unicode characters from console output in 'index.js'):index.js
                   } else {
                     console.error(`Erro ao remover reação: ${err.message}`);
                   }
