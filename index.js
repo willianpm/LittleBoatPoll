@@ -106,14 +106,14 @@ async function executeInteractionCommand(interaction, commandTypeLabel, notFound
   const command = client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`❌ ${notFoundLabel}: ${interaction.commandName}`);
+    console.error(`${notFoundLabel}: ${interaction.commandName}`);
     return;
   }
 
   try {
     await command.execute(interaction, client);
   } catch (error) {
-    console.error(`❌ Erro ao executar o comando${commandTypeLabel}:`, error);
+    console.error(`Erro ao executar o comando${commandTypeLabel}:`, error);
     await replyInteractionExecutionError(interaction);
   }
 }
@@ -155,9 +155,9 @@ async function bindMensalistasRolesOnStartup() {
   }
 
   if (vinculados > 0) {
-    console.log(`✓ Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
+    console.log(`- Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
   } else {
-    console.log('ℹ️  Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
+    console.log('Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
   }
 }
 
@@ -254,11 +254,11 @@ async function syncPollReactions() {
 
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`  ⚠️  Erro ao buscar canal: ${err.message}`);
+        console.log(`Erro ao buscar canal: ${err.message}`);
         return null;
       });
       if (!channel) {
-        console.log(`  ❌ Canal não encontrado - marcando para remoção`);
+        console.log(`Canal não encontrado - marcando para remoção`);
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -272,13 +272,13 @@ async function syncPollReactions() {
         const canRead = permissions?.has('ReadMessageHistory');
 
         if (!canRead) {
-          console.log(`  ⚠️  Falta permissão "Ler Histórico" em ${channel.name}`);
+          console.log(`Falta permissão "Ler Histórico" em ${channel.name}`);
         }
       }
 
       // Tenta buscar a mensagem
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`  ❌ Mensagem não encontrada: ${err.message}`);
+        console.log(`Mensagem não encontrada: ${err.message}`);
         return null;
       });
       if (!message) {
@@ -353,15 +353,15 @@ async function syncPollReactions() {
       poll.votos = votosAtualizados;
 
       const totalVotos = Object.keys(votosAtualizados).length;
-      console.log(`  ✓ ${totalVotos} voto(s) sincronizado(s)`);
+      console.log(`  — ${totalVotos} voto(s) sincronizado(s)`);
     } catch (error) {
-      console.error(`  ❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+      console.error(`Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
     }
   }
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`\n⚠️  Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -374,9 +374,9 @@ async function syncPollReactions() {
   const enquetesAtivas = client.activePolls.size;
 
   if (enquetesAtivas > 0) {
-    console.log(`\n✓ ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
+    console.log(`\n— ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
   } else {
-    console.log(`\n✓ Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
+    console.log(`\n— Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
   }
 }
 
@@ -453,9 +453,9 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
-                    console.error('❌ Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
+                    console.error('Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
                   } else {
-                    console.error(`❌ Erro ao remover reação: ${err.message}`);
+                    console.error(`Erro ao remover reação: ${err.message}`);
                   }
                 });
               }
@@ -477,7 +477,7 @@ async function enforceVoteLimits() {
             violacoesSencontradas++;
             console.log(`Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario}`);
           } catch (error) {
-            console.error('❌ Erro ao remover votos de ' + userVotes.usuario + ':', error.message);
+            console.error('Erro ao remover votos de ' + userVotes.usuario + ':', error.message);
           }
         }
       }
@@ -486,7 +486,7 @@ async function enforceVoteLimits() {
         console.log(`"${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados`);
       }
     } catch (error) {
-      console.error('❌ Erro ao verificar limites de "' + poll.titulo + '":', error.message);
+      console.error('Erro ao verificar limites de "' + poll.titulo + '":', error.message);
     }
   }
 
@@ -558,7 +558,7 @@ async function deployCommands() {
     const clientId = config.CLIENT_ID;
 
     if (!clientId) {
-      console.error('❌ ERRO: CLIENT_ID não está definido no arquivo .env');
+      console.error('   ERRO: CLIENT_ID não está definido no arquivo .env');
       console.error('   Adicione: CLIENT_ID=seu_client_id_aqui');
       return false;
     }
@@ -570,7 +570,7 @@ async function deployCommands() {
 
     return true;
   } catch (error) {
-    console.error('❌ Erro ao registrar comandos:', error);
+    console.error('Erro ao registrar comandos:', error);
     return false;
   }
 }
@@ -597,7 +597,7 @@ client.once('clientReady', async () => {
         process.exit(0);
       }
     } else {
-      console.error('❌ Deploy falhou\n');
+      console.error('Deploy falhou\n');
       if (process.argv.includes('--deploy')) {
         process.exit(1);
       }
@@ -693,7 +693,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     saveActivePolls();
   } catch (error) {
     if (DEBUG_MODE) {
-      console.error('❌ Erro ao processar reação:', error);
+      console.error('Erro ao processar reação:', error);
     }
   }
 });
@@ -728,7 +728,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     saveActivePolls();
   } catch (error) {
     if (DEBUG_MODE) {
-      console.error('❌ Erro ao remover reação:', error);
+      console.error('Erro ao remover reação:', error);
     }
   }
 });
