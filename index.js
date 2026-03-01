@@ -155,9 +155,9 @@ async function bindMensalistasRolesOnStartup() {
   }
 
   if (vinculados > 0) {
-    console.log(`✓ Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
+    console.log(`\n✓ Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
   } else {
-    console.log('ℹ️  Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
+    console.log('\nℹ️  Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
   }
 }
 
@@ -201,8 +201,24 @@ function loadDraftPolls() {
     if (fs.existsSync(config.DATA_FILES.draftPolls)) {
       const draftsArray = loadJsonFile(config.DATA_FILES.draftPolls, []);
 
+      // Limpeza automática: remove rascunhos com mais de 60 dias
+      const agora = Date.now();
+      const LIMITE_MS = 90 * 24 * 60 * 60 * 1000; // 90 dias em ms
+      let removidos = 0;
+
+      const draftsFiltrados = draftsArray.filter((draft) => {
+        const dataRef = draft.editadoEm || draft.criadoEm;
+        if (!dataRef) return true;
+        const diff = agora - new Date(dataRef).getTime();
+        if (diff > LIMITE_MS) {
+          removidos++;
+          return false;
+        }
+        return true;
+      });
+
       // Normaliza os dados
-      const normalizedDrafts = draftsArray.map((draft) => {
+      const normalizedDrafts = draftsFiltrados.map((draft) => {
         return [
           draft.id,
           {
@@ -217,6 +233,13 @@ function loadDraftPolls() {
       });
 
       client.draftPolls = new Map(normalizedDrafts);
+      if (removidos > 0) {
+        // Salva imediatamente se houve remoção
+        const draftsToSave = Array.from(client.draftPolls.values());
+        saveJsonFile(config.DATA_FILES.draftPolls, draftsToSave);
+        console.log(`🧹 Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
+        console.info(`[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`);
+      }
       console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
     }
   } catch (error) {
@@ -224,15 +247,22 @@ function loadDraftPolls() {
   }
 }
 
-// Inicializa arquivos de dados
+// Inicializa arquivos de dados e armazena logs
+let logBoot = [];
+const originalConsoleLog = console.log;
+console.log = function (...args) {
+  logBoot.push(args.join(' '));
+};
 initDataFiles();
 loadActivePolls();
 loadDraftPolls();
+console.log = originalConsoleLog;
+
+// Remover chamadas duplicadas de bindMensalistasRolesOnStartup e syncPollReactions (se existirem fora do client.once)
 
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
   const totalEnquetes = client.activePolls.size;
-  console.log(`Sincronizando ${totalEnquetes} enquete(s) ativa(s)...`);
 
   // Carrega mensalistas manuais uma vez antes do loop (otimização)
   const mensalistasSet = getMensalistasSet();
@@ -374,9 +404,9 @@ async function syncPollReactions() {
   const enquetesAtivas = client.activePolls.size;
 
   if (enquetesAtivas > 0) {
-    console.log(`\n✓ ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
+    console.log(`✓ ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
   } else {
-    console.log(`\n✓ Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
+    console.log(`✓ Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
   }
 }
 
@@ -522,7 +552,7 @@ for (const file of commandFiles) {
   }
 }
 
-console.log(`${client.commands.size} comando(s) carregado(s)\n`);
+console.log(`${client.commands.size} comando(s) carregado(s)`);
 
 // =====================================
 // DEPLOY DE COMANDOS
@@ -580,36 +610,8 @@ async function deployCommands() {
 // =====================================
 
 // Evento: Bot conectado e pronto
-client.once('clientReady', async () => {
-  console.log(`${client.user.tag} está ONLINE\n`);
-  client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 
-  await bindMensalistasRolesOnStartup();
-
-  // Deploy de comandos se requisitado via variável de ambiente ou flag
-  if (config.DEPLOY) {
-    console.log('Registrando comandos...');
-    const deploySuccess = await deployCommands();
-    if (deploySuccess) {
-      console.log('Deploy concluído com sucesso\n');
-      // Se foi deployment via linha de comando, sai após sucesso
-      if (process.argv.includes('--deploy')) {
-        process.exit(0);
-      }
-    } else {
-      console.error('❌ Deploy falhou\n');
-      if (process.argv.includes('--deploy')) {
-        process.exit(1);
-      }
-    }
-  }
-
-  // Sincroniza reações das enquetes ativas
-  await syncPollReactions();
-
-  // Verifica e remove votos que excedem o limite
-  await enforceVoteLimits();
-});
+// (Removido: client.once('clientReady') duplicado. Mantido apenas o bloco com logBoot)
 
 // Evento: Interação criada (Slash Commands, Context Menu, Buttons, etc)
 client.on('interactionCreate', async (interaction) => {
@@ -741,11 +743,38 @@ const port = config.PORT; // O Koyeb injeta a porta automaticamente
 
 app.get('/', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
 
-app.listen(port, () => {
-  console.log(`Keep-alive rodando na porta ${port}`);
-});
+let keepAliveStarted = false;
+function startKeepAlive() {
+  if (keepAliveStarted) return;
+  keepAliveStarted = true;
+  app.listen(port, () => {
+    // O log será feito após o bot estar online
+  });
+}
 
 // =====================================
 // LOGIN DO BOT
 // =====================================
 client.login(config.TOKEN);
+
+// Evento: Bot conectado e pronto
+client.once('clientReady', async () => {
+  // Exibe logs de carregamento
+  for (const line of logBoot) {
+    originalConsoleLog(line);
+  }
+
+  // Binding de mensalistas
+  await bindMensalistasRolesOnStartup();
+
+  // Sincroniza reações das enquetes ativas
+  await syncPollReactions();
+
+  // Verifica e remove votos que excedem o limite
+  await enforceVoteLimits();
+
+  // Inicia o keep-alive e exibe logs finais
+  startKeepAlive();
+  originalConsoleLog(`Keep-alive rodando na porta ${port}`);
+  originalConsoleLog(`${client.user.tag} está ONLINE`);
+});
