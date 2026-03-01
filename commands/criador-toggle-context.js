@@ -73,7 +73,7 @@ module.exports = {
           content: `✅ **${targetUser.username}** foi removido(a) da lista de Criadores de Enquetes.\n_O usuário continua podendo votar normalmente._`,
           flags: MessageFlags.Ephemeral,
         });
-        console.log(`❌ Criador removido (contexto): ${targetUser.username} (${targetUser.id})`);
+        console.log(`Criador removido (contexto): ${targetUser.username} (${targetUser.id})`);
       } else {
         // ADICIONAR criador
 
@@ -85,7 +85,7 @@ module.exports = {
           content: `✅ **${targetUser.username}** foi adicionado(a) como Criador de Enquetes!\n_O usuário agora tem acesso administrativo total ao bot._`,
           flags: MessageFlags.Ephemeral,
         });
-        console.log(`✅ Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
+        console.log(`Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
       }
     } catch (error) {
       console.error('❌ Erro ao alternar Criador de Enquetes (contexto):', error);

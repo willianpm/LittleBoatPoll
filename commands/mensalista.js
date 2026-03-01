@@ -80,7 +80,7 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [addEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`✅ Mensalista adicionado: ${usuario.username} (${usuario.id})`);
+        console.log(`Mensalista adicionado: ${usuario.username} (${usuario.id})`);
       }
 
       // ====================================
@@ -115,7 +115,7 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`❌ Mensalista removido: ${usuario.username} (${usuario.id})`);
+        console.log(`Mensalista removido: ${usuario.username} (${usuario.id})`);
       }
 
       // ====================================
@@ -153,10 +153,10 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [listEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`📋 Lista de mensalistas solicitada: ${mensalistasData.mensalistas.length} membros`);
+        console.log(`Lista de mensalistas solicitada: ${mensalistasData.mensalistas.length} membros`);
       }
     } catch (error) {
-      console.error('❌ Erro ao gerenciar mensalistas:', error);
+      console.error('Erro ao gerenciar mensalistas:', error);
       await interaction.reply({
         content: '❌ Erro ao processar o comando!',
         flags: MessageFlags.Ephemeral,
