@@ -155,7 +155,7 @@ async function bindMensalistasRolesOnStartup() {
   }
 
   if (vinculados > 0) {
-    console.log(`\n✓ Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
+    console.log(`\nBinding automático de mensalista ativo em ${vinculados} servidor(es)`);
   } else {
     console.log('\nℹ️  Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
   }
@@ -258,8 +258,6 @@ loadActivePolls();
 loadDraftPolls();
 console.log = originalConsoleLog;
 
-// Remover chamadas duplicadas de bindMensalistasRolesOnStartup e syncPollReactions (se existirem fora do client.once)
-
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
   const totalEnquetes = client.activePolls.size;
@@ -280,7 +278,7 @@ async function syncPollReactions() {
         continue;
       }
 
-      console.log(`[${enquetesProcessadas}/${totalEnquetes}] Sincronizando "${poll.titulo}"...`);
+      console.log(`Sincronizando "${poll.titulo}"... [${enquetesProcessadas}/${totalEnquetes}]`);
 
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
@@ -383,7 +381,7 @@ async function syncPollReactions() {
       poll.votos = votosAtualizados;
 
       const totalVotos = Object.keys(votosAtualizados).length;
-      console.log(`  ✓ ${totalVotos} voto(s) sincronizado(s)`);
+      console.log(`${totalVotos} voto(s) sincronizado(s)`);
     } catch (error) {
       console.error(`  ❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
     }
@@ -391,7 +389,7 @@ async function syncPollReactions() {
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`\n⚠️  Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`⚠️  Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -404,9 +402,9 @@ async function syncPollReactions() {
   const enquetesAtivas = client.activePolls.size;
 
   if (enquetesAtivas > 0) {
-    console.log(`✓ ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
+    console.log(`${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
   } else {
-    console.log(`✓ Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
+    console.log(`Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
   }
 }
 
@@ -522,7 +520,7 @@ async function enforceVoteLimits() {
 
   // Remove enquetes órfãs (se ainda não foram removidas na sincronização)
   if (enquetesOrfas.length > 0) {
-    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -531,7 +529,7 @@ async function enforceVoteLimits() {
   // Salva após aplicar limites
   saveActivePolls();
   if (client.activePolls.size > 0) {
-    console.log('Verificação de limites concluída\n');
+    console.log('Verificação de limites concluída');
   }
 }
 
@@ -767,11 +765,11 @@ client.once('clientReady', async () => {
   // Binding de mensalistas
   await bindMensalistasRolesOnStartup();
 
-  // Sincroniza reações das enquetes ativas
-  await syncPollReactions();
-
   // Verifica e remove votos que excedem o limite
   await enforceVoteLimits();
+
+  // Sincroniza reações das enquetes ativas
+  await syncPollReactions();
 
   // Inicia o keep-alive e exibe logs finais
   startKeepAlive();
