@@ -141,10 +141,14 @@ module.exports = {
       // Salva as votações ativas em arquivo
       client.saveActivePolls();
 
+<<<<<<< HEAD:src/commands/polls/poll.js
       console.log(
         `Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | ` +
           `Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`,
       );
+=======
+      console.log(`Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
+>>>>>>> 5699951 (conformity update: removes unicode characters from console output in 'commands'):commands/poll.js
     } catch (error) {
       console.error('Erro ao criar enquete:', error);
       await interaction.editReply({

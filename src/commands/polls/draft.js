@@ -540,9 +540,13 @@ async function handlePublicar(interaction, client) {
       embeds: [publishEmbed],
     });
 
+<<<<<<< HEAD:src/commands/polls/draft.js
     console.log(
       `Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | ` + `Canal: ${targetChannel.name}`,
     );
+=======
+    console.log(`Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
+>>>>>>> 5699951 (conformity update: removes unicode characters from console output in 'commands'):commands/draft.js
   } catch (error) {
     console.error('Erro ao publicar rascunho:', error);
     await interaction.editReply({
@@ -686,9 +690,13 @@ async function handleAdicionarOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
+<<<<<<< HEAD:src/commands/polls/draft.js
   console.log(
     `Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | ` + `Novas: ${novasOpcoes.join(', ')}`,
   );
+=======
+  console.log(`Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
+>>>>>>> 5699951 (conformity update: removes unicode characters from console output in 'commands'):commands/draft.js
 }
 
 async function handleRemoverOpcao(interaction, client) {
