@@ -39,7 +39,7 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`❌ Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
+        console.log(`Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
       } else {
         // Adiciona mensalista
         mensalistasData.mensalistas.push(usuario.id);
@@ -57,10 +57,10 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [addEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`✅ Mensalista adicionado (contexto): ${usuario.username} (${usuario.id})`);
+        console.log(`Mensalista adicionado (contexto): ${usuario.username} (${usuario.id})`);
       }
     } catch (error) {
-      console.error('❌ Erro ao alternar mensalista (contexto):', error);
+      console.error('Erro ao alternar mensalista (contexto):', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: 'Erro ao processar o comando.',
