@@ -4,7 +4,7 @@ Guia rápido para configurar seu ambiente de desenvolvimento local (~5 minutos).
 
 ## Pré-requisitos
 
-- **Node.js** 18.x ou superior ([Baixar](https://nodejs.org))
+- **Node.js** 22.x ou superior ([Baixar](https://nodejs.org))
 - **Git** 2.x ou superior ([Baixar](https://git-scm.com))
 - **Discord Developer Portal** account com permissão para criar aplicações
 
