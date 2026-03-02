@@ -7,50 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linter
-        run: npm run lint --if-present
-        continue-on-error: true
-
-      - name: Run tests
-        run: npm test -- --coverage
-
-      - name: Check coverage threshold
-        run: |
-          coverage=$(npx jest --coverage --passWithNoTests | grep -A 4 "Coverage summary" | tail -1 | awk '{print $3}' | sed 's/%//')
-          if (( $(echo "$coverage < 70" | bc -l) )); then
-            echo "Coverage is $coverage%, which is below 70% threshold"
-            exit 1
-          fi
-        continue-on-error: false
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          fail_ci_if_error: false
-
-  code-quality:
+  lint:
     runs-on: ubuntu-latest
     
     steps:
@@ -60,16 +17,49 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '22.x'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run prettier check
-        run: npm run format:check --if-present
-        continue-on-error: true
+      - name: Run ESLint
+        run: npm run lint
 
-      - name: Run eslint
-        run: npm run lint --if-present
-        continue-on-error: true
+      - name: Check Prettier formatting
+        run: npm run format:check
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage
+
+      - name: Verify coverage threshold
+        run: |
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "Coverage report not found!"
+            exit 1
+          fi
+        # Jest's coverageThreshold in jest.config.js already validates coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
