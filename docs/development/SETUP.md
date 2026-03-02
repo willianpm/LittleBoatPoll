@@ -63,7 +63,7 @@ npm install
 npm test
 ```
 
-Se ver "Tests passed" e "70%+ coverage", seu setup está correto! ✅
+Se ver "Tests passed" e um relatório de coverage gerado, seu setup está correto! ✅
 
 ## Step 5: Iniciar o Bot (Opcional)
 
