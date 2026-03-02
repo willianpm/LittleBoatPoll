@@ -21,8 +21,9 @@ Discord Bot (discord.js)
         │   └─ Error Handler (tratamento)
         │
         └─→ Data (JSON files)
-            ├─ prod/ (produção)
-            └─ staging/ (testes)
+            └─ environments/
+                ├─ prod/ (produção)
+                └─ staging/ (testes)
 ```
 
 ## Fluxo de uma Requisição
