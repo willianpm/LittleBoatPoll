@@ -1,4 +1,4 @@
-# 🧪 Testes Automatizados - LittleBoatPoll
+# Teste Automatizado - LittleBoatPoll
 
 Sistema de testes automatizados que simula interações de usuários com o bot staging, validando funcionalidades e gerando relatórios.
 
