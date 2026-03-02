@@ -189,7 +189,10 @@ O bot usa `cross-env` (multiplataforma) para definir `APP_ENV=staging`, que auto
 - `npm run start:staging` - Inicia bot staging
 - `npm run deploy:staging` - Deploy de comandos em staging
 - `npm start` - Inicia bot de produção
-- `npm run migrate:data` - Migra dados legados para `data/environments/prod/`
+
+**Para migração de dados legados:**
+
+- Execute: `node scripts/migrate-data.js` - Migra dados legados para `data/environments/prod/`
 
 ---
 
