@@ -185,7 +185,7 @@ function ensureDataFiles() {
   files.forEach(({ path: filePath, content }) => {
     if (!fs.existsSync(filePath)) {
       saveJsonFile(filePath, content);
-      console.log(`✓ Arquivo criado: ${path.relative(DATA_DIR, filePath)}`);
+      console.log(` Arquivo criado: ${path.relative(DATA_DIR, filePath)}`);
     }
   });
 }

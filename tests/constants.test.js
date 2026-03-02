@@ -5,7 +5,7 @@ describe('constants - EMOJIS_DISPONIVEIS', () => {
     expect(EMOJIS_DISPONIVEIS).toHaveLength(20);
   });
 
-  test('deve começar com 🇦 e terminar com 🇹', () => {
+  test('deve começar com emoji de A e terminar com emoji de T', () => {
     expect(EMOJIS_DISPONIVEIS[0]).toBe('🇦');
     expect(EMOJIS_DISPONIVEIS[19]).toBe('🇹');
   });

@@ -5,6 +5,7 @@
  * executando cenários de teste automatizados e gerando relatórios.
  */
 
+const { parseEmoji } = require('discord.js');
 const { Client, GatewayIntentBits } = require('discord.js');
 const dotenv = require('dotenv');
 const path = require('path');
@@ -20,7 +21,7 @@ const TEST_GUILD_ID = process.env.TEST_GUILD_ID;
 
 // Validação de configuração
 if (!TEST_BOT_TOKEN || !STAGING_BOT_ID || !TEST_CHANNEL_ID || !TEST_GUILD_ID) {
-  console.error('❌ Erro: Configure todas as variáveis em test-bot/.env.test:');
+  console.error('Erro: Configure todas as variáveis em test-bot/.env.test:');
   console.error('   TEST_BOT_TOKEN - Token do bot de teste');
   console.error('   STAGING_BOT_ID - ID do bot staging');
   console.error('   TEST_CHANNEL_ID - ID do canal de testes');
@@ -52,7 +53,7 @@ const colors = {
 };
 
 const MESSAGE_FETCH_LIMIT = 50;
-const DEFAULT_POLL_EMOJIS = ['👍', '👎', '🤷'];
+const DEFAULT_POLL_EMOJIS = [':thumbsup:', ':thumbsdown:', ':person_shrugging:'];
 
 // Função auxiliar para logging
 function log(message, color = 'reset') {
@@ -69,10 +70,10 @@ function recordTest(scenario, testName, passed, details = '') {
   testResults.total++;
   if (passed) {
     testResults.passed++;
-    log(`  ✓ ${testName}`, 'green');
+    log(`  ${testName}`, 'green');
   } else {
     testResults.failed++;
-    log(`  ✗ ${testName}`, 'red');
+    log(`  ${testName}`, 'red');
     if (details) log(`    ${details}`, 'yellow');
   }
 
@@ -115,17 +116,17 @@ async function ensurePollReactions(message, logReactionErrors = true) {
   let pollMessage = message;
 
   if (pollMessage.reactions.cache.size === 0) {
-    log('   ℹ️  Adicionando reações automaticamente à enquete para teste...', 'blue');
+    log('Adicionando reações automaticamente à enquete para teste...', 'blue');
 
     for (const emoji of DEFAULT_POLL_EMOJIS) {
       try {
-        await pollMessage.react(emoji);
+        await pollMessage.react(parseEmoji(emoji));
         await wait(500);
       } catch (error) {
         if (logReactionErrors) {
-          log(`   ⚠️  Não foi possível adicionar reação ${emoji}: ${error.message}`, 'yellow');
+          log(`Não foi possível adicionar reação ${emoji}: ${error.message}`, 'yellow');
         } else {
-          log(`   ⚠️  Não foi possível adicionar reação ${emoji}`, 'yellow');
+          log(`Não foi possível adicionar reação ${emoji}`, 'yellow');
         }
       }
     }
@@ -134,7 +135,7 @@ async function ensurePollReactions(message, logReactionErrors = true) {
     pollMessage = await pollMessage.channel.messages.fetch(pollMessage.id);
 
     if (logReactionErrors) {
-      log(`   ✓ Reações adicionadas (${pollMessage.reactions.cache.size} encontradas)`, 'green');
+      log(`   Reações adicionadas (${pollMessage.reactions.cache.size} encontradas)`, 'green');
     }
   }
 
@@ -152,7 +153,7 @@ async function ensurePollReactions(message, logReactionErrors = true) {
  * Cenário 1: Criar enquete básica
  */
 async function testCreateBasicPoll(channel) {
-  log('\n📋 Cenário 1: Criar Enquete Básica', 'cyan');
+  log('\nCenário 1: Criar Enquete Básica', 'cyan');
 
   try {
     // Busca o bot staging no servidor
@@ -176,7 +177,7 @@ async function testCreateBasicPoll(channel) {
     recordTest('Criar Enquete', 'Bot de teste pode usar slash commands', canUseCommands);
 
     if (botMessages) {
-      log('\n⚠️  Nota: Comandos estão sendo registrados no bot (veja logs de deploy).', 'yellow');
+      log('\nNota: Comandos estão sendo registrados no bot (veja logs de deploy).', 'yellow');
       log('     Se não aparecer em /enquete, aguarde até 60 minutos pela propagação do Discord.', 'yellow');
     }
 
@@ -191,14 +192,14 @@ async function testCreateBasicPoll(channel) {
  * Cenário 2: Simular votos em enquete existente
  */
 async function testVoteOnPoll(channel) {
-  log('\n🗳️  Cenário 2: Votar em Enquete', 'cyan');
+  log('\nCenário 2: Votar em Enquete', 'cyan');
 
   try {
     let pollMessage = await findLatestPollMessage(channel);
 
     if (!pollMessage) {
       recordTest('Votar em Enquete', 'Mensagem do bot encontrada', false, 'Nenhuma enquete/mensagem do bot encontrada');
-      log('     💡 Dica: Crie uma enquete com /enquete no canal de testes', 'yellow');
+      log('     Dica: Crie uma enquete com /enquete no canal de testes', 'yellow');
       return null;
     }
     recordTest('Votar em Enquete', 'Mensagem do bot encontrada', true);
@@ -238,7 +239,7 @@ async function testVoteOnPoll(channel) {
       }
     } else {
       recordTest('Votar em Enquete', 'Enquete tem múltiplas opções', false, 'Enquete não tem reações ainda');
-      log('     💡 Dica: Adicione reações manualmente à enquete (👍, 👎, etc)', 'yellow');
+      log('     Dica: Adicione reações manualmente à enquete', 'yellow');
     }
 
     return pollMessage;
@@ -252,7 +253,7 @@ async function testVoteOnPoll(channel) {
  * Cenário 3: Teste de limites de votação
  */
 async function testVoteLimits(channel) {
-  log('\n🚫 Cenário 3: Limites de Votação', 'cyan');
+  log('\nCenário 3: Limites de Votação', 'cyan');
 
   try {
     let pollMessage = await findLatestPollMessage(channel);
@@ -271,7 +272,7 @@ async function testVoteLimits(channel) {
 
     if (reactionArray.length < 2) {
       recordTest('Limites de Votação', 'Enquete com múltiplas opções', false, `Precisa de pelo menos 2 opções, encontrou ${reactionArray.length}`);
-      log('     💡 Dica: Adicione mais reações manualmente à enquete', 'yellow');
+      log('     Dica: Adicione mais reações manualmente à enquete', 'yellow');
       return;
     }
     recordTest('Limites de Votação', 'Enquete com múltiplas opções', true, `${reactionArray.length} opção(ões) encontrada(s)`);
@@ -330,7 +331,7 @@ async function testVoteLimits(channel) {
 }
 
 async function testPermissions(channel) {
-  log('\n🔒 Cenário 4: Sistema de Permissões', 'cyan');
+  log('\nCenário 4: Sistema de Permissões', 'cyan');
 
   try {
     const guild = channel.guild;
@@ -351,8 +352,8 @@ async function testPermissions(channel) {
     recordTest('Permissões', 'Bot tem permissão para enviar mensagens', canSendMessages);
     recordTest('Permissões', 'Bot tem permissão para gerenciar reações', canManageMessages || canAddReactions);
 
-    log('\n   ℹ️  Nota: Comandos slash são registrados automaticamente pelo bot.', 'blue');
-    log('        Confirme nos logs acima: "Deploy concluído com sucesso"', 'blue');
+    log('\n      Nota: Comandos slash são registrados automaticamente pelo bot.', 'blue');
+    log('      Confirme nos logs acima: "Deploy concluído com sucesso"', 'blue');
   } catch (error) {
     recordTest('Permissões', 'Execução sem erros', false, error.message);
   }
@@ -363,9 +364,9 @@ async function testPermissions(channel) {
 // =====================================
 
 testClient.once('clientReady', async () => {
-  log('\n╔══════════════════════════════════════════════╗', 'cyan');
-  log('║   🧪 LittleBoatPoll - Testes Automatizados   ║', 'cyan');
-  log('╚══════════════════════════════════════════════╝', 'cyan');
+  log('\n╔═══════════════════════════════════════════════╗', 'cyan');
+  log('║     LittleBoatPoll - Testes Automatizados     ║', 'cyan');
+  log('╚═══════════════════════════════════════════════╝', 'cyan');
 
   log(`\n✓ Bot de teste conectado: ${testClient.user.tag}`, 'green');
 
@@ -373,11 +374,11 @@ testClient.once('clientReady', async () => {
     // Obtém canal de testes
     const channel = await testClient.channels.fetch(TEST_CHANNEL_ID);
     if (!channel) {
-      log(`❌ Canal de testes não encontrado: ${TEST_CHANNEL_ID}`, 'red');
+      log(`Canal de testes não encontrado: ${TEST_CHANNEL_ID}`, 'red');
       process.exit(1);
     }
 
-    log(`✓ Canal de testes: #${channel.name}`, 'green');
+    log(`- Canal de testes: #${channel.name}`, 'green');
     log('\n' + '='.repeat(50), 'blue');
 
     // Executa cenários de teste
@@ -394,18 +395,18 @@ testClient.once('clientReady', async () => {
 
     // Relatório final
     log('\n' + '='.repeat(50), 'blue');
-    log('\n📊 RELATÓRIO FINAL', 'cyan');
+    log('\nRELATÓRIO FINAL', 'cyan');
     log('='.repeat(50), 'blue');
     log(`\nTotal de testes: ${testResults.total}`);
-    log(`✓ Passou: ${testResults.passed}`, 'green');
-    log(`✗ Falhou: ${testResults.failed}`, 'red');
+    log(`Passou: ${testResults.passed}`, 'green');
+    log(`Falhou: ${testResults.failed}`, 'red');
 
     const successRate = ((testResults.passed / testResults.total) * 100).toFixed(1);
     const color = successRate >= 80 ? 'green' : successRate >= 50 ? 'yellow' : 'red';
     log(`\nTaxa de sucesso: ${successRate}%`, color);
 
     // Exibe detalhes por cenário
-    log('\n📋 Detalhes por Cenário:', 'cyan');
+    log('\nDetalhes por Cenário:', 'cyan');
     for (const scenario of testResults.scenarios) {
       const passed = scenario.tests.filter((t) => t.passed).length;
       const total = scenario.tests.length;
@@ -418,27 +419,27 @@ testClient.once('clientReady', async () => {
 
     // Recomendações
     if (successRate < 100) {
-      log('\n💡 Dicas para melhorar os testes:', 'yellow');
+      log('\nDicas para melhorar os testes:', 'yellow');
 
       if (testResults.scenarios.some((s) => s.name === 'Votar em Enquete' && s.tests.some((t) => !t.passed && t.name.includes('reações')))) {
-        log('  1. Adicione reações manualmente à enquete (👍, 👎, 🤷) no Discord', 'yellow');
+        log('  1. Adicione reações manualmente à enquete no Discord', 'yellow');
       }
     }
 
-    log('\n✓ Testes concluídos\n', 'green');
+    log('\nTestes concluídos\n', 'green');
 
     // Exit code baseado em resultados
     process.exit(testResults.failed > 0 ? 1 : 0);
   } catch (error) {
-    log(`\n❌ Erro fatal: ${error.message}`, 'red');
+    log(`\nErro fatal: ${error.message}`, 'red');
     console.error(error);
     process.exit(1);
   }
 });
 
 // Login do bot de teste
-log('🔄 Conectando bot de teste...', 'blue');
+log('Conectando bot de teste...', 'blue');
 testClient.login(TEST_BOT_TOKEN).catch((error) => {
-  log(`\n❌ Erro ao conectar bot de teste: ${error.message}`, 'red');
+  log(`\nErro ao conectar bot de teste: ${error.message}`, 'red');
   process.exit(1);
 });

@@ -11,7 +11,7 @@ const APP_ENV = process.env.APP_ENV || 'prod';
 // Valida ambiente
 const VALID_ENVS = ['prod', 'staging'];
 if (!VALID_ENVS.includes(APP_ENV)) {
-  console.error(`❌ ERRO: APP_ENV inválido: "${APP_ENV}". Valores aceitos: ${VALID_ENVS.join(', ')}`);
+  console.error(`ERRO: APP_ENV inválido: "${APP_ENV}". Valores aceitos: ${VALID_ENVS.join(', ')}`);
   process.exit(1);
 }
 
@@ -26,12 +26,12 @@ const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 
 if (!TOKEN) {
-  console.error('❌ ERRO: TOKEN não está definido no .env');
+  console.error('ERRO: TOKEN não está definido no .env');
   process.exit(1);
 }
 
 if (!CLIENT_ID) {
-  console.error('❌ ERRO: CLIENT_ID não está definido no .env');
+  console.error('ERRO: CLIENT_ID não está definido no .env');
   process.exit(1);
 }
 
@@ -77,7 +77,7 @@ function getConfig() {
  */
 function logConfig() {
   console.log('╔════════════════════════════════════════╗');
-  console.log('║   🔧 Configuração do Little Boat Poll  ║');
+  console.log('║    Configuração do Little Boat Poll    ║');
   console.log('╚════════════════════════════════════════╝');
   console.log(`Ambiente:     ${APP_ENV.toUpperCase()}`);
   console.log(`Instância:    ${INSTANCE_ID}`);

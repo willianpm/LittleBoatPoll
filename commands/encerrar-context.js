@@ -176,7 +176,7 @@ module.exports = {
 
       console.log(`Votação finalizada via contexto: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
     } catch (error) {
-      console.error('❌ Erro ao encerrar votação:', error);
+      console.error('Erro ao encerrar votação:', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao encerrar a votação!',

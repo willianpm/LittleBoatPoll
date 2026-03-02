@@ -77,7 +77,7 @@ module.exports = {
         })
         .setTimestamp();
 
-      console.log(`✅ Criador adicionado: ${usuario.username} (${usuario.id})`);
+      console.log(`Criador adicionado: ${usuario.username} (${usuario.id})`);
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
@@ -112,7 +112,7 @@ module.exports = {
 
       const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Criador de Enquetes Removido!').setDescription(`**${usuario.username}** (${usuario.id}) não tem mais acesso administrativo ao bot.`).setFooter({ text: 'Usuário continua podendo votar normalmente' }).setTimestamp();
 
-      console.log(`❌ Criador removido: ${usuario.username} (${usuario.id})`);
+      console.log(`Criador removido: ${usuario.username} (${usuario.id})`);
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
