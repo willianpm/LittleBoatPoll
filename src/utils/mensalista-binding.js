@@ -10,9 +10,7 @@ const MENSALISTA_ROLE_NAME = 'mensalistas';
 function findMensalistasRoleByName(guild) {
   if (!guild?.roles?.cache) return null;
 
-  return (
-    guild.roles.cache.find((role) => role.name?.trim().toLowerCase() === MENSALISTA_ROLE_NAME) || null
-  );
+  return guild.roles.cache.find((role) => role.name?.trim().toLowerCase() === MENSALISTA_ROLE_NAME) || null;
 }
 
 /**

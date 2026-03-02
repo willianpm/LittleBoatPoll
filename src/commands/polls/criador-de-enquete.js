@@ -74,9 +74,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor('#00FF00')
         .setTitle('✅ Criador de Enquetes Adicionado!')
-        .setDescription(
-          `**${usuario.username}** (${usuario.id}) agora tem acesso administrativo total ao bot.`,
-        )
+        .setDescription(`**${usuario.username}** (${usuario.id}) agora tem acesso administrativo total ao bot.`)
         .addFields({
           name: '📋 Permissões Concedidas',
           value:

@@ -612,7 +612,6 @@ async function deployCommands() {
     for (const { command } of loadedCommands) {
       if (command.data && command.execute) {
         commands.push(command.data.toJSON());
-
       }
     }
 

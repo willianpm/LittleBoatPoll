@@ -472,8 +472,7 @@ async function handlePublicar(interaction, client) {
         {
           name: 'Regras 📊',
           value:
-            `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n` +
-            `• ${pesoInfo}`,
+            `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n` + `• ${pesoInfo}`,
           inline: false,
         },
       )
@@ -531,8 +530,7 @@ async function handlePublicar(interaction, client) {
         {
           name: 'Link para Votação',
           value:
-            '[Clique aqui](https://discord.com/channels/' +
-            `${interaction.guildId}/${targetChannel.id}/${msg.id})`,
+            '[Clique aqui](https://discord.com/channels/' + `${interaction.guildId}/${targetChannel.id}/${msg.id})`,
         },
       )
       .setFooter({ text: 'A enquete está ativa e aceitando votos' })
@@ -543,8 +541,7 @@ async function handlePublicar(interaction, client) {
     });
 
     console.log(
-      `Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | ` +
-        `Canal: ${targetChannel.name}`,
+      `Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | ` + `Canal: ${targetChannel.name}`,
     );
   } catch (error) {
     console.error('Erro ao publicar rascunho:', error);
@@ -690,8 +687,7 @@ async function handleAdicionarOpcao(interaction, client) {
   });
 
   console.log(
-    `Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | ` +
-      `Novas: ${novasOpcoes.join(', ')}`,
+    `Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | ` + `Novas: ${novasOpcoes.join(', ')}`,
   );
 }
 

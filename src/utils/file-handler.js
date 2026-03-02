@@ -13,9 +13,7 @@ const DEFAULT_ROLE_BINDINGS = {
  */
 function normalizeRoleBindings(data = {}) {
   const mensalistaRoleByGuild =
-    data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object'
-      ? data.mensalistaRoleByGuild
-      : {};
+    data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object' ? data.mensalistaRoleByGuild : {};
 
   return {
     mensalistaRoleByGuild,
