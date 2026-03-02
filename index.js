@@ -89,16 +89,16 @@ async function replyInteractionExecutionError(interaction) {
   try {
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
-        content: '❌ Erro ao executar o comando!',
+        content: 'Erro ao executar o comando!',
         flags: MessageFlags.Ephemeral,
       });
     } else if (interaction.deferred) {
       await interaction.editReply({
-        content: '❌ Erro ao executar o comando!',
+        content: 'Erro ao executar o comando!',
       });
     }
   } catch (replyError) {
-    console.error('❌ Não foi possível responder à interação:', replyError.message);
+    console.error('Não foi possível responder à interação:', replyError.message);
   }
 }
 
@@ -106,14 +106,14 @@ async function executeInteractionCommand(interaction, commandTypeLabel, notFound
   const command = client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`❌ ${notFoundLabel}: ${interaction.commandName}`);
+    console.error(`${notFoundLabel}: ${interaction.commandName}`);
     return;
   }
 
   try {
     await command.execute(interaction, client);
   } catch (error) {
-    console.error(`❌ Erro ao executar o comando${commandTypeLabel}:`, error);
+    console.error(`Erro ao executar o comando${commandTypeLabel}:`, error);
     await replyInteractionExecutionError(interaction);
   }
 }
@@ -237,7 +237,7 @@ function loadDraftPolls() {
         // Salva imediatamente se houve remoção
         const draftsToSave = Array.from(client.draftPolls.values());
         saveJsonFile(config.DATA_FILES.draftPolls, draftsToSave);
-        console.log(`🧹 Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
+        console.log(`Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
         console.info(`[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`);
       }
       console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
@@ -282,11 +282,11 @@ async function syncPollReactions() {
 
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`  ⚠️  Erro ao buscar canal: ${err.message}`);
+        console.log(`  Erro ao buscar canal: ${err.message}`);
         return null;
       });
       if (!channel) {
-        console.log(`  ❌ Canal não encontrado - marcando para remoção`);
+        console.log(`  Canal não encontrado - marcando para remoção`);
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -300,13 +300,13 @@ async function syncPollReactions() {
         const canRead = permissions?.has('ReadMessageHistory');
 
         if (!canRead) {
-          console.log(`  ⚠️  Falta permissão "Ler Histórico" em ${channel.name}`);
+          console.log(`  Falta permissão "Ler Histórico" em ${channel.name}`);
         }
       }
 
       // Tenta buscar a mensagem
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`  ❌ Mensagem não encontrada: ${err.message}`);
+        console.log(`  Mensagem não encontrada: ${err.message}`);
         return null;
       });
       if (!message) {
@@ -383,13 +383,13 @@ async function syncPollReactions() {
       const totalVotos = Object.keys(votosAtualizados).length;
       console.log(`${totalVotos} voto(s) sincronizado(s)`);
     } catch (error) {
-      console.error(`  ❌ Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+      console.error(`  Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
     }
   }
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`⚠️  Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -481,9 +481,9 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
-                    console.error('❌ Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
+                    console.error('Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
                   } else {
-                    console.error(`❌ Erro ao remover reação: ${err.message}`);
+                    console.error(`Erro ao remover reação: ${err.message}`);
                   }
                 });
               }
@@ -505,7 +505,7 @@ async function enforceVoteLimits() {
             violacoesSencontradas++;
             console.log(`Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario}`);
           } catch (error) {
-            console.error('❌ Erro ao remover votos de ' + userVotes.usuario + ':', error.message);
+            console.error('Erro ao remover votos de ' + userVotes.usuario + ':', error.message);
           }
         }
       }
@@ -514,7 +514,7 @@ async function enforceVoteLimits() {
         console.log(`"${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados`);
       }
     } catch (error) {
-      console.error('❌ Erro ao verificar limites de "' + poll.titulo + '":', error.message);
+      console.error('Erro ao verificar limites de "' + poll.titulo + '":', error.message);
     }
   }
 
@@ -586,7 +586,7 @@ async function deployCommands() {
     const clientId = config.CLIENT_ID;
 
     if (!clientId) {
-      console.error('❌ ERRO: CLIENT_ID não está definido no arquivo .env');
+      console.error('ERRO: CLIENT_ID não está definido no arquivo .env');
       console.error('   Adicione: CLIENT_ID=seu_client_id_aqui');
       return false;
     }
@@ -598,7 +598,7 @@ async function deployCommands() {
 
     return true;
   } catch (error) {
-    console.error('❌ Erro ao registrar comandos:', error);
+    console.error('Erro ao registrar comandos:', error);
     return false;
   }
 }
@@ -679,7 +679,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
       // Remove a reação e notifica (se possível)
       await reaction.users.remove(user.id).catch(() => null);
       try {
-        await user.send(`❌ Você já atingiu o limite de **${maxVotosValido}** voto(s) nesta enquete: "${poll.titulo}"`);
+        await user.send(`Você já atingiu o limite de ${maxVotosValido} voto(s) nesta enquete: "${poll.titulo}"`);
       } catch (e) {
         // DM bloqueada ou desativada
       }
@@ -693,7 +693,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     saveActivePolls();
   } catch (error) {
     if (DEBUG_MODE) {
-      console.error('❌ Erro ao processar reação:', error);
+      console.error('Erro ao processar reação:', error);
     }
   }
 });
@@ -728,7 +728,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     saveActivePolls();
   } catch (error) {
     if (DEBUG_MODE) {
-      console.error('❌ Erro ao remover reação:', error);
+      console.error('Erro ao remover reação:', error);
     }
   }
 });
