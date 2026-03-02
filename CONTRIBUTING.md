@@ -104,7 +104,7 @@ npm run test:coverage       # With coverage report
 
 **Requirements:**
 
-- Minimum 70% coverage on: branches, functions, lines, statements
+- Minimum coverage as enforced by Jest/CI (currently 25% global on branches, functions, lines, statements)
 - All tests must pass before PR merge
 - Add tests for new utilities or features
 
