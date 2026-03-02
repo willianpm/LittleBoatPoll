@@ -30,7 +30,7 @@ async function replyError(interaction, message = '❌ Erro ao processar o comand
 function logError(context, error, details = '') {
   const message = `[${context}] ${error.message}`;
   const log = details ? `${message} | ${details}` : message;
-  console.error(`❌ ${log}`);
+  console.error(`${log}`);
 }
 
 module.exports = {

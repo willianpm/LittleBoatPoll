@@ -155,9 +155,9 @@ async function bindMensalistasRolesOnStartup() {
   }
 
   if (vinculados > 0) {
-    console.log(`\nBinding automático de mensalista ativo em ${vinculados} servidor(es)`);
+    console.log(`- Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
   } else {
-    console.log('\nℹ️  Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
+    console.log('Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
   }
 }
 
@@ -282,11 +282,11 @@ async function syncPollReactions() {
 
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`  Erro ao buscar canal: ${err.message}`);
+        console.log(`Erro ao buscar canal: ${err.message}`);
         return null;
       });
       if (!channel) {
-        console.log(`  Canal não encontrado - marcando para remoção`);
+        console.log(`Canal não encontrado - marcando para remoção`);
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -300,13 +300,13 @@ async function syncPollReactions() {
         const canRead = permissions?.has('ReadMessageHistory');
 
         if (!canRead) {
-          console.log(`  Falta permissão "Ler Histórico" em ${channel.name}`);
+          console.log(`Falta permissão "Ler Histórico" em ${channel.name}`);
         }
       }
 
       // Tenta buscar a mensagem
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`  Mensagem não encontrada: ${err.message}`);
+        console.log(`Mensagem não encontrada: ${err.message}`);
         return null;
       });
       if (!message) {
@@ -381,15 +381,15 @@ async function syncPollReactions() {
       poll.votos = votosAtualizados;
 
       const totalVotos = Object.keys(votosAtualizados).length;
-      console.log(`${totalVotos} voto(s) sincronizado(s)`);
+      console.log(`  — ${totalVotos} voto(s) sincronizado(s)`);
     } catch (error) {
-      console.error(`  Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+      console.error(`Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
     }
   }
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -402,9 +402,9 @@ async function syncPollReactions() {
   const enquetesAtivas = client.activePolls.size;
 
   if (enquetesAtivas > 0) {
-    console.log(`${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
+    console.log(`\n— ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
   } else {
-    console.log(`Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
+    console.log(`\n— Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
   }
 }
 
@@ -586,7 +586,7 @@ async function deployCommands() {
     const clientId = config.CLIENT_ID;
 
     if (!clientId) {
-      console.error('ERRO: CLIENT_ID não está definido no arquivo .env');
+      console.error('   ERRO: CLIENT_ID não está definido no arquivo .env');
       console.error('   Adicione: CLIENT_ID=seu_client_id_aqui');
       return false;
     }
@@ -608,8 +608,36 @@ async function deployCommands() {
 // =====================================
 
 // Evento: Bot conectado e pronto
+client.once('clientReady', async () => {
+  console.log(`${client.user.tag} está ONLINE\n`);
+  client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 
-// (Removido: client.once('clientReady') duplicado. Mantido apenas o bloco com logBoot)
+  await bindMensalistasRolesOnStartup();
+
+  // Deploy de comandos se requisitado via variável de ambiente ou flag
+  if (config.DEPLOY) {
+    console.log('Registrando comandos...');
+    const deploySuccess = await deployCommands();
+    if (deploySuccess) {
+      console.log('Deploy concluído com sucesso\n');
+      // Se foi deployment via linha de comando, sai após sucesso
+      if (process.argv.includes('--deploy')) {
+        process.exit(0);
+      }
+    } else {
+      console.error('Deploy falhou\n');
+      if (process.argv.includes('--deploy')) {
+        process.exit(1);
+      }
+    }
+  }
+
+  // Sincroniza reações das enquetes ativas
+  await syncPollReactions();
+
+  // Verifica e remove votos que excedem o limite
+  await enforceVoteLimits();
+});
 
 // Evento: Interação criada (Slash Commands, Context Menu, Buttons, etc)
 client.on('interactionCreate', async (interaction) => {

@@ -38,7 +38,7 @@ module.exports = {
 
       // Carrega os rascunhos
       if (!client.draftPolls) {
-        console.error('❌ client.draftPolls não inicializado!');
+        console.error('client.draftPolls não inicializado!');
         return await interaction.reply({
           content: '❌ Erro interno: Sistema de rascunhos não inicializado. Por favor, contate um Criador.',
           flags: MessageFlags.Ephemeral,
@@ -64,7 +64,7 @@ module.exports = {
 
       // Validação extra de segurança
       if (!rascunho || !rascunho.opcoes || !Array.isArray(rascunho.opcoes)) {
-        console.error('❌ Rascunho corrompido:', rascunho);
+        console.error('Rascunho corrompido:', rascunho);
         return await interaction.reply({
           content: '❌ Erro: Rascunho corrompido. Por favor, crie um novo rascunho.',
           flags: MessageFlags.Ephemeral,
@@ -130,9 +130,9 @@ module.exports = {
 
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
-      console.log(`✅ Opção ${acao.toLowerCase()} via context menu: "${textoSelecionado}" (Rascunho: ${rascunho.id})`);
+      console.log(`Opção ${acao.toLowerCase()} via context menu: "${textoSelecionado}" (Rascunho: ${rascunho.id})`);
     } catch (error) {
-      console.error('❌ Erro ao processar toggle de opção (context menu):', error);
+      console.error('Erro ao processar toggle de opção (context menu):', error);
       console.error('Stack trace:', error.stack);
 
       try {
@@ -147,7 +147,7 @@ module.exports = {
           });
         }
       } catch (replyError) {
-        console.error('❌ Erro ao enviar mensagem de erro:', replyError);
+        console.error('Erro ao enviar mensagem de erro:', replyError);
       }
     }
   },
