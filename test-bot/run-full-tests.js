@@ -89,7 +89,7 @@ async function waitForProcessExit(processHandle) {
 
 async function main() {
   log('\n╔════════════════════════════════════════════════╗', 'cyan');
-  log('║  🧪 Iniciando Suite Completa de Testes        ║', 'cyan');
+  log('║       Iniciando Suite Completa de Testes       ║', 'cyan');
   log('╚════════════════════════════════════════════════╝\n', 'cyan');
 
   let stagingProcess = null;
@@ -99,7 +99,7 @@ async function main() {
     // =====================================
     // 1. INICIAR BOT STAGING
     // =====================================
-    log('📡 Etapa 1: Iniciando bot staging...', 'blue');
+    log('Etapa 1: Iniciando bot staging...', 'blue');
 
     stagingProcess = spawnInWorkspace('npm', ['run', 'start:staging'], {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -110,7 +110,7 @@ async function main() {
     });
 
     // Aguarda bot ficar online
-    log('\n⏳ Aguardando bot ficar online e sincronizar (máx 40s)...', 'blue');
+    log('\nAguardando bot ficar online e sincronizar (máx 40s)...', 'blue');
     const { isOnline, isDeployed } = await waitForStagingReady(() => stagingOutput);
 
     if (!isOnline) {
@@ -118,10 +118,10 @@ async function main() {
     }
 
     if (!isDeployed) {
-      log('⚠️  Deploy pode não ter completado, mas continuando...', 'yellow');
+      log('Deploy pode não ter completado, mas continuando...', 'yellow');
     }
 
-    log('✓ Bot staging pronto!', 'green');
+    log('Bot staging pronto!', 'green');
 
     // Aguarda um pouco extra para garantir estabilidade
     await wait(2000);
@@ -129,7 +129,7 @@ async function main() {
     // =====================================
     // 2. EXECUTAR TESTES
     // =====================================
-    log('\n🧪 Etapa 2: Executando testes automatizados...', 'blue');
+    log('\nEtapa 2: Executando testes automatizados...', 'blue');
     log('═'.repeat(50), 'blue');
 
     const testProcess = spawnInWorkspace('node', ['test-bot/test-runner.js'], {
@@ -142,7 +142,7 @@ async function main() {
     // 3. RESULTADO FINAL
     // =====================================
     log('\n═'.repeat(50), 'blue');
-    log('\n✅ Suite de testes concluída com sucesso!', 'green');
+    log('\nSuite de testes concluída com sucesso!', 'green');
     log('\nPróximas etapas:', 'cyan');
     log('  1. Revisar os resultados acima', 'blue');
     log('  2. Corrigir quaisquer testes que falharam', 'blue');
@@ -150,11 +150,11 @@ async function main() {
 
     process.exit(0);
   } catch (error) {
-    log('\n❌ Erro ao executar suite de testes:', 'red');
+    log('\nErro ao executar suite de testes:', 'red');
     log(`   ${error.message}`, 'red');
 
     if (error.message.includes('demorou muito')) {
-      log('\n💡 Dicas:', 'yellow');
+      log('\nDicas:', 'yellow');
       log('   • Verifique se o bot staging está configurado corretamente', 'yellow');
       log('   • Verifique os tokens em .env.staging', 'yellow');
       log('   • Verifique a conexão com a internet', 'yellow');
@@ -167,7 +167,7 @@ async function main() {
     // 4. LIMPAR: PARAR BOT STAGING
     // =====================================
     if (stagingProcess) {
-      log('\n🛑 Parando bot staging...', 'blue');
+      log('\nParando bot staging...', 'blue');
       try {
         stagingProcess.kill('SIGTERM');
         // Aguarda graceful shutdown
