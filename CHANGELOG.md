@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.2.0
+
+### 🏗️ Restructuring: Arquitetura por Domínios
+
+- **Reorganização de pastas:** transição de estrutura plana para **domain-driven**:
+  - `src/commands/admin/` - Comandos administrativos (encerrar enquete, toggle opções)
+  - `src/commands/polls/` - Comandos de enquetes (criar, draft, votação)
+  - `src/commands/users/` - Comandos de usuários (mensalistas, criadores, toggles)
+  - `src/utils/` - Utilitários centralizados (validators, permissions, handlers)
+  - `src/core/index.js` - Carregador recursivo de comandos
+- **Ambientes isolados:** estrutura `data/environments/{prod|staging}/` com variável `APP_ENV` para controle
+- **Código mais limpo:** 12 arquivos refatorados, eliminou dead code (funções não utilizadas, imports orphans)
+
+### 🔧 Qualidade de Código: ESLint Strict + Prettier
+
+- **ESLint com `--max-warnings=0`:** 32 warnings eliminadas através de refatoração real (não mascaramento)
+  - Removidos: 7 imports orphans, 5 variáveis não usadas, 8 parâmetros não utilizados
+  - Refatorados: 40+ linhas longas (>120 chars), padronização de quotes
+- **Prettier automático:** aplicado a 7 arquivos, formatação consistente `printWidth: 120`
+- **Sem compromisso funcional:** todas as mudanças foram estilo/estrutura puro — 0 impacto em lógica
+
+### 🤖 CI/CD: GitHub Actions Pipeline
+
+- **Workflow `.github/workflows/test.yml`:** jobs paralelos de lint e test
+  - Lint: ESLint + Prettier check em cada commit
+  - Test: Jest suite (67 testes) com `coverageThreshold: 25%`
+- **Reparação de flakiness:** removida dependência frágil em `coverage-summary.json`; delegado a Jest native `coverageThreshold`
+
+### 📚 Documentação Expandida
+
+- **Guias de desenvolvimento:** criados `/docs/development/{SETUP.md, GIT-WORKFLOW.md, ARCHITECTURE.md}`
+- **Documentação técnica:** `/docs/technical/` padronizado com setup Discord, staging, migração de permissões, relatório de refactoring
+- **README modernizado:** quick start em 5 min, caminhos atualizados, remota referência não-implementada de `adminRoleIdsByGuild`
+- **Comentários do Copilot resolvidos:** 100% de feedback de PR reviewers endereçado
+
+### ✅ Validação
+
+- ✅ 67 testes unitários passando (5 suites, ~1.2s)
+- ✅ Sem dependências circulares
+- ✅ Todos os imports alinhados à nova estrutura
+- ✅ ESLint strict mode validando (`$? == 0`)
+- ✅ Prettier formatado
+- ✅ GitHub Actions workflow verde (lint ✓, test ✓)
+
+## 2.1.0
+
+### 🔐 Autorização Administrativa: Suporte a Múltiplos Cargos por Servidor
+
+- **Autorização por cargo remota:** novos sistema com `adminRoleIdsByGuild` para autorizar múltiplos cargos como administradores
+- **Suporte a múltiplos cargos por servidor:** cada servidor pode ter um ou mais cargos autorizados para gerenciar enquetes
+- **Melhorias técnicas:** refatoração em `normalizeRoleBindings` com validação robusta e merge seguro de configurações
+- **Persistência aprimorada:** sistema de role-bindings melhorado para evitar conflitos cross-server
+- **Cobertura de testes expandida:** novos testes para cenários multi-cargo e validação de permissões
+- **Documentação atualizada:** guia completo de configuração de cargos administrativos por servidor
+
 ## 2.0.2
 
 ### 🏗️ Estrutura: Condensação e Reorganização
