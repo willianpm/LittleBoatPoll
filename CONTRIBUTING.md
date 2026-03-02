@@ -21,6 +21,7 @@ Thanks for considering a contribution to the **Little Boat Poll** bot! This docu
 Full setup instructions: [docs/development/SETUP.md](docs/development/SETUP.md)
 
 Quick version:
+
 ```bash
 npm install
 cp .env.example .env          # Fill with your tokens
@@ -34,6 +35,7 @@ We use **GitHub Flow** (feature branches → develop → main).
 **Step-by-step:** [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
 
 Quick version:
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -51,10 +53,12 @@ git push origin feature/your-feature-name
 ## Code Style & Standards
 
 **Automatic validation** happens in two places:
+
 1. **Local:** Via Git hooks (Husky) - runs linter before commit
 2. **CI/CD:** On PR - ESLint + Prettier + tests must pass
 
 **Manual checks:**
+
 ```bash
 npm run lint          # Run ESLint
 npm run format        # Auto-format with Prettier
@@ -62,6 +66,7 @@ npm run format:check  # Check what would be formatted
 ```
 
 **Guidelines:**
+
 - Use single quotes (`'`) for strings
 - 2-space indentation
 - 120 character line limit
@@ -76,7 +81,7 @@ src/
   core/              # Main bot entry point
   commands/          # Slash commands & context menus
     polls/           # Poll-related commands
-    users/           # User & mensalista commands  
+    users/           # User & mensalista commands
     admin/           # Admin commands
   utils/             # Shared utilities
 tests/
@@ -90,6 +95,7 @@ docs/development/    # Developer documentation
 ## Testing
 
 **Run all tests:**
+
 ```bash
 npm test                    # All tests
 npm run test:watch          # Watch mode (re-run on file change)
@@ -97,16 +103,19 @@ npm run test:coverage       # With coverage report
 ```
 
 **Requirements:**
+
 - Minimum 70% coverage on: branches, functions, lines, statements
 - All tests must pass before PR merge
 - Add tests for new utilities or features
 
 **Adding tests:**
+
 - Create mirror path in `tests/unit/` matching `src/` structure
 - File follows pattern: `*.test.js`
 - Use Jest syntax with clear describe/test blocks
 
 Example:
+
 ```javascript
 // tests/unit/utils/my-util.test.js
 const { myFunction } = require('../../../src/utils/my-util');
@@ -121,11 +130,13 @@ describe('myFunction', () => {
 ## Deployment & Releases
 
 **Environments:**
+
 - `develop`: Development/staging (deployed to staging bot)
 - `main`: Production (deployed to production bot)
 
 **Release process:**
-1. Features merge to `develop` 
+
+1. Features merge to `develop`
 2. When ready for release: Create PR from `develop` → `main`
 3. Update [CHANGELOG.md](CHANGELOG.md) with changes
 4. Merge PR to `main` (automatically triggers production deploy)
@@ -148,7 +159,7 @@ Before submitting your PR:
 
 When opening an issue, include:
 
-- **Title:** Clear, concise description  
+- **Title:** Clear, concise description
 - **Reproduction steps:** How to trigger the problem
 - **Expected behavior:** What should happen
 - **Actual behavior:** What actually happens
@@ -164,6 +175,7 @@ When opening an issue, include:
 ---
 
 **Thank you for contributing!** 🚀
+
 - Expected behavior
 - Actual behavior
 - Logs or screenshots if possible

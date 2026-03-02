@@ -49,12 +49,14 @@ git checkout -b feature/meu-feature-descritivo
 ```
 
 **Convenção de nome da branch:**
+
 - `feature/adicionar-validacao-email` - Nova funcionalidade
 - `bugfix/corrigir-votacao-duplicada` - Correção de bug
 - `docs/melhorar-setup-guide` - Apenas documentação
 - `refactor/simplificar-utils` - Code cleanup
 
 **❌ Evite:**
+
 - `feature/test` - Muito vago
 - `feature/corrige_tudo` - Muito amplo
 - `test123` - Sem contexto
@@ -84,6 +86,7 @@ git commit -m "[docs] Atualizado SETUP.md"
 ```
 
 **Prefixos de commit recomendados:**
+
 - `[feat]` - Nova funcionalidade
 - `[fix]` - Correção de bug
 - `[docs]` - Documentação
@@ -98,6 +101,7 @@ git push origin feature/meu-feature-descritivo
 ```
 
 **Primeira vez nesta branch:**
+
 ```
 The upstream branch of your current branch does not match...
 git push -u origin feature/meu-feature-descritivo
@@ -106,53 +110,64 @@ git push -u origin feature/meu-feature-descritivo
 ### 5️⃣ Crie uma Pull Request (PR)
 
 No GitHub:
+
 1. Vá para https://github.com/seu-repo/LittleBoatPoll
 2. Você verá um botão amarelo "Compare & pull request"
 3. Clique nele
 
 **Pre-fill do PR:**
+
 ```markdown
 ## Descrição
+
 Breve descrição do que foi feito e por quê.
 
 ## Tipo de Mudança
+
 - [ ] Nova funcionalidade
 - [ ] Correção de bug
 - [ ] Mudança em documentação
 - [ ] Refactor (sem mudança de comportamento)
 
 ## Como Testar?
+
 1. Passo 1
 2. Passo 2
 3. Resultado esperado
 
 ## Checklist
+
 - [ ] Código testado localmente (`npm test` passa)
 - [ ] Código lintado (`npm run lint` passa)
 - [ ] Documentação atualizada se necessário
 - [ ] Nenhum commit mergeado sem review
 
 ## Screenshots (se aplicável)
+
 Se mudança tem UI, adicione screenshotfor video.
 
 ## Link da Issue
-Fixes #123  (se existir issue relacionada)
+
+Fixes #123 (se existir issue relacionada)
 ```
 
 ### 6️⃣ Aguarde Revisão Automática
 
 GitHub Actions rodará automaticamente:
+
 - ✅ Testes unitários
 - ✅ ESLint (padrão de código)
 - ✅ Prettier (formatação)
 - ✅ Cobertura (70% mínimo)
 
 Se algum checker falhar:
+
 1. Veja logs no GitHub (seção "Checks" da PR)
 2. Corrija o problema localmente
 3. Commit + push (automático na PR)
 
 **Exemplo:**
+
 ```
 Falha em ESLint: Extra semicolon
 
@@ -166,10 +181,12 @@ git push
 ### 7️⃣ Code Review Manual
 
 Alguém da equipe revisará seu código:
+
 - Poderá solicitar mudanças (CI/CD ainda passa, mas quer melhorias)
 - Se aprovado: ✅ "Approved"
 
 Se pedir mudanças:
+
 ```bash
 # Corrija conforme solicitado
 npm test                      # Certifique-se que passa
@@ -181,6 +198,7 @@ git push                      # Automático na PR, não precisa de novo push -u
 ### 8️⃣ Merge para Develop
 
 Quando tudo estiver ✅:
+
 1. Clique em "Squash and Merge" (recomendado para histórico limpo)
    ou "Create a merge commit" (preserva todos os commits)
 2. Confirme
@@ -265,6 +283,7 @@ git fetch --prune                    # Remove branches deletadas no remote
 ### "fatal: origin does not appear to be a git repository"
 
 Não está no diretório do projeto:
+
 ```bash
 cd /caminho/para/LittleBoatPoll
 ```
@@ -272,6 +291,7 @@ cd /caminho/para/LittleBoatPoll
 ### "error: Your local changes to the following files would be overwritten"
 
 Mudanças não foram commitadas:
+
 ```bash
 git status                    # Veja o que mudou
 git add .

@@ -23,6 +23,7 @@ npm install
 ```
 
 Se encontrar erro, tente limpar cache:
+
 ```bash
 npm cache clean --force
 npm install
@@ -31,6 +32,7 @@ npm install
 ## Step 3: Configurar Variáveis de Ambiente
 
 1. Copie o template:
+
    ```bash
    cp .env.example .env
    ```
@@ -44,6 +46,7 @@ npm install
    - Vá em "Bot" → "Token" → "Copy" → `TOKEN`
 
    **.env preenchido:**
+
    ```env
    TOKEN=seu_token_super_secreta_aqui
    CLIENT_ID=seu_client_id_aqui
@@ -129,6 +132,7 @@ cat .env | grep TOKEN  # Deve mostrar TOKEN=seu_token
 ### ❌ "Tests failing"
 
 Tente:
+
 ```bash
 npm cache clean --force
 rm -rf node_modules
@@ -139,6 +143,7 @@ npm test
 ### ❌ Discord API "401 Unauthorized"
 
 O token expirou ou está inválido. Gere um novo:
+
 1. https://discord.com/developers/applications
 2. Vá em "Bot" → "Token" → "Regenerate"
 3. Atualize seu `.env`
@@ -146,6 +151,7 @@ O token expirou ou está inválido. Gere um novo:
 ### ❌ "EADDRINUSE: address already in use :::8000"
 
 A porta 8000 está sendo usada. Mude em `.env`:
+
 ```env
 PORT=8001  # ou outro número disponível
 ```
@@ -153,6 +159,7 @@ PORT=8001  # ou outro número disponível
 ### ❌ "Cannot find module 'discord.js'"
 
 Você pulou o `npm install`. Execute:
+
 ```bash
 npm install
 ```

@@ -154,6 +154,7 @@ config/
 ## Responsabilidades por Componente
 
 ### `src/core/index.js`
+
 - **Responsabilidade:** Orquestração principal
 - **O que faz:**
   - Carrega variáveis de ambiente
@@ -163,6 +164,7 @@ config/
   - Define listeners (interactionCreate, ready, etc.)
 
 ### `src/commands/*`
+
 - **Responsabilidade:** Implementar lógica de cada comando
 - **Padrão esperado:**
   ```javascript
@@ -179,6 +181,7 @@ config/
 - **Restrição:** **Não acesse diretamente o sistema de arquivos** - sempre use `file-handler.js`
 
 ### `src/utils/*`
+
 - **Responsabilidade:** Lógica compartilhada entre comandos
 - **Exemplos:**
   - `permissions.js`: "Usuário pode criar enquete?"
@@ -240,6 +243,7 @@ APP_ENV=staging npm start
 ```
 
 **Arquivo `.env.staging` isolado:**
+
 ```env
 TOKEN=seu_staging_token_diferente
 CLIENT_ID=seu_staging_client_id_diferente
@@ -247,6 +251,7 @@ APP_ENV=staging
 ```
 
 **Carregamento automático:**
+
 ```javascript
 // src/core/index.js linha 1
 const envFile = process.env.APP_ENV === 'staging' ? '.env.staging' : '.env';
@@ -300,7 +305,7 @@ describe('validatePollInput', () => {
   test('should reject empty name', () => {
     expect(validatePollInput({ name: '' })).toBe(false);
   });
-  
+
   test('should accept valid input', () => {
     expect(validatePollInput({ name: 'Pick a book' })).toBe(true);
   });
@@ -320,32 +325,38 @@ npm run test:coverage       # Com cobertura
 **Checklist:**
 
 1. **Criar novo comando**
+
    ```
    src/commands/{domínio}/novo-comando.js
    ```
 
 2. **Testar entrada**
+
    ```
    src/utils/validators.js → adicionar rule
    ```
 
 3. **Verificar permissão (se necessário)**
+
    ```
    src/utils/permissions.js → adicionar check
    ```
 
 4. **Persistir dados (se necessário)**
+
    ```
    src/utils/file-handler.js → usar saveJsonFile()
    ```
 
 5. **Adicionar testes**
+
    ```
    tests/unit/utils/seu-tópico.test.js
    tests/unit/commands/{domínio}/novo-comando.test.js
    ```
 
 6. **Rodar validações**
+
    ```bash
    npm test
    npm run lint
@@ -359,14 +370,14 @@ npm run test:coverage       # Com cobertura
 
 ## Decisões Arquiteturais
 
-| Decisão | Razão |
-|---------|-------|
-| Estrutura por domínio | Reduz conflitos em PRs simultâneas |
-| Utils centralizados | Evita duplicação de lógica |
-| JSON como persistência | Simples, versionável no Git |
-| Em memória (activePolls) | Rápido acesso durante votação |
-| Dois ambientes isolados | Staging para testes sem afetar prod |
-| Jest para testes | Padrão Node.js, sintaxe clara |
+| Decisão                  | Razão                               |
+| ------------------------ | ----------------------------------- |
+| Estrutura por domínio    | Reduz conflitos em PRs simultâneas  |
+| Utils centralizados      | Evita duplicação de lógica          |
+| JSON como persistência   | Simples, versionável no Git         |
+| Em memória (activePolls) | Rápido acesso durante votação       |
+| Dois ambientes isolados  | Staging para testes sem afetar prod |
+| Jest para testes         | Padrão Node.js, sintaxe clara       |
 
 ---
 

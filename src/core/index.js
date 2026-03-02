@@ -2,7 +2,18 @@
 const envFile = process.env.APP_ENV === 'staging' ? '.env.staging' : '.env';
 require('dotenv').config({ path: envFile });
 
-const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes, Partials, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  ChannelType,
+  ActivityType,
+  REST,
+  Routes,
+  Partials,
+  PermissionFlagsBits,
+  MessageFlags,
+} = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -139,7 +150,8 @@ async function isUserMensalista(guild, userId, mensalistasSet = null) {
     return isMensalistaManual;
   }
 
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch({ user: userId, force: true }).catch(() => null));
+  const member =
+    guild.members.cache.get(userId) || (await guild.members.fetch({ user: userId, force: true }).catch(() => null));
   const isMensalistaByRole = Boolean(member?.roles?.cache?.has(roleId));
 
   return isMensalistaManual || isMensalistaByRole;
@@ -238,7 +250,9 @@ function loadDraftPolls() {
         const draftsToSave = Array.from(client.draftPolls.values());
         saveJsonFile(config.DATA_FILES.draftPolls, draftsToSave);
         console.log(`Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
-        console.info(`[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`);
+        console.info(
+          `[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`,
+        );
       }
       console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
     }
@@ -435,7 +449,12 @@ async function enforceVoteLimits() {
         const canManage = permissions?.has('ManageMessages');
 
         if (!canView || !canRead || !canManage) {
-          console.log(`Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` + `   Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` + `   Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` + `   Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`);
+          console.log(
+            `Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` +
+              `   Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` +
+              `   Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` +
+              `   Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`,
+          );
         }
       }
 
@@ -481,7 +500,11 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
-                    console.error('Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
+                    console.error(
+                      'Sem permissão para remover reação de ' +
+                        userVotes.usuario +
+                        '. O bot precisa de "Gerenciar Mensagens"',
+                    );
                   } else {
                     console.error(`Erro ao remover reação: ${err.message}`);
                   }
@@ -496,7 +519,14 @@ async function enforceVoteLimits() {
             try {
               const user = await client.users.fetch(userId).catch(() => null);
               if (user) {
-                await user.send(`⚠️ **Votos ajustados em "${poll.titulo}"**\n\n` + `Você havia votado em ${numVotos} opção(ões), mas o limite é ${poll.maxVotos}.\n` + `As ${votosParaRemover} opção(ões) mais recente(s) foram removidas.\n` + `Seus votos atuais: ${userVotes.reacoes.join(', ')}`).catch(() => {});
+                await user
+                  .send(
+                    `⚠️ **Votos ajustados em "${poll.titulo}"**\n\n` +
+                      `Você havia votado em ${numVotos} opção(ões), mas o limite é ${poll.maxVotos}.\n` +
+                      `As ${votosParaRemover} opção(ões) mais recente(s) foram removidas.\n` +
+                      `Seus votos atuais: ${userVotes.reacoes.join(', ')}`,
+                  )
+                  .catch(() => {});
               }
             } catch (e) {
               // Silencioso se não conseguir enviar DM
