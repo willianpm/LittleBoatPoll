@@ -6,9 +6,9 @@ const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, 
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const config = require('./utils/config');
-const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('./utils/file-handler');
-const { ensureMensalistaRoleBinding } = require('./utils/mensalista-binding');
+const config = require('../utils/config');
+const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('../utils/file-handler');
+const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
 
 // Exibe configuração na inicialização
 config.logConfig();
@@ -536,18 +536,39 @@ async function enforceVoteLimits() {
 // =====================================
 // CARREGAMENTO DE COMANDOS
 // =====================================
-const commandsPath = path.join(__dirname, 'commands');
-// Filtra e carrega apenas arquivos válidos, excluindo contextos unificados obsoletos
-const excludedFiles = ['mensalista-add-context.js', 'mensalista-remove-context.js'];
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js') && !excludedFiles.includes(file));
+// Carrega comandos recursivamente de todos os domínios (polls, users, admin)
+function loadCommandsRecursively(dir) {
+  const commands = [];
+  const files = fs.readdirSync(dir);
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
 
-  if (command.data && command.execute) {
-    client.commands.set(command.data.name, command);
+    if (stat.isDirectory()) {
+      // Recursivamente carrega subdirectórios
+      commands.push(...loadCommandsRecursively(filePath));
+    } else if (file.endsWith('.js')) {
+      // Carrega arquivo de comando
+      try {
+        const command = require(filePath);
+        if (command.data && command.execute) {
+          commands.push({ file, command, path: filePath });
+        }
+      } catch (error) {
+        console.error(`Erro ao carregar comando ${file}:`, error);
+      }
+    }
   }
+
+  return commands;
+}
+
+const commandsPath = path.join(__dirname, '../commands');
+const loadedCommands = loadCommandsRecursively(commandsPath);
+
+for (const { command } of loadedCommands) {
+  client.commands.set(command.data.name, command);
 }
 
 console.log(`${client.commands.size} comando(s) carregado(s)`);
@@ -562,10 +583,7 @@ async function deployCommands() {
     let contextCount = 0;
 
     // Carrega todos os comandos para registrar
-    for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
-      const command = require(filePath);
-
+    for (const { command } of loadedCommands) {
       if (command.data && command.execute) {
         commands.push(command.data.toJSON());
 

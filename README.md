@@ -2,6 +2,18 @@
 
 Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripulação de Papel, com sistema de votações ponderadas para escolhas do clube do livro.
 
+## 🚀 Quick Start para Desenvolvedores
+
+Se você quer **contribuir ou configurar localmente**:
+
+1. **Leia:** [docs/development/SETUP.md](docs/development/SETUP.md) (~5 minutos)
+2. **Execute:** Clone, `npm install`, preencha `.env`, `npm test`
+3. **Contribua:** Leia [CONTRIBUTING.md](CONTRIBUTING.md) e [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
+
+Para documentação técnica completa, veja [docs/](docs/) (setup Discord, staging, arquitetura, etc.)
+
+---
+
 ## Permissões
 
 Sistema binário **interno** para permissões administrativas:

@@ -12,22 +12,27 @@ test-bot/.env.test
 
 # Dados persistentes isolados por ambiente
 # Mantém dados de runtime fora do Git, mas permite versionar bindings de permissão
-data/*
-!data/prod/
-!data/staging/
-data/prod/*
-data/staging/*
-!data/prod/role-bindings.json
-!data/staging/role-bindings.json
+data/environments/*
+!data/environments/prod/
+!data/environments/staging/
+data/environments/prod/*
+data/environments/staging/*
+!data/environments/prod/role-bindings.json
+!data/environments/staging/role-bindings.json
 
-# Dados legados na raiz (mantidos por retrocompatibilidade)
-vips.json
-votos.json
-historico-votacoes.json
-mensalistas.json
-cargos-criadores.json
-active-polls.json
-draft-polls.json
+# Testes e Coverage
+coverage/
+.nyc_output/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Builds
+dist/
+build/
 criadores-internos.json
 /role-bindings.json
 
