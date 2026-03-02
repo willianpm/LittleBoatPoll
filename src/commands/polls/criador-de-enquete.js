@@ -74,7 +74,9 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor('#00FF00')
         .setTitle('✅ Criador de Enquetes Adicionado!')
-        .setDescription(`**${usuario.username}** (${usuario.id}) agora tem acesso administrativo total ao bot.`)
+        .setDescription(
+          `**${usuario.username}** (${usuario.id}) agora tem acesso administrativo total ao bot.`,
+        )
         .addFields({
           name: '📋 Permissões Concedidas',
           value:
@@ -136,7 +138,9 @@ module.exports = {
           .setColor('#FFA500')
           .setTitle('📋 Criadores de Enquetes')
           .setDescription(
-            'Nenhum Criador cadastrado internamente ainda.\n\n_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n_Use `/criador-de-enquete adicionar` para cadastrar um usuário._',
+            'Nenhum Criador cadastrado internamente ainda.\n\n' +
+              '_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n' +
+              '_Use `/criador-de-enquete adicionar` para cadastrar um usuário._',
           )
           .setTimestamp();
 
@@ -177,7 +181,9 @@ module.exports = {
       if (usuariosNaoEncontrados > 0) {
         embed.addFields({
           name: '⚠️ Aviso',
-          value: `${usuariosNaoEncontrados} usuário(s) não foram encontrados. Podem ter saído do servidor ou excluído a conta.`,
+          value:
+            `${usuariosNaoEncontrados} usuário(s) não foram encontrados. ` +
+            'Podem ter saído do servidor ou excluído a conta.',
         });
       }
 

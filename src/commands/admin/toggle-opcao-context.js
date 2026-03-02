@@ -1,6 +1,6 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
-const { getLatestUserDraft, canEditDraft } = require('../../utils/draft-handler');
+const { getLatestUserDraft } = require('../../utils/draft-handler');
 const { COLORS } = require('../../utils/constants');
 
 module.exports = {

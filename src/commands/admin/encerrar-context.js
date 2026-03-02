@@ -53,7 +53,7 @@ module.exports = {
       }));
 
       // Conta os votos com peso
-      for (const [userId, votoData] of Object.entries(poll.votos)) {
+      for (const votoData of Object.values(poll.votos)) {
         const peso = votoData.peso;
 
         // Processa cada reação do usuário
@@ -113,7 +113,7 @@ module.exports = {
           const mencoes = [];
           for (const userId of mensalistasQueVotaram) {
             try {
-              const user = await client.users.fetch(userId);
+              await client.users.fetch(userId);
               mencoes.push(`<@${userId}>`);
             } catch (error) {
               console.log(`Não foi possível buscar usuário ${userId}`);
@@ -137,12 +137,21 @@ module.exports = {
         });
       }
 
+      const informacoesPeso =
+        poll.usarPesoMensalista ? 'Mensalistas contam como peso 2' : 'Peso igual para todos';
+
+      const infoResumo =
+        `Total de participantes: ${Object.keys(poll.votos).length}\n` +
+        `Limite de votos: ${poll.maxVotos} por pessoa\n` +
+        `${informacoesPeso}\n\n` +
+        '*Mostrando apenas o TOP 3*';
+
       resultEmbed
         .addFields(
           { name: '\u200B', value: '\u200B', inline: false },
           {
             name: 'ℹ️ Informações',
-            value: `Total de participantes: ${Object.keys(poll.votos).length}\nLimite de votos: ${poll.maxVotos} por pessoa\n${poll.usarPesoMensalista ? 'Mensalistas contam como peso 2' : 'Peso igual para todos'}\n\n *Mostrando apenas o TOP 3*`,
+            value: infoResumo,
             inline: false,
           },
         )
