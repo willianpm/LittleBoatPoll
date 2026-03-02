@@ -14,10 +14,10 @@
   "scripts": {
     "start": "node src/core/index.js",
     "start:quick": "node src/core/index.js",
-    "start:staging": "npx cross-env APP_ENV=staging node src/core/index.js",
+    "start:staging": "cross-env APP_ENV=staging node src/core/index.js",
     "dev": "node src/core/index.js",
     "deploy": "node src/core/index.js --deploy",
-    "deploy:staging": "npx cross-env APP_ENV=staging node src/core/index.js --deploy",
+    "deploy:staging": "cross-env APP_ENV=staging node src/core/index.js --deploy",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -51,8 +51,9 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "jest": "^30.2.0",
+    "cross-env": "^10.1.0",
     "eslint": "^8.56.0",
+    "jest": "^30.2.0",
     "prettier": "^3.1.0"
   }
 }
