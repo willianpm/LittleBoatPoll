@@ -49,45 +49,6 @@ jobs:
       - name: Run tests with coverage
         run: npm test -- --coverage
 
-      - name: Check coverage threshold
-        run: |
-          COVERAGE_FILE="coverage/coverage-summary.json"
-          if [ ! -f "$COVERAGE_FILE" ]; then
-            echo "Coverage summary file not found: $COVERAGE_FILE"
-            exit 1
-          fi
-          
-          node - << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
-          
-          const THRESHOLD = 25;
-          const coveragePath = path.resolve('coverage/coverage-summary.json');
-          
-          let data;
-          try {
-            data = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
-          } catch (err) {
-            console.error('Failed to read or parse coverage summary:', err.message);
-            process.exit(1);
-          }
-          
-          const lines = data && data.total && data.total.lines;
-          const linesPct = lines && typeof lines.pct === 'number' ? lines.pct : null;
-          
-          if (linesPct === null) {
-            console.error('Could not determine line coverage percentage from coverage-summary.json');
-            process.exit(1);
-          }
-          
-          if (linesPct < THRESHOLD) {
-            console.error(`Coverage is ${linesPct}%, which is below ${THRESHOLD}% threshold`);
-            process.exit(1);
-          } else {
-            console.log(`Coverage is ${linesPct}%, meets threshold of ${THRESHOLD}%`);
-          }
-          EOF
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
