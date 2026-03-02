@@ -1,4 +1,4 @@
-const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../utils/constants');
+const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../../src/utils/constants');
 
 describe('constants - EMOJIS_DISPONIVEIS', () => {
   test('deve conter exatamente 20 emojis', () => {

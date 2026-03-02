@@ -21,7 +21,7 @@ O bot de homologação permite testar funcionalidades "em loco" (no Discord real
 ### Características
 
 - ✅ **Mesmo código-fonte** - Zero duplicação
-- ✅ **Dados isolados** - Staging usa `data/staging/`, prod usa `data/prod/`
+- ✅ **Dados isolados** - Staging usa `data/environments/staging/`, prod usa `data/environments/prod/`
 - ✅ **Identidade separada** - Token/client ID próprios
 - ✅ **Execução sob demanda** - Roda localmente apenas quando necessário
 - ✅ **Comandos globais** - Mesma experiência de produção
@@ -102,20 +102,21 @@ O bot criará automaticamente os diretórios na primeira execução:
 
 ```
 data/
-├── prod/          # Dados do bot de produção
-│   ├── active-polls.json
-│   ├── draft-polls.json
-│   ├── mensalistas.json
-│   ├── role-bindings.json
-│   ├── criadores-internos.json
-│   └── historico-votacoes.json
-└── staging/       # Dados isolados do staging
-    ├── active-polls.json
-    ├── draft-polls.json
-    ├── mensalistas.json
-    ├── role-bindings.json
-    ├── criadores-internos.json
-    └── historico-votacoes.json
+└── environments/
+    ├── prod/          # Dados do bot de produção
+    │   ├── active-polls.json
+    │   ├── draft-polls.json
+    │   ├── mensalistas.json
+    │   ├── role-bindings.json
+    │   ├── criadores-internos.json
+    │   └── historico-votacoes.json
+    └── staging/       # Dados isolados do staging
+        ├── active-polls.json
+        ├── draft-polls.json
+        ├── mensalistas.json
+        ├── role-bindings.json
+        ├── criadores-internos.json
+        └── historico-votacoes.json
 ```
 
 ---
@@ -188,7 +189,10 @@ O bot usa `cross-env` (multiplataforma) para definir `APP_ENV=staging`, que auto
 - `npm run start:staging` - Inicia bot staging
 - `npm run deploy:staging` - Deploy de comandos em staging
 - `npm start` - Inicia bot de produção
-- `npm run migrate:data` - Migra dados legados para `data/prod/`
+
+**Para migração de dados legados:**
+
+- Execute: `node scripts/migrate-data.js` - Migra dados legados para `data/environments/prod/`
 
 ---
 
@@ -201,7 +205,7 @@ Use este checklist para validar funcionalidades antes de promover para produçã
 - [ ] Bot aparece online no servidor de teste
 - [ ] Comandos são registrados corretamente
 - [ ] Logs mostram `Ambiente: STAGING`
-- [ ] Arquivos criados em `data/staging/`
+- [ ] Arquivos criados em `data/environments/staging/`
 
 ### 2. Comandos de Enquete
 
@@ -210,7 +214,7 @@ Use este checklist para validar funcionalidades antes de promover para produçã
 - [ ] Comando responde corretamente
 - [ ] Mensagem da enquete é enviada no canal
 - [ ] Reações automáticas são adicionadas
-- [ ] Enquete aparece em `data/staging/active-polls.json`
+- [ ] Enquete aparece em `data/environments/staging/active-polls.json`
 
 #### 2.2. Votar em Enquete
 
@@ -233,7 +237,7 @@ Use este checklist para validar funcionalidades antes de promover para produçã
 #### 3.1. Criar Rascunho (`/draft criar`)
 
 - [ ] Rascunho é criado com sucesso
-- [ ] Salvo em `data/staging/draft-polls.json`
+- [ ] Salvo em `data/environments/staging/draft-polls.json`
 - [ ] ID é gerado corretamente
 
 #### 3.2. Listar Rascunhos (`/draft listar`)
@@ -329,7 +333,7 @@ Aguarde "Deploy concluído com sucesso" antes de testar.
 
 **Solução:**
 
-1. Restaure backup de `data/prod/` (se houver)
+1. Restaure backup de `data/environments/prod/` (se houver)
 2. Sempre confirme que os logs mostram `Ambiente: STAGING` na inicialização
 3. Use script `npm run start:staging` para evitar erro humano
 
@@ -353,7 +357,7 @@ Aguarde "Deploy concluído com sucesso" antes de testar.
 **Solução:**
 
 1. Pare o bot
-2. Valide JSON com `npx jsonlint data/staging/arquivo.json`
+2. Valide JSON com `npx jsonlint data/environments/staging/arquivo.json`
 3. Restaure de backup ou corrija manualmente
 4. Reinicie o bot
 
@@ -430,7 +434,7 @@ git push --force origin main
 
 ### Operação
 
-- ✅ Faça backup de `data/prod/` regularmente
+- ✅ Faça backup de `data/environments/prod/` regularmente
 - ✅ Não confie 100% em staging - bugs podem surgir apenas em prod
 - ✅ Monitore logs de produção após deploy
 - ✅ Tenha plano de rollback sempre pronto

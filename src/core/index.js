@@ -2,13 +2,22 @@
 const envFile = process.env.APP_ENV === 'staging' ? '.env.staging' : '.env';
 require('dotenv').config({ path: envFile });
 
-const { Client, GatewayIntentBits, Collection, ChannelType, ActivityType, REST, Routes, Partials, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  ActivityType,
+  REST,
+  Routes,
+  Partials,
+  MessageFlags,
+} = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const config = require('./utils/config');
-const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('./utils/file-handler');
-const { ensureMensalistaRoleBinding } = require('./utils/mensalista-binding');
+const config = require('../utils/config');
+const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('../utils/file-handler');
+const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
 
 // Exibe configuração na inicialização
 config.logConfig();
@@ -139,7 +148,8 @@ async function isUserMensalista(guild, userId, mensalistasSet = null) {
     return isMensalistaManual;
   }
 
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch({ user: userId, force: true }).catch(() => null));
+  const member =
+    guild.members.cache.get(userId) || (await guild.members.fetch({ user: userId, force: true }).catch(() => null));
   const isMensalistaByRole = Boolean(member?.roles?.cache?.has(roleId));
 
   return isMensalistaManual || isMensalistaByRole;
@@ -238,7 +248,9 @@ function loadDraftPolls() {
         const draftsToSave = Array.from(client.draftPolls.values());
         saveJsonFile(config.DATA_FILES.draftPolls, draftsToSave);
         console.log(`Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
-        console.info(`[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`);
+        console.info(
+          `[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`,
+        );
       }
       console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
     }
@@ -286,7 +298,7 @@ async function syncPollReactions() {
         return null;
       });
       if (!channel) {
-        console.log(`Canal não encontrado - marcando para remoção`);
+        console.log('Canal não encontrado - marcando para remoção');
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -435,7 +447,12 @@ async function enforceVoteLimits() {
         const canManage = permissions?.has('ManageMessages');
 
         if (!canView || !canRead || !canManage) {
-          console.log(`Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` + `   Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` + `   Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` + `   Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`);
+          console.log(
+            `Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` +
+              `   Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` +
+              `   Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` +
+              `   Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`,
+          );
         }
       }
 
@@ -481,7 +498,11 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
-                    console.error('Sem permissão para remover reação de ' + userVotes.usuario + '. O bot precisa de "Gerenciar Mensagens"');
+                    console.error(
+                      'Sem permissão para remover reação de ' +
+                        userVotes.usuario +
+                        '. O bot precisa de "Gerenciar Mensagens"',
+                    );
                   } else {
                     console.error(`Erro ao remover reação: ${err.message}`);
                   }
@@ -496,7 +517,14 @@ async function enforceVoteLimits() {
             try {
               const user = await client.users.fetch(userId).catch(() => null);
               if (user) {
-                await user.send(`⚠️ **Votos ajustados em "${poll.titulo}"**\n\n` + `Você havia votado em ${numVotos} opção(ões), mas o limite é ${poll.maxVotos}.\n` + `As ${votosParaRemover} opção(ões) mais recente(s) foram removidas.\n` + `Seus votos atuais: ${userVotes.reacoes.join(', ')}`).catch(() => {});
+                await user
+                  .send(
+                    `⚠️ **Votos ajustados em "${poll.titulo}"**\n\n` +
+                      `Você havia votado em ${numVotos} opção(ões), mas o limite é ${poll.maxVotos}.\n` +
+                      `As ${votosParaRemover} opção(ões) mais recente(s) foram removidas.\n` +
+                      `Seus votos atuais: ${userVotes.reacoes.join(', ')}`,
+                  )
+                  .catch(() => {});
               }
             } catch (e) {
               // Silencioso se não conseguir enviar DM
@@ -536,18 +564,39 @@ async function enforceVoteLimits() {
 // =====================================
 // CARREGAMENTO DE COMANDOS
 // =====================================
-const commandsPath = path.join(__dirname, 'commands');
-// Filtra e carrega apenas arquivos válidos, excluindo contextos unificados obsoletos
-const excludedFiles = ['mensalista-add-context.js', 'mensalista-remove-context.js'];
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js') && !excludedFiles.includes(file));
+// Carrega comandos recursivamente de todos os domínios (polls, users, admin)
+function loadCommandsRecursively(dir) {
+  const commands = [];
+  const files = fs.readdirSync(dir);
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
 
-  if (command.data && command.execute) {
-    client.commands.set(command.data.name, command);
+    if (stat.isDirectory()) {
+      // Recursivamente carrega subdirectórios
+      commands.push(...loadCommandsRecursively(filePath));
+    } else if (file.endsWith('.js')) {
+      // Carrega arquivo de comando
+      try {
+        const command = require(filePath);
+        if (command.data && command.execute) {
+          commands.push({ file, command, path: filePath });
+        }
+      } catch (error) {
+        console.error(`Erro ao carregar comando ${file}:`, error);
+      }
+    }
   }
+
+  return commands;
+}
+
+const commandsPath = path.join(__dirname, '../commands');
+const loadedCommands = loadCommandsRecursively(commandsPath);
+
+for (const { command } of loadedCommands) {
+  client.commands.set(command.data.name, command);
 }
 
 console.log(`${client.commands.size} comando(s) carregado(s)`);
@@ -558,24 +607,11 @@ console.log(`${client.commands.size} comando(s) carregado(s)`);
 async function deployCommands() {
   try {
     const commands = [];
-    let slashCount = 0;
-    let contextCount = 0;
 
     // Carrega todos os comandos para registrar
-    for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
-      const command = require(filePath);
-
+    for (const { command } of loadedCommands) {
       if (command.data && command.execute) {
         commands.push(command.data.toJSON());
-
-        // Identifica o tipo de comando
-        if (command.data.type === 3) {
-          // ApplicationCommandType.Message = 3
-          contextCount++;
-        } else {
-          slashCount++;
-        }
       }
     }
 
@@ -592,7 +628,7 @@ async function deployCommands() {
     }
 
     // Registra os comandos globalmente (disponível em todos os servidores)
-    const data = await rest.put(Routes.applicationCommands(clientId), {
+    await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
 

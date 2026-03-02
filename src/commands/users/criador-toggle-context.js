@@ -1,6 +1,6 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { loadCriadores, saveCriadores } = require('../utils/file-handler');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { loadCriadores, saveCriadores } = require('../../utils/file-handler');
 
 /**
  * CONTEXT MENU: Add/Del Criador de Enquetes
@@ -60,7 +60,9 @@ module.exports = {
 
         if (isLastCreator && isSelfRemoval) {
           return await interaction.reply({
-            content: '❌ **Você é o último Criador!** Não é possível se remover.\n_Adicione outro Criador antes de se remover._',
+            content:
+              '❌ **Você é o último Criador!** Não é possível se remover.\n' +
+              '_Adicione outro Criador antes de se remover._',
             flags: MessageFlags.Ephemeral,
           });
         }
@@ -70,7 +72,9 @@ module.exports = {
         saveCriadores(data);
 
         await interaction.reply({
-          content: `✅ **${targetUser.username}** foi removido(a) da lista de Criadores de Enquetes.\n_O usuário continua podendo votar normalmente._`,
+          content:
+            `✅ **${targetUser.username}** foi removido(a) da lista de Criadores de Enquetes.\n` +
+            '_O usuário continua podendo votar normalmente._',
           flags: MessageFlags.Ephemeral,
         });
         console.log(`Criador removido (contexto): ${targetUser.username} (${targetUser.id})`);
@@ -82,7 +86,9 @@ module.exports = {
         saveCriadores(data);
 
         await interaction.reply({
-          content: `✅ **${targetUser.username}** foi adicionado(a) como Criador de Enquetes!\n_O usuário agora tem acesso administrativo total ao bot._`,
+          content:
+            `✅ **${targetUser.username}** foi adicionado(a) como Criador de Enquetes!\n` +
+            '_O usuário agora tem acesso administrativo total ao bot._',
           flags: MessageFlags.Ephemeral,
         });
         console.log(`Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);

@@ -1,5 +1,5 @@
 const { MessageFlags, PermissionFlagsBits } = require('discord.js');
-const { loadCriadores, loadRoleBindings } = require('./file-handler');
+const { loadCriadores } = require('./file-handler');
 
 function extractSnowflake(value) {
   if (value === null || value === undefined) return null;
@@ -47,27 +47,6 @@ function hasAdministratorPermission(member) {
   }
 }
 
-function getMemberRoleIds(member) {
-  const roleCache = member?.roles?.cache;
-  if (roleCache && typeof roleCache.has === 'function' && typeof roleCache.keys === 'function') {
-    return Array.from(roleCache.keys());
-  }
-
-  if (Array.isArray(member?.roles)) {
-    return member.roles.map((roleId) => extractSnowflake(roleId)).filter(Boolean);
-  }
-
-  if (Array.isArray(member?._roles)) {
-    return member._roles.map((roleId) => extractSnowflake(roleId)).filter(Boolean);
-  }
-
-  return [];
-}
-
-function resolveGuildId(member, guildIdOverride) {
-  return extractSnowflake(guildIdOverride) || extractSnowflake(member?.guild?.id);
-}
-
 /**
  * SISTEMA DE PERMISSÕES BINÁRIO - VERSÃO INTERNA
  *
@@ -83,7 +62,7 @@ function resolveGuildId(member, guildIdOverride) {
  * @param {GuildMember} member - O membro do servidor a verificar
  * @returns {boolean} true se o usuário possui acesso total, false caso contrário
  */
-function isCriador(member, guildIdOverride) {
+function isCriador(member, _guildIdOverride) {
   if (!member) {
     return false;
   }
@@ -114,7 +93,9 @@ function isCriador(member, guildIdOverride) {
 /**
  * Mensagem padrão de permissão negada
  */
-const MENSAGEM_PERMISSAO_NEGADA = '❌ **Permissão negada!** Apenas Criadores de Enquetes, Administradores ou o dono do servidor podem executar este comando.';
+const MENSAGEM_PERMISSAO_NEGADA =
+  '❌ **Permissão negada!** Apenas Criadores de Enquetes, Administradores ' +
+  'ou o dono do servidor podem executar este comando.';
 
 /**
  * Verifica permissão e responde automaticamente se negado

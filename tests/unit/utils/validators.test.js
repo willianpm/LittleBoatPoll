@@ -1,4 +1,4 @@
-const { validatePollOptions, parseOptions } = require('../utils/validators');
+const { validatePollOptions, parseOptions } = require('../../../src/utils/validators');
 
 describe('validators - validatePollOptions', () => {
   test('deve validar opções válidas com 2 opções', () => {

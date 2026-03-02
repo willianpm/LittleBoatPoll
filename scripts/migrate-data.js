@@ -4,7 +4,7 @@
  * Script de Migração de Dados para Sistema Multi-Ambiente
  *
  * Este script migra dados da raiz do projeto (estrutura antiga)
- * para a nova estrutura data/prod/ sem perda de informações.
+ * para a nova estrutura data/environments/prod/ sem perda de informações.
  *
  * Uso: node scripts/migrate-data.js
  */
@@ -13,10 +13,17 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT_DIR = path.join(__dirname, '..');
-const PROD_DATA_DIR = path.join(ROOT_DIR, 'data', 'prod');
+const PROD_DATA_DIR = path.join(ROOT_DIR, 'data', 'environments', 'prod');
 
 // Arquivos a migrar
-const FILES_TO_MIGRATE = ['active-polls.json', 'draft-polls.json', 'mensalistas.json', 'role-bindings.json', 'criadores-internos.json', 'historico-votacoes.json'];
+const FILES_TO_MIGRATE = [
+  'active-polls.json',
+  'draft-polls.json',
+  'mensalistas.json',
+  'role-bindings.json',
+  'criadores-internos.json',
+  'historico-votacoes.json',
+];
 
 console.log('╔════════════════════════════════════════════════════════╗');
 console.log('║      Migração de Dados - Little Boat Poll              ║');
@@ -46,7 +53,7 @@ for (const fileName of FILES_TO_MIGRATE) {
 
   // Verifica se já foi migrado
   if (fs.existsSync(destPath)) {
-    console.log(`${fileName} - já existe em data/prod/ (pulando)`);
+    console.log(`${fileName} - já existe em data/environments/prod/ (pulando)`);
     skippedCount++;
     continue;
   }
@@ -72,7 +79,7 @@ console.log(`Erros:    ${errorCount}\n`);
 if (migratedCount > 0) {
   console.log('Migração concluída com sucesso!\n');
   console.log('PRÓXIMOS PASSOS:\n');
-  console.log('1. Verifique os dados em data/prod/');
+  console.log('1. Verifique os dados em data/environments/prod/');
   console.log('2. Faça backup dos arquivos da raiz (se necessário)');
   console.log('3. Execute o bot: npm start');
   console.log('4. Os arquivos da raiz podem ser mantidos como backup\n');
@@ -80,6 +87,6 @@ if (migratedCount > 0) {
   console.log('Migração falhou com erros. Verifique os logs acima.\n');
   process.exit(1);
 } else {
-  console.log('Nenhum arquivo foi migrado (já estão em data/prod/ ou não existem).\n');
+  console.log('Nenhum arquivo foi migrado (já estão em data/environments/prod/ ou não existem).\n');
   console.log('O bot criará os arquivos automaticamente na primeira execução.\n');
 }

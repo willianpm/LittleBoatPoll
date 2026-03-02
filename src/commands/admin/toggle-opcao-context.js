@@ -1,7 +1,7 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { getLatestUserDraft, canEditDraft } = require('../utils/draft-handler');
-const { COLORS } = require('../utils/constants');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { getLatestUserDraft } = require('../../utils/draft-handler');
+const { COLORS } = require('../../utils/constants');
 
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message),
@@ -124,7 +124,11 @@ module.exports = {
         .setColor(cor)
         .setTitle(`✅ OPÇÃO ${acao}`)
         .setDescription(`**"${textoSelecionado}"**`)
-        .addFields({ name: '📋 Rascunho', value: rascunho.titulo, inline: true }, { name: '🔢 Total de Opções', value: `${rascunho.opcoes.length}/20`, inline: true }, { name: '🗳️ Máximo de Votos', value: `${rascunho.maxVotos}`, inline: true })
+        .addFields(
+          { name: '📋 Rascunho', value: rascunho.titulo, inline: true },
+          { name: '🔢 Total de Opções', value: `${rascunho.opcoes.length}/20`, inline: true },
+          { name: '🗳️ Máximo de Votos', value: `${rascunho.maxVotos}`, inline: true },
+        )
         .setFooter({ text: `ID: ${rascunho.id}` })
         .setTimestamp();
 

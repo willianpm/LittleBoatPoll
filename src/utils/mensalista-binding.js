@@ -22,11 +22,15 @@ async function ensureMensalistaRoleBinding(guild) {
   if (!guild?.id) return null;
 
   const bindings = loadRoleBindings();
-  const mensalistaRoleByGuild = bindings.mensalistaRoleByGuild && typeof bindings.mensalistaRoleByGuild === 'object' ? bindings.mensalistaRoleByGuild : {};
+  const mensalistaRoleByGuild =
+    bindings.mensalistaRoleByGuild && typeof bindings.mensalistaRoleByGuild === 'object'
+      ? bindings.mensalistaRoleByGuild
+      : {};
 
   const currentRoleId = mensalistaRoleByGuild[guild.id];
   if (currentRoleId) {
-    const persistedRole = guild.roles.cache.get(currentRoleId) || (await guild.roles.fetch(currentRoleId).catch(() => null));
+    const persistedRole =
+      guild.roles.cache.get(currentRoleId) || (await guild.roles.fetch(currentRoleId).catch(() => null));
     if (persistedRole) {
       return currentRoleId;
     }

@@ -36,7 +36,7 @@ if (!CLIENT_ID) {
 }
 
 // Diretório base para dados (isolado por ambiente)
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data', APP_ENV);
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../../data/environments', APP_ENV);
 
 // Configuração de deploy de comandos
 const DEPLOY = process.env.DEPLOY === 'true' || process.argv.includes('--deploy');

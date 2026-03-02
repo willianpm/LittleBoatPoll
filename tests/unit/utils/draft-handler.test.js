@@ -1,10 +1,16 @@
-const { getUserDrafts, getLatestUserDraft, getDraftById, canEditDraft } = require('../utils/draft-handler');
+const { getUserDrafts, getLatestUserDraft, getDraftById, canEditDraft } = require('../../../src/utils/draft-handler');
 
 describe('draft-handler - getUserDrafts', () => {
   test('deve retornar rascunhos do usuário ordenados por data de edição', () => {
     const draftPolls = new Map([
-      ['draft1', { draftId: 'draft1', criadorId: 'user1', criadoEm: new Date('2026-01-01'), editadoEm: new Date('2026-01-03') }],
-      ['draft2', { draftId: 'draft2', criadorId: 'user1', criadoEm: new Date('2026-01-02'), editadoEm: new Date('2026-01-04') }],
+      [
+        'draft1',
+        { draftId: 'draft1', criadorId: 'user1', criadoEm: new Date('2026-01-01'), editadoEm: new Date('2026-01-03') },
+      ],
+      [
+        'draft2',
+        { draftId: 'draft2', criadorId: 'user1', criadoEm: new Date('2026-01-02'), editadoEm: new Date('2026-01-04') },
+      ],
       ['draft3', { draftId: 'draft3', criadorId: 'user2', criadoEm: new Date('2026-01-03') }],
     ]);
 

@@ -22,7 +22,10 @@ function validatePollOptions(opcoes, maxVotos) {
   }
 
   if (maxVotos > opcoes.length) {
-    return { valid: false, error: `O número máximo de votos (${maxVotos}) não pode ser maior que o número de opções (${opcoes.length}).` };
+    return {
+      valid: false,
+      error: `O número máximo de votos (${maxVotos}) não pode ser maior que o número de opções (${opcoes.length}).`,
+    };
   }
 
   return { valid: true };

@@ -30,7 +30,12 @@ if (!TEST_BOT_TOKEN || !STAGING_BOT_ID || !TEST_CHANNEL_ID || !TEST_GUILD_ID) {
 
 // Cliente do bot de teste
 const testClient = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
 // Resultados dos testes
@@ -168,7 +173,12 @@ async function testCreateBasicPoll(channel) {
     // Verifica se bot respondeu neste canal (indicativo de estar funcionando)
     const messages = await channel.messages.fetch({ limit: 50 }).catch(() => null);
     const botMessages = messages?.filter((m) => m.author.id === STAGING_BOT_ID).size > 0;
-    recordTest('Criar Enquete', 'Bot staging responde no canal', botMessages, 'Nenhuma mensagem do bot encontrada no canal');
+    recordTest(
+      'Criar Enquete',
+      'Bot staging responde no canal',
+      botMessages,
+      'Nenhuma mensagem do bot encontrada no canal',
+    );
 
     // Verifica se bot tem permissão para usar slash commands
     const botMember = await guild.members.fetch(testClient.user.id).catch(() => null);
@@ -209,7 +219,12 @@ async function testVoteOnPoll(channel) {
     // Verifica reações disponíveis
     const reactions = pollMessage.reactions.cache;
     const hasReactions = reactions.size > 0;
-    recordTest('Votar em Enquete', 'Enquete tem opções (reações)', hasReactions, `${reactions.size} reação(ões) encontrada(s)`);
+    recordTest(
+      'Votar em Enquete',
+      'Enquete tem opções (reações)',
+      hasReactions,
+      `${reactions.size} reação(ões) encontrada(s)`,
+    );
 
     if (hasReactions) {
       // Adiciona voto na primeira opção
@@ -270,11 +285,21 @@ async function testVoteLimits(channel) {
     const reactionArray = Array.from(reactions.values());
 
     if (reactionArray.length < 2) {
-      recordTest('Limites de Votação', 'Enquete com múltiplas opções', false, `Precisa de pelo menos 2 opções, encontrou ${reactionArray.length}`);
+      recordTest(
+        'Limites de Votação',
+        'Enquete com múltiplas opções',
+        false,
+        `Precisa de pelo menos 2 opções, encontrou ${reactionArray.length}`,
+      );
       log('     Dica: Adicione mais reações manualmente à enquete', 'yellow');
       return;
     }
-    recordTest('Limites de Votação', 'Enquete com múltiplas opções', true, `${reactionArray.length} opção(ões) encontrada(s)`);
+    recordTest(
+      'Limites de Votação',
+      'Enquete com múltiplas opções',
+      true,
+      `${reactionArray.length} opção(ões) encontrada(s)`,
+    );
 
     // Tenta votar em múltiplas opções
     log(`\n   Tentando votar em ${reactionArray.length} opções...`, 'blue');
@@ -420,7 +445,11 @@ testClient.once('clientReady', async () => {
     if (successRate < 100) {
       log('\nDicas para melhorar os testes:', 'yellow');
 
-      if (testResults.scenarios.some((s) => s.name === 'Votar em Enquete' && s.tests.some((t) => !t.passed && t.name.includes('reações')))) {
+      if (
+        testResults.scenarios.some(
+          (s) => s.name === 'Votar em Enquete' && s.tests.some((t) => !t.passed && t.name.includes('reações')),
+        )
+      ) {
         log('  1. Adicione reações manualmente à enquete no Discord', 'yellow');
       }
     }
