@@ -137,8 +137,7 @@ module.exports = {
         });
       }
 
-      const informacoesPeso =
-        poll.usarPesoMensalista ? 'Mensalistas contam como peso 2' : 'Peso igual para todos';
+      const informacoesPeso = poll.usarPesoMensalista ? 'Mensalistas contam como peso 2' : 'Peso igual para todos';
 
       const infoResumo =
         `Total de participantes: ${Object.keys(poll.votos).length}\n` +

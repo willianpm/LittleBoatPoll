@@ -5,7 +5,7 @@ const { loadMensalistas, saveMensalistas } = require('../../utils/file-handler')
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Add/Del Mensalistas').setType(ApplicationCommandType.User),
 
-  async execute(interaction, client) {
+  async execute(interaction, _client) {
     const usuario = interaction.targetUser;
 
     try {

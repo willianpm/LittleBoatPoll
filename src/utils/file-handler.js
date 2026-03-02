@@ -6,35 +6,16 @@ const DEFAULT_ROLE_BINDINGS = {
   mensalistaRoleByGuild: {},
 };
 
-function normalizeSnowflakeId(value) {
-  if (value === null || value === undefined) return null;
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-
-    const match = trimmed.match(/\d{5,}/);
-    return match ? match[0] : trimmed;
-  }
-
-  if (typeof value === 'bigint') {
-    return value.toString();
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(Math.trunc(value));
-  }
-
-  return null;
-}
-
 /**
  * Normaliza estrutura de role-bindings para formato esperado
  * @param {Object} data - Dados brutos carregados do JSON
  * @returns {Object} Estrutura normalizada
  */
 function normalizeRoleBindings(data = {}) {
-  const mensalistaRoleByGuild = data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object' ? data.mensalistaRoleByGuild : {};
+  const mensalistaRoleByGuild =
+    data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object'
+      ? data.mensalistaRoleByGuild
+      : {};
 
   return {
     mensalistaRoleByGuild,

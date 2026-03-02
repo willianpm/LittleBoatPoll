@@ -1,10 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
-const fs = require('fs');
 const crypto = require('crypto');
 const { validatePollOptions, parseOptions } = require('../../utils/validators');
-const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
-const { getUserDrafts, getDraftById, canEditDraft } = require('../../utils/draft-handler');
+const { EMOJIS_DISPONIVEIS, COLORS } = require('../../utils/constants');
 
 /**
  * COMANDO: /rascunho
@@ -256,7 +254,8 @@ async function handleEditar(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content:
-        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador ' +
+        'podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -300,7 +299,9 @@ async function handleEditar(interaction, client) {
   if (novoMaxVotos) {
     if (novoMaxVotos > draft.opcoes.length) {
       return await interaction.reply({
-        content: `❌ **Erro!** O número máximo de votos (${novoMaxVotos}) não pode ser maior que o número de opções (${draft.opcoes.length}).`,
+        content:
+          `❌ **Erro!** O número máximo de votos (${novoMaxVotos}) não pode ser maior ` +
+          `que o número de opções (${draft.opcoes.length}).`,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -438,7 +439,8 @@ async function handlePublicar(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content:
-        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem publicar este rascunho.',
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador ' +
+        'podem publicar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -469,7 +471,9 @@ async function handlePublicar(interaction, client) {
         { name: '\u200B', value: '\u200B', inline: false },
         {
           name: 'Regras 📊',
-          value: `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`,
+          value:
+            `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n` +
+            `• ${pesoInfo}`,
           inline: false,
         },
       )
@@ -482,7 +486,11 @@ async function handlePublicar(interaction, client) {
     });
 
     // Atualiza o embed para incluir o ID
-    const updatedEmbed = EmbedBuilder.from(pollEmbed).addFields({ name: 'ID', value: `${msg.id}`, inline: false });
+    const updatedEmbed = EmbedBuilder.from(pollEmbed).addFields({
+      name: 'ID',
+      value: `${msg.id}`,
+      inline: false,
+    });
     await msg.edit({ embeds: [updatedEmbed] });
 
     // Adiciona as reações
@@ -522,7 +530,9 @@ async function handlePublicar(interaction, client) {
         { name: 'Canal', value: `${targetChannel}` },
         {
           name: 'Link para Votação',
-          value: `[Clique aqui](https://discord.com/channels/${interaction.guildId}/${targetChannel.id}/${msg.id})`,
+          value:
+            '[Clique aqui](https://discord.com/channels/' +
+            `${interaction.guildId}/${targetChannel.id}/${msg.id})`,
         },
       )
       .setFooter({ text: 'A enquete está ativa e aceitando votos' })
@@ -532,7 +542,10 @@ async function handlePublicar(interaction, client) {
       embeds: [publishEmbed],
     });
 
-    console.log(`Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
+    console.log(
+      `Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | ` +
+        `Canal: ${targetChannel.name}`,
+    );
   } catch (error) {
     console.error('Erro ao publicar rascunho:', error);
     await interaction.editReply({
@@ -557,7 +570,8 @@ async function handleDeletar(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content:
-        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem deletar este rascunho.',
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador ' +
+        'podem deletar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -601,7 +615,8 @@ async function handleAdicionarOpcao(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content:
-        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador ' +
+        'podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -636,7 +651,9 @@ async function handleAdicionarOpcao(interaction, client) {
   // Valida o total de opções
   if (draft.opcoes.length > 20) {
     return await interaction.reply({
-      content: `❌ **Erro!** O Discord limita a 20 reações por mensagem. Total de opções: ${draft.opcoes.length}. Remova ${draft.opcoes.length - 20} opção(ões).`,
+      content:
+        '❌ **Erro!** O Discord limita a 20 reações por mensagem. ' +
+        `Total de opções: ${draft.opcoes.length}. Remova ${draft.opcoes.length - 20} opção(ões).`,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -672,7 +689,10 @@ async function handleAdicionarOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
+  console.log(
+    `Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | ` +
+      `Novas: ${novasOpcoes.join(', ')}`,
+  );
 }
 
 async function handleRemoverOpcao(interaction, client) {
@@ -692,7 +712,8 @@ async function handleRemoverOpcao(interaction, client) {
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
       content:
-        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador ' +
+        'podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -716,7 +737,9 @@ async function handleRemoverOpcao(interaction, client) {
 
   if (indexRemover === -1) {
     return await interaction.reply({
-      content: `❌ **Erro!** Opção "${opcaoParaRemover}" não encontrada.\n\n**Opções disponíveis:**\n${draft.opcoes.map((op, i) => `${i + 1}. ${op}`).join('\n')}`,
+      content:
+        `❌ **Erro!** Opção '${opcaoParaRemover}' não encontrada.\n\n**Opções disponíveis:**\n` +
+        `${draft.opcoes.map((op, i) => `${i + 1}. ${op}`).join('\n')}`,
       flags: MessageFlags.Ephemeral,
     });
   }

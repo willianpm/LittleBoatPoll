@@ -6,12 +6,10 @@ const {
   Client,
   GatewayIntentBits,
   Collection,
-  ChannelType,
   ActivityType,
   REST,
   Routes,
   Partials,
-  PermissionFlagsBits,
   MessageFlags,
 } = require('discord.js');
 const fs = require('fs');
@@ -609,21 +607,12 @@ console.log(`${client.commands.size} comando(s) carregado(s)`);
 async function deployCommands() {
   try {
     const commands = [];
-    let slashCount = 0;
-    let contextCount = 0;
 
     // Carrega todos os comandos para registrar
     for (const { command } of loadedCommands) {
       if (command.data && command.execute) {
         commands.push(command.data.toJSON());
 
-        // Identifica o tipo de comando
-        if (command.data.type === 3) {
-          // ApplicationCommandType.Message = 3
-          contextCount++;
-        } else {
-          slashCount++;
-        }
       }
     }
 
@@ -640,7 +629,7 @@ async function deployCommands() {
     }
 
     // Registra os comandos globalmente (disponível em todos os servidores)
-    const data = await rest.put(Routes.applicationCommands(clientId), {
+    await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
 

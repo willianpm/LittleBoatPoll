@@ -2,7 +2,28 @@
  * Emojis disponíveis para reações de enquete
  * Discord limita a 20 reações por mensagem
  */
-const EMOJIS_DISPONIVEIS = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹'];
+const EMOJIS_DISPONIVEIS = [
+  '🇦',
+  '🇧',
+  '🇨',
+  '🇩',
+  '🇪',
+  '🇫',
+  '🇬',
+  '🇭',
+  '🇮',
+  '🇯',
+  '🇰',
+  '🇱',
+  '🇲',
+  '🇳',
+  '🇴',
+  '🇵',
+  '🇶',
+  '🇷',
+  '🇸',
+  '🇹',
+];
 
 /**
  * Cores padrão para embeds

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { validatePollOptions, parseOptions } = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
@@ -77,7 +77,9 @@ module.exports = {
       // Verifica se há emojis suficientes (limite do Discord: 20 reações)
       if (opcoes.length > LIMITS.MAX_OPTIONS) {
         return await interaction.editReply({
-          content: `❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: ${LIMITS.MAX_OPTIONS} opções por enquete.`,
+          content:
+            '❌ **Erro!** O Discord limita a 20 reações por mensagem. ' +
+            `Máximo: ${LIMITS.MAX_OPTIONS} opções por enquete.`,
         });
       }
 
@@ -140,7 +142,8 @@ module.exports = {
       client.saveActivePolls();
 
       console.log(
-        `Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`,
+        `Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | ` +
+          `Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`,
       );
     } catch (error) {
       console.error('Erro ao criar enquete:', error);

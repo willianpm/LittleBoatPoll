@@ -80,7 +80,11 @@ module.exports = {
         .addFields({
           name: '📋 Permissões Concedidas',
           value:
-            '• Criar e gerenciar enquetes\n• Adicionar/remover mensalistas\n• Encerrar votações\n• Gerenciar rascunhos\n• Gerenciar outros criadores',
+            '• Criar e gerenciar enquetes\n' +
+            '• Adicionar/remover mensalistas\n' +
+            '• Encerrar votações\n' +
+            '• Gerenciar rascunhos\n' +
+            '• Gerenciar outros criadores',
         })
         .setTimestamp();
 
