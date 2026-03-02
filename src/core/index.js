@@ -300,7 +300,7 @@ async function syncPollReactions() {
         return null;
       });
       if (!channel) {
-        console.log(`Canal não encontrado - marcando para remoção`);
+        console.log('Canal não encontrado - marcando para remoção');
         enquetesOrfas.push(messageId);
         continue;
       }

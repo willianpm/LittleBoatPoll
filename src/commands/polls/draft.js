@@ -392,7 +392,7 @@ async function handleExibir(interaction, client) {
   }
 
   // Constrói a descrição com as opções
-  let descricao = `Opções:\n\n`;
+  let descricao = 'Opções:\n\n';
   draft.opcoes.forEach((opcao, index) => {
     descricao += `**${index + 1}.** ${opcao}\n`;
   });
