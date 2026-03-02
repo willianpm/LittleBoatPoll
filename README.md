@@ -29,8 +29,8 @@ Não existem níveis intermediários para permissões administrativas. O sistema
 
 Se você quiser autorizar um cargo do Discord sem usar comando, edite o arquivo do ambiente em uso:
 
-- Produção: `data/prod/role-bindings.json`
-- Staging: `data/staging/role-bindings.json`
+- Produção: `data/environments/prod/role-bindings.json`
+- Staging: `data/environments/staging/role-bindings.json`
 
 **Como encontrar os IDs:**
 
@@ -91,7 +91,7 @@ npm run add:creator 123456789012345678   # Adiciona criador via CLI
 node scripts/add-creator.js <MEMBER_ID>  # Forma alternativa
 ```
 
-📖 **Leia mais:** [Documentação de Migração](docs/MIGRACAO-PERMISSOES-INTERNAS.md)
+📖 **Leia mais:** [Documentação de Migração](docs/technical/MIGRACAO-PERMISSOES-INTERNAS.md)
 
 ## Requisitos
 
@@ -134,12 +134,12 @@ DEPLOY=true
 
 O projeto suporta execução em dois ambientes isolados:
 
-- **Produção** (`APP_ENV=prod`) - Bot principal com dados em `data/prod/`
-- **Staging** (`APP_ENV=staging`) - Bot de testes com dados em `data/staging/`
+- **Produção** (`APP_ENV=prod`) - Bot principal com dados em `data/environments/prod/`
+- **Staging** (`APP_ENV=staging`) - Bot de testes com dados em `data/environments/staging/`
 
 ### 📁 Arquivos de dados por ambiente
 
-Cada ambiente usa a mesma estrutura de arquivos, mudando apenas a pasta (`data/prod/` ou `data/staging/`):
+Cada ambiente usa a mesma estrutura de arquivos, mudando apenas a pasta (`data/environments/prod/` ou `data/environments/staging/`):
 
 - `active-polls.json`
 - `draft-polls.json`
@@ -148,8 +148,8 @@ Cada ambiente usa a mesma estrutura de arquivos, mudando apenas a pasta (`data/p
 - `historico-votacoes.json`
 - `role-bindings.json` (**inclui `adminRoleIdsByGuild` para autorização por cargo**)
 
-> ✅ Em produção, edite os arquivos em `data/prod/`.
-> ✅ Em homologação, edite os arquivos em `data/staging/`.
+> ✅ Em produção, edite os arquivos em `data/environments/prod/`.
+> ✅ Em homologação, edite os arquivos em `data/environments/staging/`.
 
 ### Executar bot de staging
 

@@ -46,7 +46,7 @@ All notable changes to this project will be documented in this file.
 ### 📖 Documentação
 
 - Atualizado `README.md` com instruções de como encontrar IDs de cargo e servidor no Discord.
-- Adicionados comentários detalhados em `data/prod/role-bindings.json` e `data/staging/role-bindings.json`.
+- Adicionados comentários detalhados em `data/environments/prod/role-bindings.json` e `data/environments/staging/role-bindings.json`.
 - Atualizada wiki `permissoes.md` com novo método de autorização (Método 4).
 - Atualizado `docs/MIGRACAO-PERMISSOES-INTERNAS.md` com detalhes técnicos da feature v2.1.
 
