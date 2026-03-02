@@ -117,9 +117,9 @@ module.exports = {
       // Salva as votações ativas em arquivo
       client.saveActivePolls();
 
-      console.log(`✅ Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
+      console.log(`Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
     } catch (error) {
-      console.error('❌ Erro ao criar enquete:', error);
+      console.error('Erro ao criar enquete:', error);
       await interaction.editReply({
         content: '❌ Erro ao criar a enquete!',
       });

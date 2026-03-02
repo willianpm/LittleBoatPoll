@@ -104,7 +104,7 @@ module.exports = {
       else if (subcommand === 'publicar') await handlePublicar(interaction, client);
       else if (subcommand === 'deletar') await handleDeletar(interaction, client);
     } catch (error) {
-      console.error('❌ Erro ao gerenciar rascunho:', error);
+      console.error('Erro ao gerenciar rascunho:', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao processar o comando!',
@@ -192,7 +192,7 @@ async function handleCriar(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`✅ Rascunho criado: ${titulo} | ID: ${draftId} | Criador: ${interaction.user.tag}`);
+  console.log(`Rascunho criado: ${titulo} | ID: ${draftId} | Criador: ${interaction.user.tag}`);
 }
 
 async function handleEditar(interaction, client) {
@@ -287,7 +287,7 @@ async function handleEditar(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`✅ Rascunho editado: ${draft.titulo} | ID: ${draftId}`);
+  console.log(`Rascunho editado: ${draft.titulo} | ID: ${draftId}`);
 }
 
 async function handleListar(interaction, client) {
@@ -458,9 +458,9 @@ async function handlePublicar(interaction, client) {
       embeds: [publishEmbed],
     });
 
-    console.log(`✅ Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
+    console.log(`Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
   } catch (error) {
-    console.error('❌ Erro ao publicar rascunho:', error);
+    console.error('Erro ao publicar rascunho:', error);
     await interaction.editReply({
       content: '❌ Erro ao publicar o rascunho. Verifique minhas permissões no canal.',
     });
@@ -506,7 +506,7 @@ async function handleDeletar(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`✅ Rascunho deletado: ${draft.titulo} | ID: ${draftId}`);
+  console.log(`Rascunho deletado: ${draft.titulo} | ID: ${draftId}`);
 }
 
 async function handleAdicionarOpcao(interaction, client) {
@@ -590,7 +590,7 @@ async function handleAdicionarOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`✅ Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
+  console.log(`Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
 }
 
 async function handleRemoverOpcao(interaction, client) {
@@ -674,5 +674,5 @@ async function handleRemoverOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`✅ Opção removida do rascunho: ${draft.titulo} | ID: ${draftId} | Removida: ${opcaoRemovida}`);
+  console.log(`Opção removida do rascunho: ${draft.titulo} | ID: ${draftId} | Removida: ${opcaoRemovida}`);
 }
