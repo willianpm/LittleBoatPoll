@@ -1,10 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const fs = require('fs');
 const crypto = require('crypto');
-const { validatePollOptions, parseOptions } = require('../utils/validators');
-const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../utils/constants');
-const { getUserDrafts, getDraftById, canEditDraft } = require('../utils/draft-handler');
+const { validatePollOptions, parseOptions } = require('../../utils/validators');
+const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
+const { getUserDrafts, getDraftById, canEditDraft } = require('../../utils/draft-handler');
 
 /**
  * COMANDO: /rascunho
@@ -29,33 +29,72 @@ module.exports = {
         .setName('criar')
         .setDescription('Cria um novo rascunho de enquete')
         .addStringOption((option) => option.setName('titulo').setDescription('Título da enquete').setRequired(true))
-        .addStringOption((option) => option.setName('opcoes').setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)').setRequired(true))
-        .addIntegerOption((option) => option.setName('max_votos').setDescription('Número máximo de votos por pessoa').setRequired(true).setMinValue(1))
-        .addStringOption((option) => option.setName('peso_mensalista').setDescription('Mensalistas têm peso 2 nos votos?').setRequired(false).addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' })),
+        .addStringOption((option) =>
+          option
+            .setName('opcoes')
+            .setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)')
+            .setRequired(true),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('max_votos')
+            .setDescription('Número máximo de votos por pessoa')
+            .setRequired(true)
+            .setMinValue(1),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('peso_mensalista')
+            .setDescription('Mensalistas têm peso 2 nos votos?')
+            .setRequired(false)
+            .addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' }),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('editar')
         .setDescription('Edita um rascunho existente')
         .addStringOption((option) => option.setName('id').setDescription('ID do rascunho a editar').setRequired(true))
-        .addStringOption((option) => option.setName('titulo').setDescription('Novo título (deixe em branco para manter)').setRequired(false))
-        .addStringOption((option) => option.setName('opcoes').setDescription('Novas opções (deixe em branco para manter)').setRequired(false))
-        .addIntegerOption((option) => option.setName('max_votos').setDescription('Novo máximo de votos').setRequired(false).setMinValue(1))
-        .addStringOption((option) => option.setName('peso_mensalista').setDescription('Mudar peso de mensalistas?').setRequired(false).addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' })),
+        .addStringOption((option) =>
+          option.setName('titulo').setDescription('Novo título (deixe em branco para manter)').setRequired(false),
+        )
+        .addStringOption((option) =>
+          option.setName('opcoes').setDescription('Novas opções (deixe em branco para manter)').setRequired(false),
+        )
+        .addIntegerOption((option) =>
+          option.setName('max_votos').setDescription('Novo máximo de votos').setRequired(false).setMinValue(1),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('peso_mensalista')
+            .setDescription('Mudar peso de mensalistas?')
+            .setRequired(false)
+            .addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' }),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('adicionar-opcao')
         .setDescription('Adiciona uma ou mais opções ao rascunho')
         .addStringOption((option) => option.setName('id').setDescription('ID do rascunho').setRequired(true))
-        .addStringOption((option) => option.setName('opcoes').setDescription('Novas opções separadas por vírgula (ex: Livro D, Livro E)').setRequired(true)),
+        .addStringOption((option) =>
+          option
+            .setName('opcoes')
+            .setDescription('Novas opções separadas por vírgula (ex: Livro D, Livro E)')
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('remover-opcao')
         .setDescription('Remove uma opção específica do rascunho')
         .addStringOption((option) => option.setName('id').setDescription('ID do rascunho').setRequired(true))
-        .addStringOption((option) => option.setName('opcao').setDescription('Texto da opção a remover (ex: Livro A) ou número (ex: 1)').setRequired(true)),
+        .addStringOption((option) =>
+          option
+            .setName('opcao')
+            .setDescription('Texto da opção a remover (ex: Livro A) ou número (ex: 1)')
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista os rascunhos disponíveis'))
     .addSubcommand((subcommand) =>
@@ -69,7 +108,12 @@ module.exports = {
         .setName('publicar')
         .setDescription('Publica um rascunho como enquete ativa')
         .addStringOption((option) => option.setName('id').setDescription('ID do rascunho a publicar').setRequired(true))
-        .addChannelOption((option) => option.setName('canal').setDescription('Canal onde a enquete será publicada (padrão: canal atual)').setRequired(false)),
+        .addChannelOption((option) =>
+          option
+            .setName('canal')
+            .setDescription('Canal onde a enquete será publicada (padrão: canal atual)')
+            .setRequired(false),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -211,7 +255,8 @@ async function handleEditar(interaction, client) {
   const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
+      content:
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -278,7 +323,13 @@ async function handleEditar(interaction, client) {
   const updateEmbed = new EmbedBuilder()
     .setColor(COLORS.GOLD)
     .setTitle('Rascunho Atualizado!')
-    .addFields({ name: 'ID', value: `\`${draftId}\`` }, { name: 'Título', value: draft.titulo }, { name: 'Opções', value: draft.opcoes.join(', ') }, { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true }, { name: 'Peso Mensalista', value: draft.usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true })
+    .addFields(
+      { name: 'ID', value: `\`${draftId}\`` },
+      { name: 'Título', value: draft.titulo },
+      { name: 'Opções', value: draft.opcoes.join(', ') },
+      { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true },
+      { name: 'Peso Mensalista', value: draft.usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true },
+    )
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
 
@@ -352,7 +403,15 @@ async function handleExibir(interaction, client) {
     .setColor(COLORS.NEUTRAL)
     .setTitle(`${draft.titulo}`)
     .setDescription(descricao)
-    .addFields({ name: 'ID do Rascunho', value: `\`${draftId}\`` }, { name: 'Criador', value: `<@${draft.criadorId}>`, inline: true }, { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true }, { name: 'Peso Mensalista', value: pesoInfo, inline: true }, { name: 'Criado em', value: `<t:${Math.floor(new Date(draft.criadoEm).getTime() / 1000)}:f>` }, { name: 'Editado em', value: `<t:${Math.floor(new Date(draft.editadoEm).getTime() / 1000)}:f>` }, { name: 'Status', value: '📝 Rascunho (não publicado)' })
+    .addFields(
+      { name: 'ID do Rascunho', value: `\`${draftId}\`` },
+      { name: 'Criador', value: `<@${draft.criadorId}>`, inline: true },
+      { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true },
+      { name: 'Peso Mensalista', value: pesoInfo, inline: true },
+      { name: 'Criado em', value: `<t:${Math.floor(new Date(draft.criadoEm).getTime() / 1000)}:f>` },
+      { name: 'Editado em', value: `<t:${Math.floor(new Date(draft.editadoEm).getTime() / 1000)}:f>` },
+      { name: 'Status', value: '📝 Rascunho (não publicado)' },
+    )
     .setFooter({ text: `Total de opções: ${draft.opcoes.length}` })
     .setTimestamp();
 
@@ -378,7 +437,8 @@ async function handlePublicar(interaction, client) {
   const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem publicar este rascunho.',
+      content:
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem publicar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -405,7 +465,14 @@ async function handlePublicar(interaction, client) {
       .setColor(COLORS.GOLD)
       .setTitle(`${draft.titulo} `)
       .setDescription(descricaoPoll)
-      .addFields({ name: '\u200B', value: '\u200B', inline: false }, { name: 'Regras 📊', value: `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`, inline: false })
+      .addFields(
+        { name: '\u200B', value: '\u200B', inline: false },
+        {
+          name: 'Regras 📊',
+          value: `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`,
+          inline: false,
+        },
+      )
       .setFooter({ text: `${draft.opcoes.length} opções disponíveis` })
       .setTimestamp();
 
@@ -450,7 +517,14 @@ async function handlePublicar(interaction, client) {
     const publishEmbed = new EmbedBuilder()
       .setColor(COLORS.SUCCESS)
       .setTitle('Enquete Publicada com Sucesso!')
-      .addFields({ name: 'Título', value: draft.titulo }, { name: 'Canal', value: `${targetChannel}` }, { name: 'Link para Votação', value: `[Clique aqui](https://discord.com/channels/${interaction.guildId}/${targetChannel.id}/${msg.id})` })
+      .addFields(
+        { name: 'Título', value: draft.titulo },
+        { name: 'Canal', value: `${targetChannel}` },
+        {
+          name: 'Link para Votação',
+          value: `[Clique aqui](https://discord.com/channels/${interaction.guildId}/${targetChannel.id}/${msg.id})`,
+        },
+      )
       .setFooter({ text: 'A enquete está ativa e aceitando votos' })
       .setTimestamp();
 
@@ -482,7 +556,8 @@ async function handleDeletar(interaction, client) {
   const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem deletar este rascunho.',
+      content:
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem deletar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -525,7 +600,8 @@ async function handleAdicionarOpcao(interaction, client) {
   const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
+      content:
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -581,7 +657,13 @@ async function handleAdicionarOpcao(interaction, client) {
   const updateEmbed = new EmbedBuilder()
     .setColor(COLORS.SUCCESS)
     .setTitle('Opções Adicionadas!')
-    .addFields({ name: 'ID', value: `\`${draftId}\`` }, { name: 'Título', value: draft.titulo }, { name: 'Opções Adicionadas', value: novasOpcoes.join(', ') }, { name: 'Total de Opções', value: `${draft.opcoes.length}` }, { name: 'Todas as Opções', value: draft.opcoes.join(', ') })
+    .addFields(
+      { name: 'ID', value: `\`${draftId}\`` },
+      { name: 'Título', value: draft.titulo },
+      { name: 'Opções Adicionadas', value: novasOpcoes.join(', ') },
+      { name: 'Total de Opções', value: `${draft.opcoes.length}` },
+      { name: 'Todas as Opções', value: draft.opcoes.join(', ') },
+    )
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
 
@@ -609,7 +691,8 @@ async function handleRemoverOpcao(interaction, client) {
   const temCargoCriador = isCriador(interaction.member, interaction.guildId);
   if (draft.criadorId !== interaction.user.id && !temCargoCriador) {
     return await interaction.reply({
-      content: '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
+      content:
+        '❌ **Permissão negada!** Apenas o criador do rascunho ou usuários com o cargo Criador podem editar este rascunho.',
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -665,7 +748,13 @@ async function handleRemoverOpcao(interaction, client) {
   const updateEmbed = new EmbedBuilder()
     .setColor(COLORS.WARNING)
     .setTitle('Opção Removida!')
-    .addFields({ name: 'ID', value: `\`${draftId}\`` }, { name: 'Título', value: draft.titulo }, { name: 'Opção Removida', value: opcaoRemovida }, { name: 'Total de Opções', value: `${draft.opcoes.length}` }, { name: 'Opções Restantes', value: draft.opcoes.join(', ') })
+    .addFields(
+      { name: 'ID', value: `\`${draftId}\`` },
+      { name: 'Título', value: draft.titulo },
+      { name: 'Opção Removida', value: opcaoRemovida },
+      { name: 'Total de Opções', value: `${draft.opcoes.length}` },
+      { name: 'Opções Restantes', value: draft.opcoes.join(', ') },
+    )
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
 

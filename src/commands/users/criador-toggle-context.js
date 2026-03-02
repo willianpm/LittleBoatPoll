@@ -1,6 +1,6 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { loadCriadores, saveCriadores } = require('../utils/file-handler');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { loadCriadores, saveCriadores } = require('../../utils/file-handler');
 
 /**
  * CONTEXT MENU: Add/Del Criador de Enquetes
@@ -60,7 +60,8 @@ module.exports = {
 
         if (isLastCreator && isSelfRemoval) {
           return await interaction.reply({
-            content: '❌ **Você é o último Criador!** Não é possível se remover.\n_Adicione outro Criador antes de se remover._',
+            content:
+              '❌ **Você é o último Criador!** Não é possível se remover.\n_Adicione outro Criador antes de se remover._',
             flags: MessageFlags.Ephemeral,
           });
         }

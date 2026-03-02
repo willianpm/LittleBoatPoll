@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { validatePollOptions, parseOptions } = require('../utils/validators');
-const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../utils/constants');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { validatePollOptions, parseOptions } = require('../../utils/validators');
+const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
 
 /**
  * COMANDO: /enquete
@@ -17,10 +17,25 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('enquete')
     .setDescription('Cria uma enquete para votação do Clube do Livro')
-    .addStringOption((option) => option.setName('nome-da-enquete').setDescription('Nome/Título da enquete').setRequired(true))
-    .addStringOption((option) => option.setName('opcoes').setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)').setRequired(true))
-    .addIntegerOption((option) => option.setName('max_votos').setDescription('Número máximo de votos por pessoa').setRequired(true).setMinValue(1))
-    .addStringOption((option) => option.setName('peso_mensalista').setDescription('Mensalistas têm peso 2 nos votos?').setRequired(true).addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' })),
+    .addStringOption((option) =>
+      option.setName('nome-da-enquete').setDescription('Nome/Título da enquete').setRequired(true),
+    )
+    .addStringOption((option) =>
+      option
+        .setName('opcoes')
+        .setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)')
+        .setRequired(true),
+    )
+    .addIntegerOption((option) =>
+      option.setName('max_votos').setDescription('Número máximo de votos por pessoa').setRequired(true).setMinValue(1),
+    )
+    .addStringOption((option) =>
+      option
+        .setName('peso_mensalista')
+        .setDescription('Mensalistas têm peso 2 nos votos?')
+        .setRequired(true)
+        .addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' }),
+    ),
 
   async execute(interaction, client) {
     // Defer reply IMEDIATAMENTE para evitar timeout (3s do Discord)
@@ -78,7 +93,14 @@ module.exports = {
         .setColor(COLORS.GOLD)
         .setTitle(`${titulo} `)
         .setDescription(descricao)
-        .addFields({ name: '\u200B', value: '\u200B', inline: false }, { name: 'Regras 📊', value: `• Você pode votar em até ${maxVotos} opç${maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`, inline: false })
+        .addFields(
+          { name: '\u200B', value: '\u200B', inline: false },
+          {
+            name: 'Regras 📊',
+            value: `• Você pode votar em até ${maxVotos} opç${maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`,
+            inline: false,
+          },
+        )
         .setFooter({ text: `${opcoes.length} opções disponíveis` })
         .setTimestamp();
 
@@ -117,7 +139,9 @@ module.exports = {
       // Salva as votações ativas em arquivo
       client.saveActivePolls();
 
-      console.log(`Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`);
+      console.log(
+        `Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`,
+      );
     } catch (error) {
       console.error('Erro ao criar enquete:', error);
       await interaction.editReply({

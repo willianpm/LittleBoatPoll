@@ -1,6 +1,6 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { loadVotacoes, saveVotacoes } = require('../utils/file-handler');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { loadVotacoes, saveVotacoes } = require('../../utils/file-handler');
 
 /**
  * COMANDO DE CONTEXTO: Encerrar Votação
@@ -80,7 +80,10 @@ module.exports = {
       // CRIAÇÃO DO EMBED DE RESULTADO
       // ====================================
 
-      const resultEmbed = new EmbedBuilder().setColor(cor).setTitle('📊 RESULTADO FINAL DA VOTAÇÃO 📊').setDescription(`${poll.titulo}\n\n${tituloResultado}`);
+      const resultEmbed = new EmbedBuilder()
+        .setColor(cor)
+        .setTitle('📊 RESULTADO FINAL DA VOTAÇÃO 📊')
+        .setDescription(`${poll.titulo}\n\n${tituloResultado}`);
 
       // Adiciona ranking de opções (apenas top 3)
       const top3 = resultados.slice(0, 3);

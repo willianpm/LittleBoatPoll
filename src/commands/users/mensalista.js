@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { loadMensalistas, saveMensalistas } = require('../utils/file-handler');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { loadMensalistas, saveMensalistas } = require('../../utils/file-handler');
 
 /**
  * COMANDO: /mensalista
@@ -29,7 +29,9 @@ module.exports = {
         .setDescription('Remove um usuário da lista de mensalistas')
         .addUserOption((option) => option.setName('usuario').setDescription('Usuário a remover').setRequired(true)),
     )
-    .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os mensalistas cadastrados')),
+    .addSubcommand((subcommand) =>
+      subcommand.setName('listar').setDescription('Lista todos os mensalistas cadastrados'),
+    ),
 
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();

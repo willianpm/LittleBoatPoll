@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../utils/permissions');
-const { loadCriadores, saveCriadores } = require('../utils/file-handler');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { loadCriadores, saveCriadores } = require('../../utils/file-handler');
 
 /**
  * COMANDO: /criador-de-enquete
@@ -22,13 +22,17 @@ module.exports = {
       subcommand
         .setName('adicionar')
         .setDescription('Adiciona um usuário como Criador de Enquetes')
-        .addUserOption((option) => option.setName('usuario').setDescription('Usuário a ser adicionado').setRequired(true)),
+        .addUserOption((option) =>
+          option.setName('usuario').setDescription('Usuário a ser adicionado').setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('remover')
         .setDescription('Remove um usuário da lista de Criadores')
-        .addUserOption((option) => option.setName('usuario').setDescription('Usuário a ser removido').setRequired(true)),
+        .addUserOption((option) =>
+          option.setName('usuario').setDescription('Usuário a ser removido').setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) => subcommand.setName('listar').setDescription('Lista todos os Criadores de Enquetes')),
 
@@ -73,7 +77,8 @@ module.exports = {
         .setDescription(`**${usuario.username}** (${usuario.id}) agora tem acesso administrativo total ao bot.`)
         .addFields({
           name: '📋 Permissões Concedidas',
-          value: '• Criar e gerenciar enquetes\n• Adicionar/remover mensalistas\n• Encerrar votações\n• Gerenciar rascunhos\n• Gerenciar outros criadores',
+          value:
+            '• Criar e gerenciar enquetes\n• Adicionar/remover mensalistas\n• Encerrar votações\n• Gerenciar rascunhos\n• Gerenciar outros criadores',
         })
         .setTimestamp();
 
@@ -101,7 +106,8 @@ module.exports = {
 
       if (isLastCreator && isSelfRemoval) {
         return await interaction.reply({
-          content: '❌ **Você é o último Criador!** Não é possível se remover.\n_Adicione outro Criador antes de se remover._',
+          content:
+            '❌ **Você é o último Criador!** Não é possível se remover.\n_Adicione outro Criador antes de se remover._',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -110,7 +116,12 @@ module.exports = {
       data.criadores = data.criadores.filter((id) => id !== usuario.id);
       saveCriadores(data);
 
-      const embed = new EmbedBuilder().setColor('#FF0000').setTitle('🗑️ Criador de Enquetes Removido!').setDescription(`**${usuario.username}** (${usuario.id}) não tem mais acesso administrativo ao bot.`).setFooter({ text: 'Usuário continua podendo votar normalmente' }).setTimestamp();
+      const embed = new EmbedBuilder()
+        .setColor('#FF0000')
+        .setTitle('🗑️ Criador de Enquetes Removido!')
+        .setDescription(`**${usuario.username}** (${usuario.id}) não tem mais acesso administrativo ao bot.`)
+        .setFooter({ text: 'Usuário continua podendo votar normalmente' })
+        .setTimestamp();
 
       console.log(`Criador removido: ${usuario.username} (${usuario.id})`);
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
@@ -121,7 +132,13 @@ module.exports = {
     // =====================================
     if (subcommand === 'listar') {
       if (data.criadores.length === 0) {
-        const embed = new EmbedBuilder().setColor('#FFA500').setTitle('📋 Criadores de Enquetes').setDescription('Nenhum Criador cadastrado internamente ainda.\n\n_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n_Use `/criador-de-enquete adicionar` para cadastrar um usuário._').setTimestamp();
+        const embed = new EmbedBuilder()
+          .setColor('#FFA500')
+          .setTitle('📋 Criadores de Enquetes')
+          .setDescription(
+            'Nenhum Criador cadastrado internamente ainda.\n\n_⚠️ Apenas Administradores e o dono do servidor têm acesso administrativo no momento._\n\n_Use `/criador-de-enquete adicionar` para cadastrar um usuário._',
+          )
+          .setTimestamp();
 
         return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       }
@@ -148,7 +165,12 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor('#4169E1')
         .setTitle('📋 Criadores de Enquetes (Sistema Interno)')
-        .setDescription(lista + '\n\n_✅ Estes usuários têm acesso administrativo total ao bot._\n' + '_📌 Permissões gerenciadas internamente (não dependem de cargos do Discord)._\n' + '_👥 Administradores e dono do servidor também têm acesso total._')
+        .setDescription(
+          lista +
+            '\n\n_✅ Estes usuários têm acesso administrativo total ao bot._\n' +
+            '_📌 Permissões gerenciadas internamente (não dependem de cargos do Discord)._\n' +
+            '_👥 Administradores e dono do servidor também têm acesso total._',
+        )
         .setFooter({ text: `Total: ${data.criadores.length} criador(es) cadastrado(s)` })
         .setTimestamp();
 
