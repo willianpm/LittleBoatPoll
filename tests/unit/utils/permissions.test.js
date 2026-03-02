@@ -1,13 +1,19 @@
-jest.mock('../utils/file-handler', () => ({
+jest.mock('../../../src/utils/file-handler', () => ({
   loadCriadores: jest.fn(),
   loadRoleBindings: jest.fn(),
 }));
 
 const { MessageFlags, PermissionFlagsBits } = require('discord.js');
-const { loadCriadores, loadRoleBindings } = require('../utils/file-handler');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA, checkPermissionReply } = require('../utils/permissions');
+const { loadCriadores, loadRoleBindings } = require('../../../src/utils/file-handler');
+const { isCriador, MENSAGEM_PERMISSAO_NEGADA, checkPermissionReply } = require('../../../src/utils/permissions');
 
-function createMember({ memberId = 'member-1', ownerId = 'owner-1', guildId = 'guild-1', isAdmin = false, roleIds = [] } = {}) {
+function createMember({
+  memberId = 'member-1',
+  ownerId = 'owner-1',
+  guildId = 'guild-1',
+  isAdmin = false,
+  roleIds = [],
+} = {}) {
   const roleCache = new Map(roleIds.map((roleId) => [roleId, { id: roleId }]));
 
   return {

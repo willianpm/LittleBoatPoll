@@ -1,10 +1,10 @@
-jest.mock('../utils/file-handler', () => ({
+jest.mock('../../../src/utils/file-handler', () => ({
   loadRoleBindings: jest.fn(),
   saveRoleBindings: jest.fn(),
 }));
 
-const { loadRoleBindings, saveRoleBindings } = require('../utils/file-handler');
-const { findMensalistasRoleByName, ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
+const { loadRoleBindings, saveRoleBindings } = require('../../../src/utils/file-handler');
+const { findMensalistasRoleByName, ensureMensalistaRoleBinding } = require('../../../src/utils/mensalista-binding');
 
 function createGuild({ id = 'guild-1', name = 'Guild Test', roles = [] } = {}) {
   const rolesCache = new Map(roles.map((role) => [role.id, role]));
