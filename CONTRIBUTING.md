@@ -52,9 +52,9 @@ git push origin feature/your-feature-name
 
 ## Code Style & Standards
 
-**Automatic validation** happens in two places:
+**Validation** happens in two ways:
 
-1. **Local:** Via Git hooks (Husky) - runs linter before commit
+1. **Local (recommended):** Run the commands below before committing
 2. **CI/CD:** On PR - ESLint + Prettier + tests must pass
 
 **Manual checks:**
