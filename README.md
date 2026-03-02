@@ -19,49 +19,10 @@ Para documentação técnica completa, veja [docs/](docs/) (setup Discord, stagi
 Sistema binário **interno** para permissões administrativas:
 
 - **Criador de Enquetes**: Usuários adicionados internamente com `/criador-de-enquete adicionar`
-- **Cargo autorizado por servidor (opcional)**: cargos cadastrados em `role-bindings.json` dentro de `adminRoleIdsByGuild`
 - **Administrador e dono do servidor**: acesso total automático
 - **Usuário comum**: apenas vota por reações
 
 Não existem níveis intermediários para permissões administrativas. O sistema é gerenciado internamente pelo bot.
-
-### Autorização administrativa remota por cargo (JSON)
-
-Se você quiser autorizar um cargo do Discord sem usar comando, edite o arquivo do ambiente em uso:
-
-- Produção: `data/environments/prod/role-bindings.json`
-- Staging: `data/environments/staging/role-bindings.json`
-
-**Como encontrar os IDs:**
-
-1. **ID do servidor (Guild ID):**
-   - Abra o servidor Discord
-   - Clique com botão direito no nome do servidor (canto superior esquerdo)
-   - Selecione "Copiar ID do Servidor"
-
-2. **ID do cargo (Role ID):**
-   - Ative "Modo Desenvolvedor" em Discord (User Settings → App Settings → Developer Mode)
-   - Abra Configurações do Servidor → Cargos
-   - Clique com botão direito no cargo desejado
-   - Selecione "Copiar ID do Role"
-
-**Estrutura do arquivo:**
-
-```json
-{
-  "mensalistaRoleByGuild": {
-    "771368260633362473": "1476256860293304330"
-  },
-  "adminRoleIdsByGuild": {
-    "771368260633362473": ["123456789012345678", "987654321098765432"]
-  }
-}
-```
-
-- **adminRoleIdsByGuild**: objeto onde a chave é `guildId` e o valor é uma lista de IDs de cargos.
-- Membros com qualquer um desses cargos terão **acesso administrativo total** ao bot.
-- Mudança é aplicada na próxima interação (não exige reinicialização).
-- Veja os comentários no arquivo `role-bindings.json` para instruções detalhadas.
 
 ### Mensalistas por cargo do servidor
 
@@ -146,7 +107,7 @@ Cada ambiente usa a mesma estrutura de arquivos, mudando apenas a pasta (`data/e
 - `mensalistas.json`
 - `criadores-internos.json`
 - `historico-votacoes.json`
-- `role-bindings.json` (**inclui `adminRoleIdsByGuild` para autorização por cargo**)
+- `role-bindings.json` (**vínculo automático do cargo Mensalistas**)
 
 > ✅ Em produção, edite os arquivos em `data/environments/prod/`.
 > ✅ Em homologação, edite os arquivos em `data/environments/staging/`.
