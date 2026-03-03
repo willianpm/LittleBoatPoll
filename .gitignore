@@ -63,3 +63,7 @@ out/
 *.tmp
 *.temp
 .cache/
+
+# Copilot Agents Config
+/.github/agents
+/.copilot-tracking
