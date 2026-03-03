@@ -2,8 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-<<<<<<< HEAD
-=======
 ## 2.2.0
 
 ### 🏗️ Restructuring: Arquitetura por Domínios
@@ -59,7 +57,6 @@ All notable changes to this project will be documented in this file.
 - **Cobertura de testes expandida:** novos testes para cenários multi-cargo e validação de permissões
 - **Documentação atualizada:** guia completo de configuração de cargos administrativos por servidor
 
->>>>>>> develop
 ## 2.0.2
 
 ### 🏗️ Estrutura: Condensação e Reorganização
