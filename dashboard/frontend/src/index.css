@@ -3,4 +3,9 @@ body {
   background-color: #2c2f33;
   color: whitesmoke;
   font-family: 'Comfortaa';
+  height: 100%;
+}
+
+html, #root{
+  height: 100%;
 }

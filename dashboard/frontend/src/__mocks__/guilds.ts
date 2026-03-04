@@ -1,15 +1,21 @@
+import DummyFace from '../assets/img/dummy.png'
+
 export const mockGuilds = [
     {
         id: '100',
-        name: 'Alpha'
+        name: 'Alpha',
+        face: DummyFace,
     },{
         id: '101',
-        name: 'Bravo'
+        name: 'Bravo',
+        face: DummyFace,
     },{
         id: '102',
-        name: 'Charlie'
+        name: 'Charlie',
+        face: DummyFace,
     },{
         id: '103',
-        name: 'Delta'
+        name: 'Delta',
+        face: DummyFace,
     }
 ]
