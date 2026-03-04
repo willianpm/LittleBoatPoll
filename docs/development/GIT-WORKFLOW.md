@@ -79,20 +79,23 @@ npm run format                # Auto-formata código
 ```bash
 git add .                           # Ou git add arquivo_específico
 
-git commit -m "[feat] Beschreibung curta"
+git commit -m "feat: descrição curta"
 # Ou
-git commit -m "[fix] Corrigido bug em validação"
-git commit -m "[docs] Atualizado SETUP.md"
+git commit -m "fix: corrigido bug em validação"
+git commit -m "docs: atualizado SETUP.md"
+git commit -m "test: adiciona testes unitários"
+git commit -m "refactor: simplifica função"
+git commit -m "perf: otimiza performance"
 ```
 
-**Prefixos de commit recomendados:**
+**Prefixos de commit permitidos:**
 
-- `[feat]` - Nova funcionalidade
-- `[fix]` - Correção de bug
-- `[docs]` - Documentação
-- `[test]` - Testes
-- `[refactor]` - Code cleanup (sem mudança de comportamento)
-- `[perf]` - Melhoria de performance
+- `feat:` - Nova funcionalidade
+- `fix:` - Correção de bug
+- `docs:` - Documentação
+- `test:` - Testes
+- `refactor:` - Refatoração (sem mudança de comportamento)
+- `perf:` - Melhoria de performance
 
 ### 4️⃣ Push para o Repositório
 
@@ -114,42 +117,7 @@ No GitHub:
 1. Vá para https://github.com/seu-repo/LittleBoatPoll
 2. Você verá um botão amarelo "Compare & pull request"
 3. Clique nele
-
-**Pre-fill do PR:**
-
-```markdown
-## Descrição
-
-Breve descrição do que foi feito e por quê.
-
-## Tipo de Mudança
-
-- [ ] Nova funcionalidade
-- [ ] Correção de bug
-- [ ] Mudança em documentação
-- [ ] Refactor (sem mudança de comportamento)
-
-## Como Testar?
-
-1. Passo 1
-2. Passo 2
-3. Resultado esperado
-
-## Checklist
-
-- [ ] Código testado localmente (`npm test` passa)
-- [ ] Código lintado (`npm run lint` passa)
-- [ ] Documentação atualizada se necessário
-- [ ] Nenhum commit mergeado sem review
-
-## Screenshots (se aplicável)
-
-Se mudança tem UI, adicione screenshotfor video.
-
-## Link da Issue
-
-Fixes #123 (se existir issue relacionada)
-```
+   ...existing code...
 
 ### 6️⃣ Aguarde Revisão Automática
 
