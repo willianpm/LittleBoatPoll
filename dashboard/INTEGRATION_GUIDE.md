@@ -88,20 +88,67 @@ Execute:
 npm run test:dashboard
 ```
 
-## 2. Teste de Integração Simples
+## 2. Teste de Integração Simples (Importação de Enquetes via CSV)
 
-Crie um script de integração para simular upload e processamento:
+O script `dashboard/integrationTest.js` agora suporta importação de múltiplas enquetes via CSV, reaproveitando todas as validações e regras do comando `/enquete`.
+
+**Fluxo atualizado:**
+
+1. O CSV deve conter as colunas obrigatórias: `nome-da-enquete`, `opções`, `max_votos`, `peso_mensalistas` (separadas por ponto e vírgula `;`).
+2. Cada linha é convertida para a estrutura interna de enquete.
+3. Para cada linha:
+   - Os dados são validados usando as mesmas funções do comando `/enquete` (`validatePollOptions`, `parseOptions`).
+   - Apenas enquetes válidas são salvas.
+   - Linhas inválidas são reportadas com o motivo do erro.
+4. Ao final, o script informa:
+   - Quantas enquetes foram criadas com sucesso
+   - Quais linhas falharam e por qual motivo
+
+**Exemplo de uso:**
 
 ```js
-// dashboard/integrationTest.js
-const csvService = require('./services/csvService'); // ou .mock
-const botService = require('./services/botService'); // ou .mock
+const useMock = process.env.USE_MOCK === 'true';
+const csvService = useMock ? require('./services/csvService.mock') : require('./services/csvService');
+const botService = useMock ? require('./services/botService.mock') : require('./services/botService');
+const { validatePollOptions, parseOptions } = require('../src/utils/validators');
 
 (async () => {
-  const result = await csvService.parseAndValidate('caminho/do/arquivo.csv');
-  if (result.valid) {
-    await botService.savePoll(result.data);
-    console.log('Integração concluída com sucesso!');
+  const csvPath = useMock ? 'mock.csv' : './services/test.csv';
+  const result = await csvService.parseAndValidate(csvPath);
+  let sucesso = 0;
+  let falhas = [];
+  let criadas = [];
+  if (result.valid && Array.isArray(result.data)) {
+    for (let i = 0; i < result.data.length; i++) {
+      const linha = result.data[i];
+      const opcoes = Array.isArray(linha.opcoes)
+        ? linha.opcoes
+        : parseOptions(Array.isArray(linha.opcoes) ? linha.opcoes.join(',') : linha.opcoes);
+      const validation = validatePollOptions(opcoes, linha.maxVotos);
+      if (!validation.valid) {
+        falhas.push({ linha: i + 2, motivo: validation.error });
+        continue;
+      }
+      const dto = {
+        titulo: linha.titulo || linha['nome-da-enquete'],
+        opcoes,
+        maxVotos: linha.maxVotos,
+        usarPesoMensalista: linha.usarPesoMensalista,
+        status: 'rascunho',
+        criadoEm: linha.criadoEm || new Date().toISOString(),
+        editadoEm: linha.editadoEm || new Date().toISOString(),
+      };
+      criadas.push(dto);
+      sucesso++;
+    }
+    if (criadas.length) {
+      await botService.savePoll(criadas);
+    }
+    console.log(`Enquetes criadas com sucesso: ${sucesso}`);
+    if (falhas.length) {
+      console.log('Falhas:');
+      falhas.forEach((f) => console.log(`Linha ${f.linha}: ${f.motivo}`));
+    }
   } else {
     console.error('Erro:', result.error);
   }
@@ -113,6 +160,12 @@ Execute:
 ```bash
 node dashboard/integrationTest.js
 ```
+
+**Resumo das melhorias:**
+
+- Validação de colunas e tipos do CSV
+- Reaproveitamento das regras do comando `/enquete` (sem duplicação de lógica)
+- Feedback detalhado ao usuário sobre sucesso e falhas
 
 ---
 
