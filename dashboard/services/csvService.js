@@ -14,14 +14,65 @@ async function parseAndValidate(filePath) {
   try {
     console.log(`[csvService] Lendo arquivo CSV: ${filePath}`);
     const content = await fs.readFile(filePath, 'utf-8');
-    const records = csv.parse(content, { columns: true, skip_empty_lines: true });
+    // Configura parser para ; como delimitador
+    let records;
+    try {
+      records = csv.parse(content, { columns: true, skip_empty_lines: true, delimiter: ';' });
+    } catch (parseErr) {
+      console.error(`[csvService] Erro de parsing CSV: ${parseErr.message}`);
+      return { valid: false, error: 'Erro ao ler o CSV: formato inválido ou delimitador incorreto.' };
+    }
     if (!records.length) {
       console.error('[csvService] Erro: Arquivo CSV vazio.');
       return { valid: false, error: 'Arquivo CSV vazio.' };
     }
-    // TODO: Adicionar validações específicas do bot
-    console.log(`[csvService] CSV processado com sucesso. Registros: ${records.length}`);
-    return { valid: true, data: records };
+    // Colunas obrigatórias
+    const requiredColumns = ['nome-da-enquete', 'opções', 'max_votos', 'peso_mensalistas'];
+    const csvColumns = Object.keys(records[0] || {});
+    if (csvColumns.length !== requiredColumns.length || !requiredColumns.every((col) => csvColumns.includes(col))) {
+      console.error('[csvService] Erro: Colunas obrigatórias ausentes ou incorretas.');
+      return { valid: false, error: `CSV deve conter exatamente as colunas: ${requiredColumns.join(', ')}` };
+    }
+    // Mapeia cada linha para estrutura interna
+    const mappedPolls = [];
+    for (let i = 0; i < records.length; i++) {
+      const row = records[i];
+      // Validação de tipos
+      if (!row['nome-da-enquete'] || !row['opções'] || !row['max_votos'] || !row['peso_mensalistas']) {
+        return { valid: false, error: `Linha ${i + 2}: campos obrigatórios ausentes.` };
+      }
+      // max_votos deve ser numérico
+      const maxVotos = Number(row['max_votos']);
+      if (!Number.isInteger(maxVotos) || maxVotos < 1) {
+        return { valid: false, error: `Linha ${i + 2}: max_votos deve ser um número inteiro positivo.` };
+      }
+      // opções separadas por vírgula ou barra
+      let opcoes = row['opções']
+        .split(/[,|\|]/)
+        .map((op) => op.trim())
+        .filter((op) => op.length > 0);
+      // Validação de opções
+      if (opcoes.length < 2) {
+        return { valid: false, error: `Linha ${i + 2}: mínimo 2 opções.` };
+      }
+      if (opcoes.length > 20) {
+        return { valid: false, error: `Linha ${i + 2}: máximo 20 opções.` };
+      }
+      // peso_mensalistas: sim/nao
+      const usarPesoMensalista = String(row['peso_mensalistas']).toLowerCase() === 'sim';
+      // Monta estrutura interna
+      mappedPolls.push({
+        titulo: row['nome-da-enquete'],
+        opcoes,
+        maxVotos,
+        usarPesoMensalista,
+        status: 'rascunho',
+        criadoEm: new Date().toISOString(),
+        editadoEm: new Date().toISOString(),
+      });
+    }
+    console.log(`[csvService] CSV processado com sucesso. Registros: ${mappedPolls.length}`);
+    return { valid: true, data: mappedPolls };
   } catch (err) {
     console.error(`[csvService] Erro ao processar CSV: ${err.message}`);
     return { valid: false, error: err.message };
