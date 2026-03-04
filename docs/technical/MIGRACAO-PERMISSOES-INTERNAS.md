@@ -106,9 +106,8 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 
 ### ⚠️ Importante
 
-- O arquivo `cargos-criadores.json` ainda existe mas **não é mais usado**
-- O comando `/criadores` ainda aparece mas mostra aviso de descontinuação
-- Administradores e dono do servidor **sempre terão acesso**, independente do arquivo
+O comando `/criadores` ainda aparece mas mostra aviso de descontinuação
+Administradores e dono do servidor **sempre terão acesso**, independente de arquivos antigos
 
 ---
 

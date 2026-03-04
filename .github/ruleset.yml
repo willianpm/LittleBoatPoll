@@ -1,0 +1,49 @@
+# Regras de Proteção e Nomenclatura de Branches - LittleBoatPoll
+# Baseado estritamente em docs/development/GIT-WORKFLOW.md
+
+rules:
+  - name: Proteção develop
+    target: develop
+    type: branch
+    enforcement: true
+    conditions:
+      - no-direct-push: true
+      - require-pull-request: true
+      - require-status-checks:
+          - npm test
+          - npm run lint
+
+      - require-commit-prefix:
+          - 'feat:'
+          - 'fix:'
+          - 'docs:'
+          - 'test:'
+          - 'refactor:'
+          - 'perf:'
+      - merge-method: squash
+
+  - name: Proteção main
+    target: main
+    type: branch
+    enforcement: true
+    conditions:
+      - no-direct-push: true
+      - require-pull-request: true
+      - require-status-checks:
+          - npm test
+          - npm run lint
+      - merge-method: squash
+      - delete-branch-after-merge: true
+
+  - name: Nomenclatura de branches
+    target: '*'
+    type: branch
+    enforcement: true
+    conditions:
+      - allow-patterns:
+          - 'feature/*'
+          - 'bugfix/*'
+          - 'docs/*'
+          - 'refactor/*'
+
+# Observação: Outras regras (labels, milestones, reviewers, etc.) são gerenciadas pelo GitHub e não entram neste YAML.
