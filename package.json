@@ -23,6 +23,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --coverage --passWithNoTests",
+    "test:dashboard": "jest dashboard/services/*.test.js dashboard/controllers/*.test.js",
     "test:automation": "node test-bot/test-runner.js",
     "test:full": "node test-bot/run-full-tests.js",
     "lint": "eslint src/ tests/ --max-warnings=0",
@@ -47,6 +48,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "csv-parse": "^6.1.0",
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1"
