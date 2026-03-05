@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { client } = require('../../src/core/index'); // Garante acesso ao client e comandos
+const { client } = require('../../src/core/client'); // Garante acesso ao client e comandos
 const { validateDashboardToken } = require('./auth');
 
 function buildFakeInteraction({ commandName, options, user, guild, member, permissions }) {

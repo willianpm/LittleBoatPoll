@@ -2,16 +2,8 @@
 const envFile = process.env.APP_ENV === 'staging' ? '.env.staging' : '.env';
 require('dotenv').config({ path: envFile });
 
-const {
-  Client,
-  GatewayIntentBits,
-  Collection,
-  ActivityType,
-  REST,
-  Routes,
-  Partials,
-  MessageFlags,
-} = require('discord.js');
+const { ActivityType, REST, Routes, MessageFlags } = require('discord.js');
+const { client } = require('./client');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -25,29 +17,7 @@ config.logConfig();
 // Controle de verbosidade de logs (DEBUG=true para logs detalhados)
 const DEBUG_MODE = config.DEBUG_MODE;
 
-// =====================================
-// CONFIGURAÇÃO DO CLIENTE DISCORD
-// =====================================
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds, // Para interagir com servidores
-    GatewayIntentBits.GuildMembers, // Para validar cargos de membros (mensalistas)
-    GatewayIntentBits.GuildMessages, // Para ler mensagens
-    GatewayIntentBits.MessageContent, // Para ler conteúdo das mensagens
-    GatewayIntentBits.DirectMessages, // Para DMs
-    GatewayIntentBits.GuildMessageReactions, // CRUCIAL: Para ler reações
-  ],
-  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
-});
-
-// Criamos uma coleção para armazenar os comandos slash
-client.commands = new Collection();
-
-// Estrutura para armazenar votações ativas em memória
-client.activePolls = new Map();
-
-// Estrutura para armazenar rascunhos de enquetes
-client.draftPolls = new Map();
+// ...existing code...
 
 // =====================================
 // FUNÇÕES AUXILIARES

@@ -1,5 +1,14 @@
 const request = require('supertest');
 const express = require('express');
+
+// Mock do client para evitar dependência real do Discord
+jest.mock('../../src/core/client', () => ({
+  client: {
+    commands: new Map(),
+    guilds: { cache: new Map() },
+  },
+}));
+
 const dashboardCommandsRouter = require('../api/dashboard-commands');
 
 describe('Dashboard Commands API', () => {
