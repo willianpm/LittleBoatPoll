@@ -38,19 +38,24 @@ async function parseAndValidate(filePath) {
     for (let i = 0; i < records.length; i++) {
       const row = records[i];
       // Validação de tipos
-      if (!row['nome-da-enquete'] || !row['opções'] || !row['max_votos'] || !row['peso_mensalistas']) {
+      // Aceita tanto 'opcoes' quanto 'opções' (com acento)
+      const opcoesRaw = row['opcoes'] || row['opções'];
+      const maxVotosRaw = row['maxVotos'] || row['max_votos'];
+      if (!row['nome-da-enquete'] || !opcoesRaw || !maxVotosRaw || !row['peso_mensalistas']) {
         return { valid: false, error: `Linha ${i + 2}: campos obrigatórios ausentes.` };
       }
-      // max_votos deve ser numérico
-      const maxVotos = Number(row['max_votos']);
+      // maxVotos deve ser numérico
+      const maxVotos = Number(maxVotosRaw);
       if (!Number.isInteger(maxVotos) || maxVotos < 1) {
         return { valid: false, error: `Linha ${i + 2}: max_votos deve ser um número inteiro positivo.` };
       }
       // opções separadas por vírgula ou barra
-      let opcoes = row['opções']
-        .split(/[,|\|]/)
-        .map((op) => op.trim())
-        .filter((op) => op.length > 0);
+      let opcoes = Array.isArray(opcoesRaw)
+        ? opcoesRaw
+        : String(opcoesRaw)
+            .split(/[,|\|]/)
+            .map((op) => op.trim())
+            .filter((op) => op.length > 0);
       // Validação de opções
       if (opcoes.length < 2) {
         return { valid: false, error: `Linha ${i + 2}: mínimo 2 opções.` };

@@ -16,11 +16,13 @@ const botService = useMock ? require('./services/botService.mock') : require('./
   if (result.valid && Array.isArray(result.data)) {
     for (let i = 0; i < result.data.length; i++) {
       const linha = result.data[i];
-      // Reaproveita parseOptions e validatePollOptions
-      const opcoes = Array.isArray(linha.opcoes)
-        ? linha.opcoes
-        : parseOptions(Array.isArray(linha.opcoes) ? linha.opcoes.join(',') : linha.opcoes);
-      const validation = validatePollOptions(opcoes, linha.maxVotos);
+      // Aceita tanto 'opcoes' quanto 'opções' (com acento)
+      const opcoesRaw = linha.opcoes || linha['opções'];
+      const opcoes = Array.isArray(opcoesRaw)
+        ? opcoesRaw
+        : parseOptions(Array.isArray(opcoesRaw) ? opcoesRaw.join(',') : opcoesRaw);
+      const maxVotos = linha.maxVotos || linha['max_votos'];
+      const validation = validatePollOptions(opcoes, maxVotos);
       if (!validation.valid) {
         falhas.push({ linha: i + 2, motivo: validation.error });
         continue;
