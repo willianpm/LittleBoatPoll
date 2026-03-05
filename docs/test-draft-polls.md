@@ -246,7 +246,7 @@ O rascunho foi permanentemente removido
 
 **Erro:** "Permissão negada"
 → Verifique se possui o cargo Criador
-→ Use /criadores listar para ver os cargos Criador
+→ Use /criador-de-enquete listar para ver os criadores cadastrados
 
 **Erro:** "Discord limita a 20 reações por mensagem"
 → Use máximo 20 opções por enquete
