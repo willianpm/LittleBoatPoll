@@ -194,7 +194,7 @@ node dashboard/integrationTest.js
 }
 ```
 
-### Diagrama do Payload do Comando
+### Diagrama do Payload
 
 ```
 {
