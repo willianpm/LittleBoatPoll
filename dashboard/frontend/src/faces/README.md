@@ -4,9 +4,9 @@ Manter nesta pasta somente o conteúdo estrutural da implementação do frontend
 
 ### Estrutura
 ---
-`faces/`: Indexadores Principais (Apresentação, Seletor de Servidores, Menu de Opções).
-├──`config/`: Funções de administrador.
-├──`draft/`: Estruturas relacionadas as funções "rascunho".
+`faces/`: Indexadores Principais (Apresentação, Seletor de Servidores, Menu de Opções).\
+├──`config/`: Funções de administrador.\
+├──`draft/`: Estruturas relacionadas as funções "rascunho".\
 └──`poll/`: Estruturas relacionadas as funções "enquete".
 
 ### Estilos
