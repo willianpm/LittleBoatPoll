@@ -8,25 +8,39 @@ Esta pasta contém os serviços e controllers necessários para integração bac
 - `services/botService.js`: Escrita segura de JSON para o bot.
 - `controllers/csvController.js`: Endpoint para upload e processamento de CSV.
 
-## Contratos
+## Formato do CSV
 
-- `csvService.parseAndValidate(filePath)` → `{ valid, data, error }`
-- `botService.savePoll(jsonData)` → `Promise<void>`
-- `csvController.uploadCsv(req, res)` → Processa upload e salva JSON
+O CSV entregue pelo frontend deve seguir esta especificação:
 
-## Pontos de Integração
+### Estrutura Obrigatória
 
-- O frontend do Dashboard (#15) deve consumir o endpoint de upload e os serviços expostos.
-- Não duplicar lógica de conversão/validação no Dashboard.
-- Toda comunicação com o bot é feita via arquivos JSON.
+**Delimitador:** ponto e vírgula (`;`)
 
-## Testes e Mocks
+**Colunas obrigatórias** (exatamente estas 4 colunas, nesta ordem):
 
-- Os serviços podem ser testados isoladamente.
-- Funções mock (`csvService.mock.js`, `botService.mock.js`) podem ser usadas para simular integração enquanto o frontend não está pronto. Basta importar o mock no lugar do serviço real para testes ou desenvolvimento paralelo.
+1. `nome-da-enquete` - Texto do título da enquete
+2. `opções` - Opções separadas por vírgula, barra ou pipe (`,` `|` `/`)
+3. `max_votos` - Número inteiro positivo (quantidade máxima de votos por usuário)
+4. `peso_mensalistas` - `sim` ou `nao` (se deve aplicar peso para mensalistas)
 
-## Observações
+### Exemplo de CSV Válido
 
-- Todos os serviços e controllers possuem tratamento de erros e logs para facilitar depuração e integração.
-- Não dependa de código ainda inexistente do Dashboard.
-- Documente qualquer alteração de contrato para evitar conflitos futuros.
+```csv
+nome-da-enquete;opções;max_votos;peso_mensalistas
+Enquete 1;Opção A,Opção B;2;sim
+Enquete 2;Opção X,Opção Y,Opção Z;1;nao
+Melhor filme;Star Wars,Matrix,Senhor dos Anéis;1;sim
+```
+
+## Diagrama do Payload do CSV
+
+```
+{
+  "nome-da-enquete": string,
+  "opções": string, // Opções separadas por vírgula, barra ou pipe
+  "max_votos": number,
+  "peso_mensalistas": "sim" | "nao"
+}
+```
+
+Consulte `INTEGRATION_GUIDE.md` para detalhes sobre integração de comandos do bot via dashboard.

@@ -800,10 +800,16 @@ client.on('messageReactionRemove', async (reaction, user) => {
 // =====================================
 // SERVIDOR WEB (MANTER BOT ATIVO)
 // =====================================
+
 const app = express();
 const port = config.PORT; // O Koyeb injeta a porta automaticamente
 
+app.use(express.json());
 app.get('/', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
+
+// Rota para execução de comandos via dashboard
+const dashboardCommandsRouter = require('../../dashboard/api/dashboard-commands');
+app.use('/api/commands', dashboardCommandsRouter);
 
 let keepAliveStarted = false;
 function startKeepAlive() {
