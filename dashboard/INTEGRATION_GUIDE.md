@@ -169,4 +169,71 @@ node dashboard/integrationTest.js
 
 ---
 
+# Integração de Comandos do Bot via Dashboard
+
+## Endpoint HTTP
+
+- **URL:** `/api/commands/:commandName`
+- **Método:** `POST`
+- **Exemplo:** `/api/commands/poll`
+
+## Autenticação
+
+- **Header:** `Authorization: Bearer <token>`
+- O token deve ser obtido pelo fluxo de login do dashboard (feature #15).
+
+## Payload da Requisição
+
+```json
+{
+  "options": { /* argumentos do comando */ },
+  "user": { "id": "...", "username": "..." },
+  "guild": { "id": "...", "name": "..." },
+  "member": { "id": "...", "roles": ["..."], ... },
+  "permissions": ["...", "..."]
+}
+```
+
+### Diagrama do Payload do Comando
+
+```
+{
+  options: { ... },
+  user: {
+    id: string,
+    username: string,
+    ...
+  },
+  guild: {
+    id: string,
+    name: string,
+    ...
+  },
+  member: {
+    id: string,
+    roles: string[],
+    ...
+  },
+  permissions: string[]
+}
+```
+
+## Resposta
+
+- Formato igual ao que o bot retornaria no Discord (objeto com `content`, `embeds`, etc).
+- Em caso de erro, retorna `{ error: "mensagem" }` e status HTTP apropriado.
+
+## Regras de Negócio
+
+- O comando só será executado se:
+  - O bot estiver presente na guild informada.
+  - O usuário tiver permissão para executar o comando.
+- O backend valida permissões e contexto.
+
+## Teste de Integração
+
+- Teste disponível em `dashboard/tests/dashboard-commands.test.js` como referência de uso.
+
+---
+
 Com isso, você pode alternar facilmente entre mocks e serviços reais, garantindo desenvolvimento paralelo, testes isolados e integração segura com o Dashboard (#15).
