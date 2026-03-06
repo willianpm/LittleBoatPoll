@@ -234,6 +234,98 @@ node dashboard/integrationTest.js
 
 - Teste disponível em `dashboard/tests/dashboard-commands.test.js` como referência de uso.
 
+## Endpoint de Upload de CSV
+
+- **URL:** `/api/csv/upload`
+- **Método:** `POST`
+- **Autenticação:** `Authorization: Bearer <token>` (via header ou query param)
+- **Content-Type:** `multipart/form-data`
+
+### Payload (Multipart)
+
+```
+POST /api/csv/upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="enquetes.csv"
+Content-Type: text/csv
+
+[conteúdo do CSV aqui]
+------WebKitFormBoundary--
+```
+
+### Exemplo com cURL
+
+```bash
+curl -X POST http://localhost:3000/api/csv/upload \
+  -H "Authorization: Bearer seu-token-aqui" \
+  -F "file=@enquetes.csv"
+```
+
+### Exemplo com JavaScript (Fetch)
+
+```js
+const formData = new FormData();
+formData.append('file', csvFile); // File object from input
+
+const response = await fetch('/api/csv/upload', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+  body: formData,
+});
+
+const result = await response.json();
+console.log(result); // { success: true } ou { error: "mensagem" }
+```
+
+### Resposta de Sucesso
+
+```json
+{
+  "success": true
+}
+```
+
+### Resposta de Erro
+
+```json
+{
+  "error": "Descrição do erro"
+}
+```
+
+### Códigos de Status HTTP
+
+- **200** - Upload e processamento concluído com sucesso
+- **400** - Arquivo não enviado, validação falhou, ou apenas CSV aceitos
+- **413** - Arquivo muito grande (máximo 5MB)
+- **500** - Erro interno do servidor
+
+### Regras
+
+- **Tipo de arquivo:** Apenas `.csv` é aceito (validação por MIME type e extensão)
+- **Tamanho máximo:** 5MB
+- **Formato do CSV:**
+  - Delimitador: ponto e vírgula (`;`)
+  - Colunas obrigatórias: `nome-da-enquete;opções;max_votos;peso_mensalistas`
+  - Ver exemplo de CSV em `README.md` desta pasta
+- **Autenticação:** É obrigatória (validar token via `validateDashboardToken`)
+- **Processamento:** Cada enquete do CSV é validada usando as mesmas regras do comando `/enquete`
+
+### Fluxo de Processamento
+
+1. Middleware `multer` valida tipo e tamanho do arquivo
+2. Arquivo é salvo temporariamente em `uploads/`
+3. `csvService.parseAndValidate()` faz parsing e validação
+4. `botService.savePoll()` persiste as enquetes (se válidas)
+5. Arquivo temporário é deletado automaticamente
+6. Resposta é retornada ao cliente
+
 ---
 
+Com isso, você pode alternar facilmente entre mocks e serviços reais, garantindo desenvolvimento paralelo, testes isolados e integração segura com o Dashboard (#15).
 Com isso, você pode alternar facilmente entre mocks e serviços reais, garantindo desenvolvimento paralelo, testes isolados e integração segura com o Dashboard (#15).

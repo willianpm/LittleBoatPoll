@@ -36,11 +36,67 @@ Melhor filme;Star Wars,Matrix,Senhor dos Anéis;1;sim
 
 ```
 {
-  "nome-da-enquete": string,
-  "opções": string, // Opções separadas por vírgula, barra ou pipe
-  "max_votos": number,
+- `api/dashboard-commands.js`: Rota HTTP para execução de comandos do bot (`POST /api/commands/:commandName`)
+- `api/dashboard-csv.js`: Rota HTTP para upload de CSV (`POST /api/csv/upload`) com middleware multer
+- `services/csvService.js`: Parsing, validação e conversão de CSV para JSON.
+- `services/botService.js`: Escrita segura de JSON para o bot.
+- `controllers/csvController.js`: Controller para upload e processamento de CSV.
+- `controllers/csvController.test.js`: Testes unitários do csvController
+- `tests/dashboard-csv.test.js`: Testes de integração da rota HTTP de CSV
+- `tests/dashboard-commands.test.js`: Testes de integração da rota HTTP de comandos
   "peso_mensalistas": "sim" | "nao"
 }
 ```
 
 Consulte `INTEGRATION_GUIDE.md` para detalhes sobre integração de comandos do bot via dashboard.
+
+## Endpoints HTTP
+
+### 1. Upload de CSV
+
+**Endpoint:** `POST /api/csv/upload`
+
+**Autenticação:** Bearer token (via header)
+
+**Content-Type:** `multipart/form-data`
+
+**Exemplo com cURL:**
+
+```bash
+curl -X POST http://localhost:3000/api/csv/upload \
+  -H "Authorization: Bearer seu-token" \
+  -F "file=@enquetes.csv"
+```
+
+**Resposta de sucesso:**
+
+```json
+{
+  "success": true
+}
+```
+
+### 2. Execução de Comandos
+
+**Endpoint:** `POST /api/commands/:commandName`
+
+**Autenticação:** Bearer token (via header)
+
+**Content-Type:** `application/json`
+
+**Exemplo:**
+
+```bash
+curl -X POST http://localhost:3000/api/commands/poll \
+  -H "Authorization: Bearer seu-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "options": {"title": "Minha enquete"},
+    "user": {"id": "123", "username": "user"},
+    "guild": {"id": "456"},
+    "member": {"id": "123"},
+    "permissions": []
+  }'
+```
+
+Consulte `INTEGRATION_GUIDE.md` para detalhes completos sobre ambos os endpoints.
