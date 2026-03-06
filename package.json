@@ -23,7 +23,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --coverage --passWithNoTests",
-    "test:dashboard": "jest --testPathPatterns=\"dashboard/(services|controllers)\"",
+    "test:dashboard": "jest --testPathPatterns=\"dashboard/(services|controllers|tests)\"",
     "test:automation": "node test-bot/test-runner.js",
     "test:full": "node test-bot/run-full-tests.js",
     "lint": "eslint src/ tests/ --max-warnings=0",
