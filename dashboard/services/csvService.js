@@ -27,9 +27,14 @@ async function parseAndValidate(filePath) {
       return { valid: false, error: 'Arquivo CSV vazio.' };
     }
     // Colunas obrigatórias
-    const requiredColumns = ['nome-da-enquete', 'opções', 'max_votos', 'peso_mensalistas'];
+    const requiredColumns = ['nome-da-enquete', 'opções/opcoes', 'max_votos/maxVotos', 'peso_mensalistas'];
     const csvColumns = Object.keys(records[0] || {});
-    if (csvColumns.length !== requiredColumns.length || !requiredColumns.every((col) => csvColumns.includes(col))) {
+    const hasNome = csvColumns.includes('nome-da-enquete');
+    const hasOpcoes = csvColumns.includes('opções') || csvColumns.includes('opcoes');
+    const hasMaxVotos = csvColumns.includes('max_votos') || csvColumns.includes('maxVotos');
+    const hasPesoMensalistas = csvColumns.includes('peso_mensalistas');
+    const hasExactCount = csvColumns.length === requiredColumns.length;
+    if (!hasExactCount || !hasNome || !hasOpcoes || !hasMaxVotos || !hasPesoMensalistas) {
       console.error('[csvService] Erro: Colunas obrigatórias ausentes ou incorretas.');
       return { valid: false, error: `CSV deve conter exatamente as colunas: ${requiredColumns.join(', ')}` };
     }
