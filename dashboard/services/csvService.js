@@ -2,7 +2,7 @@
 // Contrato: parseAndValidate(filePath) => { valid, data, error }
 
 const fs = require('fs/promises');
-const csv = require('csv-parse/sync'); // Instalar depois: npm install csv-parse
+const csv = require('csv-parse/sync');
 const { validatePollOptions } = require('../../src/utils/validators');
 
 /**
