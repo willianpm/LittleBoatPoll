@@ -23,6 +23,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --coverage --passWithNoTests",
+    "test:dashboard": "jest --testPathPatterns=\"dashboard/(services|controllers|tests)\"",
     "test:automation": "node test-bot/test-runner.js",
     "test:full": "node test-bot/run-full-tests.js",
     "lint": "eslint src/ tests/ --max-warnings=0",
@@ -47,14 +48,20 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "csv-parse": "^6.1.0",
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
     "cross-env": "^10.1.0",
     "eslint": "^8.56.0",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
-    "prettier": "^3.1.0"
+    "prettier": "^3.1.0",
+    "supertest": "^7.2.2"
   }
 }

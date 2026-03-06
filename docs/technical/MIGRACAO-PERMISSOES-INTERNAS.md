@@ -7,7 +7,7 @@ O bot migrou as permissões administrativas de um sistema baseado em **cargos do
 ### ⚠️ Breaking Changes
 
 - ✅ **Não é mais necessário** criar o cargo "Criador de Enquetes" no servidor
-- ✅ **Comando `/criadores`** foi descontinuado → Use **`/criador-de-enquete-de-enquete`**
+- ✅ **Comando `/criadores`** foi removido. Use **`/criador-de-enquete`**
 - ✅ **Context Menu** agora gerencia permissões internas (não adiciona cargos)
 - ✅ Permissões são salvas em `criadores-internos.json`
 
@@ -106,7 +106,7 @@ Este arquivo armazena os IDs dos usuários que têm permissões administrativas.
 
 ### ⚠️ Importante
 
-O comando `/criadores` ainda aparece mas mostra aviso de descontinuação
+O comando `/criadores` foi removido e não está mais disponível. Use apenas `/criador-de-enquete`.
 Administradores e dono do servidor **sempre terão acesso**, independente de arquivos antigos
 
 ---
@@ -128,7 +128,7 @@ Administradores e dono do servidor **sempre terão acesso**, independente de arq
 | `utils/permissions.js`               | Verifica criadores internos e cargos autorizados por guild |
 | `utils/file-handler.js`              | Adicionadas funções `loadCriadores()` e `saveCriadores()`  |
 | `commands/criador-de-enquete.js`     | **NOVO** - Gerencia criadores por ID                       |
-| `commands/criadores.js`              | **DESCONTINUADO** - Mostra aviso de migração               |
+| `commands/criadores.js`              | **REMOVIDO** - Não existe mais no código                   |
 | `commands/criador-toggle-context.js` | Atualizado para sistema interno                            |
 
 ### Novo Arquivo de Dados
@@ -158,7 +158,7 @@ Administradores e dono do servidor **sempre terão acesso**, independente de arq
 | **Visibilidade**        | Visível na lista de membros | Apenas no bot                         |
 | **Hierarquia**          | Requer configuração         | Não se aplica                         |
 | **Persistência**        | Pode ser deletado           | Sempre persiste                       |
-| **Comando**             | `/criadores` (com cargo)    | `/criador-de-enquete` (com usuário)   |
+| **Comando**             | (removido)                  | `/criador-de-enquete` (com usuário)   |
 
 ---
 

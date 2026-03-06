@@ -176,14 +176,6 @@ Foram implementadas as refatorações de **Fase 1 e Fase 2** do plano de ação,
 
 ---
 
-### 8. `commands/criadores.js`
-
-**Mudanças:**
-
-- Import de `file-handler.js`
-- Substituição de inicialização local por `loadCargos()`
-- Substituição de `fs.writeFileSync` por `saveCargos()`
-
 ---
 
 ### 9. `commands/toggle-opcao-context.js`
