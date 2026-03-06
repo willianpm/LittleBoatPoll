@@ -51,11 +51,11 @@ async function parseAndValidate(filePath) {
       }
       // Converte maxVotos para número antes de validar com regras compartilhadas
       const maxVotos = Number(maxVotosRaw);
-      // opções separadas por vírgula ou barra
+      // opções separadas por vírgula, barra ou pipe
       let opcoes = Array.isArray(opcoesRaw)
         ? opcoesRaw
         : String(opcoesRaw)
-            .split(/[,|\|]/)
+            .split(/[,\|/]/)
             .map((op) => op.trim())
             .filter((op) => op.length > 0);
 
