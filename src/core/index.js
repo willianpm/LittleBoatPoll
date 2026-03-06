@@ -781,6 +781,10 @@ app.get('/', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()
 const dashboardCommandsRouter = require('../../dashboard/api/dashboard-commands');
 app.use('/api/commands', dashboardCommandsRouter);
 
+// Rota para upload de CSV via dashboard
+const dashboardCsvRouter = require('../../dashboard/api/dashboard-csv');
+app.use('/api/csv', dashboardCsvRouter);
+
 let keepAliveStarted = false;
 function startKeepAlive() {
   if (keepAliveStarted) return;

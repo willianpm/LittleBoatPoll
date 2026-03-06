@@ -63,3 +63,5 @@ out/
 *.tmp
 *.temp
 .cache/
+# Uploads temporários
+uploads/
