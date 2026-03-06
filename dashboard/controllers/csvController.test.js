@@ -1,7 +1,5 @@
 // Testes unitários para csvController
 const { uploadCsv } = require('./csvController');
-const fs = require('fs/promises');
-const path = require('path');
 const botService = require('../services/botService');
 const csvService = require('../services/csvService');
 
@@ -9,6 +7,10 @@ jest.mock('../services/botService');
 jest.mock('../services/csvService');
 
 describe('csvController.uploadCsv', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('deve retornar erro se arquivo não enviado', async () => {
     const req = { file: null };
     const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
@@ -34,5 +36,16 @@ describe('csvController.uploadCsv', () => {
     await uploadCsv(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: 'Erro de validação' });
+  });
+
+  it('deve retornar erro interno se ocorrer exceção no processamento', async () => {
+    const req = { file: { path: 'fake.csv' } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    csvService.parseAndValidate.mockRejectedValue(new Error('falha inesperada'));
+
+    await uploadCsv(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Erro interno no servidor.' });
   });
 });

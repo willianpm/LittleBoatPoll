@@ -1,7 +1,11 @@
 module.exports = {
   testEnvironment: 'node',
-  testMatch: ['**/tests/**/*.test.js'],
-  testMatch: ['**/tests/**/*.test.js', '**/dashboard/services/*.test.js', '**/dashboard/controllers/*.test.js'],
+  testMatch: [
+    '**/tests/**/*.test.js',
+    '**/dashboard/services/*.test.js',
+    '**/dashboard/controllers/*.test.js',
+    '**/dashboard/tests/*.test.js',
+  ],
   collectCoverageFrom: ['src/utils/**/*.js', '!**/node_modules/**', '!**/docs/**', '!**/tests/**', '!**/dist/**'],
   coverageThreshold: {
     global: {

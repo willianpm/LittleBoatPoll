@@ -2,8 +2,8 @@
 // Contrato: parseAndValidate(filePath) => { valid, data, error }
 
 const fs = require('fs/promises');
-const path = require('path');
 const csv = require('csv-parse/sync'); // Instalar depois: npm install csv-parse
+const { validatePollOptions } = require('../../src/utils/validators');
 
 /**
  * Lê, valida e converte CSV para JSON compatível com o bot
@@ -44,11 +44,8 @@ async function parseAndValidate(filePath) {
       if (!row['nome-da-enquete'] || !opcoesRaw || !maxVotosRaw || !row['peso_mensalistas']) {
         return { valid: false, error: `Linha ${i + 2}: campos obrigatórios ausentes.` };
       }
-      // maxVotos deve ser numérico
+      // Converte maxVotos para número antes de validar com regras compartilhadas
       const maxVotos = Number(maxVotosRaw);
-      if (!Number.isInteger(maxVotos) || maxVotos < 1) {
-        return { valid: false, error: `Linha ${i + 2}: max_votos deve ser um número inteiro positivo.` };
-      }
       // opções separadas por vírgula ou barra
       let opcoes = Array.isArray(opcoesRaw)
         ? opcoesRaw
@@ -56,12 +53,11 @@ async function parseAndValidate(filePath) {
             .split(/[,|\|]/)
             .map((op) => op.trim())
             .filter((op) => op.length > 0);
-      // Validação de opções
-      if (opcoes.length < 2) {
-        return { valid: false, error: `Linha ${i + 2}: mínimo 2 opções.` };
-      }
-      if (opcoes.length > 20) {
-        return { valid: false, error: `Linha ${i + 2}: máximo 20 opções.` };
+
+      // Reutiliza validação oficial do domínio para evitar divergência com o bot
+      const validation = validatePollOptions(opcoes, maxVotos);
+      if (!validation.valid) {
+        return { valid: false, error: `Linha ${i + 2}: ${validation.error}` };
       }
       // peso_mensalistas: sim/nao
       const usarPesoMensalista = String(row['peso_mensalistas']).toLowerCase() === 'sim';
