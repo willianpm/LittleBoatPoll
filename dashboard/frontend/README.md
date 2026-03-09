@@ -6,7 +6,7 @@ Nesta pasta concentra-se o frontend do dashboard, desenvolvido em React + Typesc
 
 `public/` # Estáticos e demais arquivos web de interesse. Alterar somente se necessário.\
 `src/` # Conteúdo de exibição do frontend.\
-├──`Dashboard.tsx` # Roteador React.\ 
+├──`Dashboard.tsx` # Roteador React.\
 ├──`index.css` # Raiz de estilos da aplicação. Não é aconselhado alterar.\
 └──`index.tsx` # Indexador da aplicação React. Alterações nesse arquivo podem potencialmente quebrar a aplicação se não feitas com cuidado.
 

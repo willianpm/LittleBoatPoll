@@ -1,5 +1,7 @@
 export const SendDraftPage = () => {
-    return (
-        <div>SendDraftPage</div>
-    )
-}  
+  return (
+    <div>
+      <h1>⚠️ Under Construction.</h1>
+    </div>
+  );
+};

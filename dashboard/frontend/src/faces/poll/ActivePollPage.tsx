@@ -1,5 +1,7 @@
 export const ActivePollPage = () => {
-    return (
-        <div>ActivePollPage</div>
-    )
-}  
+  return (
+    <div>
+      <h1>⚠️ Under Construction.</h1>
+    </div>
+  );
+};

@@ -16,7 +16,7 @@ export const MenuPage = () => {
 					<IoRadioOutline size={35} />
 				</Flex>
 				<Flex alignItems="center">
-					<Grid>
+					<Grid rowGap="4px" gridTemplateColumns="1fr 1fr 1fr 1fr 1fr">
 						<ConfigMenuButton onClick={() => navigate('/dashboard/poll/create')}>
 							<div>
 								<IoDuplicateOutline size={60}/>
@@ -43,7 +43,7 @@ export const MenuPage = () => {
 					<IoFileTrayStackedOutline size={35} />
 				</Flex>
 				<Flex alignItems="center">
-					<Grid>
+					<Grid rowGap="4px" gridTemplateColumns="1fr 1fr 1fr 1fr 1fr">
 						<ConfigMenuButton onClick={() => navigate('/dashboard/draft/create')}>
 							<div>
 								<IoDuplicateOutline size={60}/>
@@ -76,7 +76,7 @@ export const MenuPage = () => {
 					<IoOptionsOutline size={35} />
 				</Flex>
 				<Flex alignItems="center">
-					<Grid>
+					<Grid rowGap="4px" gridTemplateColumns="1fr 1fr 1fr 1fr 1fr">
 						<ConfigMenuButton onClick={() => navigate('/dashboard/admin/mensalistas')}>
 							<div>
 								<IoPeopleCircleOutline size={60}/>

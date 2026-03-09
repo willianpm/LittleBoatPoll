@@ -1,20 +1,25 @@
 import { AppMenuNavbar, AppMenuTitle } from "../utils/styles"
 import DummyFace from "../assets/img/dummy.png"
-import { useContext } from "react"
-import { GuildContext } from "../utils/contexts/GuildContext"
+import { useNavigate } from "react-router-dom"
 
 export const AppBar = () => {
-	const { guildId } = useContext(GuildContext)
+	
+	const navigate = useNavigate();
+	
 	return (
 		<AppMenuNavbar>
-			<AppMenuTitle>Dashboard</AppMenuTitle>
-			<img 
-				src={DummyFace} 
-				height={45} 
-				width={45} 
-				style={{borderRadius: '50%'}}
-				alt="guild-face"
-			/>		
+			<div onClick={() => navigate('/dashboard/menu')} style={{cursor:"pointer"}}>
+				<AppMenuTitle>Dashboard</AppMenuTitle>
+			</div>
+			<div>
+				<img 
+					src={DummyFace} 
+					height={45} 
+					width={45} 
+					style={{borderRadius: '50%'}}
+					alt="guild-face"
+				/>		
+			</div>
 		</AppMenuNavbar>
 	)
 }

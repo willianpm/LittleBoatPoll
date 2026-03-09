@@ -1,5 +1,7 @@
 export const EditCriadores = () => {
-    return (
-        <div>EditCriadores</div>
-    )
-}  
+  return (
+    <div>
+      <h1>⚠️ Under Construction.</h1>
+    </div>
+  );
+};
