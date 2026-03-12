@@ -30,6 +30,7 @@
     "dashboard:frontend:dev": "npm --prefix dashboard/frontend run dev",
     "dashboard:frontend:dev:staging": "cross-env VITE_API_PROXY_TARGET=http://localhost:8001 npm --prefix dashboard/frontend run dev",
     "dashboard:frontend:build": "npm --prefix dashboard/frontend run build",
+    "heroku-postbuild": "npm run dashboard:frontend:install && npm run dashboard:frontend:build",
     "lint": "eslint src/ tests/ --max-warnings=0",
     "lint:fix": "eslint src/ tests/ --fix",
     "format": "prettier --write .",
