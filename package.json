@@ -26,7 +26,7 @@
     "test:dashboard": "jest --testPathPatterns=\"dashboard/(services|controllers|tests)\"",
     "test:automation": "node test-bot/test-runner.js",
     "test:full": "node test-bot/run-full-tests.js",
-    "dashboard:frontend:install": "npm --prefix dashboard/frontend install",
+    "dashboard:frontend:install": "npm --prefix dashboard/frontend install --include=dev",
     "dashboard:frontend:dev": "npm --prefix dashboard/frontend run dev",
     "dashboard:frontend:dev:staging": "cross-env VITE_API_PROXY_TARGET=http://localhost:8001 npm --prefix dashboard/frontend run dev",
     "dashboard:frontend:build": "npm --prefix dashboard/frontend run build",
