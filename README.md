@@ -64,6 +64,11 @@ Crie o arquivo `.env`:
 ```env
 TOKEN=seu_token_aqui
 CLIENT_ID=seu_client_id_aqui
+DISCORD_CLIENT_ID=seu_client_id_oauth
+DISCORD_CLIENT_SECRET=seu_client_secret_oauth
+DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DASHBOARD_SESSION_SECRET=troque_este_secret
+DASHBOARD_ALLOWED_GUILD_ID=id_da_guild
 ```
 
 ## Executar
@@ -83,6 +88,25 @@ Registrar comandos automaticamente na inicialização:
 ```env
 DEPLOY=true
 ```
+
+## Dashboard Web
+
+O dashboard administrativo usa frontend React + backend Express com login Discord OAuth2.
+
+Comandos úteis:
+
+```bash
+npm run dashboard:frontend:install
+npm run dashboard:frontend:dev
+npm run dashboard:frontend:build
+```
+
+Endpoints de autenticação:
+
+- `/api/auth/discord/login`
+- `/api/auth/discord/callback`
+- `/api/auth/me`
+- `/api/auth/logout`
 
 ## 🧪 Bot de Homologação (Staging)
 

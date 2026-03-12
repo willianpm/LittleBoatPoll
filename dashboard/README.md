@@ -1,74 +1,40 @@
-# Dashboard Backend Integration (Feature #16)
+# Dashboard (Backend + Frontend)
 
-Esta pasta contém os serviços e controllers necessários para integração backend do Dashboard com o bot, conforme arquitetura planejada.
+Esta pasta contém a implementação completa do dashboard administrativo do bot:
 
-## Estrutura
+- backend de integração (`api/`, `controllers/`, `services/`)
+- frontend React + Vite (`frontend/`)
+- autenticação via Discord OAuth2 (sessão HttpOnly)
 
-- `services/csvService.js`: Parsing, validação e conversão de CSV para JSON.
-- `services/botService.js`: Escrita segura de JSON para o bot.
-- `controllers/csvController.js`: Endpoint para upload e processamento de CSV.
+## Autenticação
 
-## Formato do CSV
+O acesso ao dashboard é feito por login com Discord:
 
-O CSV entregue pelo frontend deve seguir esta especificação:
+1. frontend redireciona para `GET /api/auth/discord/login`
+2. callback OAuth em `GET /api/auth/discord/callback`
+3. sessão é mantida por cookie HttpOnly (`dashboard.sid`)
+4. APIs protegidas exigem sessão válida e permissão de Criador/Admin/Dono
 
-### Estrutura Obrigatória
+### Endpoints de auth
 
-**Delimitador:** ponto e vírgula (`;`)
+- `GET /api/auth/discord/login`
+- `GET /api/auth/discord/callback`
+- `GET /api/auth/me`
+- `GET /api/auth/guilds` (lista servidores acessíveis ao usuário autenticado)
+- `GET /api/auth/guilds/:guildId/members?query=`
+- `GET /api/auth/guilds/:guildId/channels`
+- `POST /api/auth/logout`
 
-**Colunas obrigatórias** (exatamente estas 4 colunas, nesta ordem):
+## Endpoints de negócio
 
-1. `nome-da-enquete` - Texto do título da enquete
-2. `opções` - Opções separadas por vírgula, barra ou pipe (`,` `|` `/`)
-3. `max_votos` - Número inteiro positivo (quantidade máxima de votos por usuário)
-4. `peso_mensalistas` - `sim` ou `nao` (se deve aplicar peso para mensalistas)
+### Upload CSV
 
-### Exemplo de CSV Válido
+- **Endpoint:** `POST /api/csv/upload`
+- **Auth:** sessão autenticada (cookie)
+- **Content-Type:** `multipart/form-data`
+- **Campo obrigatório:** `file`
 
-```csv
-nome-da-enquete;opções;max_votos;peso_mensalistas
-Enquete 1;Opção A,Opção B;2;sim
-Enquete 2;Opção X,Opção Y,Opção Z;1;nao
-Melhor filme;Star Wars,Matrix,Senhor dos Anéis;1;sim
-```
-
-## Diagrama do Payload do CSV
-
-```
-{
-- `api/dashboard-commands.js`: Rota HTTP para execução de comandos do bot (`POST /api/commands/:commandName`)
-- `api/dashboard-csv.js`: Rota HTTP para upload de CSV (`POST /api/csv/upload`) com middleware multer
-- `services/csvService.js`: Parsing, validação e conversão de CSV para JSON.
-- `services/botService.js`: Escrita segura de JSON para o bot.
-- `controllers/csvController.js`: Controller para upload e processamento de CSV.
-- `controllers/csvController.test.js`: Testes unitários do csvController
-- `tests/dashboard-csv.test.js`: Testes de integração da rota HTTP de CSV
-- `tests/dashboard-commands.test.js`: Testes de integração da rota HTTP de comandos
-  "peso_mensalistas": "sim" | "nao"
-}
-```
-
-Consulte `INTEGRATION_GUIDE.md` para detalhes sobre integração de comandos do bot via dashboard.
-
-## Endpoints HTTP
-
-### 1. Upload de CSV
-
-**Endpoint:** `POST /api/csv/upload`
-
-**Autenticação:** Bearer token (via header)
-
-**Content-Type:** `multipart/form-data`
-
-**Exemplo com cURL:**
-
-```bash
-curl -X POST http://localhost:3000/api/csv/upload \
-  -H "Authorization: Bearer seu-token" \
-  -F "file=@enquetes.csv"
-```
-
-**Resposta de sucesso:**
+Resposta de sucesso:
 
 ```json
 {
@@ -76,27 +42,78 @@ curl -X POST http://localhost:3000/api/csv/upload \
 }
 ```
 
-### 2. Execução de Comandos
+### Execução de comandos
 
-**Endpoint:** `POST /api/commands/:commandName`
+- **Endpoint:** `POST /api/commands/:commandName`
+- **Auth:** sessão autenticada (cookie)
+- **Content-Type:** `application/json`
 
-**Autenticação:** Bearer token (via header)
+Payload mínimo:
 
-**Content-Type:** `application/json`
-
-**Exemplo:**
-
-```bash
-curl -X POST http://localhost:3000/api/commands/poll \
-  -H "Authorization: Bearer seu-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "options": {"title": "Minha enquete"},
-    "user": {"id": "123", "username": "user"},
-    "guild": {"id": "456"},
-    "member": {"id": "123"},
-    "permissions": []
-  }'
+```json
+{
+  "commandType": 1,
+  "options": {},
+  "guild": { "id": "123" },
+  "target": {}
+}
 ```
 
-Consulte `INTEGRATION_GUIDE.md` para detalhes completos sobre ambos os endpoints.
+### Catálogo e alvos visuais
+
+- `GET /api/commands/catalog` — Lista todos os comandos disponíveis do bot (slash + contexto), incluindo metadados para renderização da UI.
+- `GET /api/commands/context-targets/polls?guildId=...` — Retorna enquetes ativas para seleção visual em comandos contextuais de mensagem.
+- `GET /api/commands/context-targets/drafts` — Retorna rascunhos disponíveis para seleção visual do ID em ações de `/rascunho`.
+
+## Formato do CSV
+
+Delimitador obrigatório: `;`
+
+Colunas obrigatórias (nesta ordem):
+
+1. `nome-da-enquete`
+2. `opções`
+3. `max_votos`
+4. `peso_mensalistas`
+
+Exemplo:
+
+```csv
+nome-da-enquete;opções;max_votos;peso_mensalistas
+Enquete 1;Opção A,Opção B;2;sim
+Enquete 2;Opção X,Opção Y,Opção Z;1;nao
+```
+
+## Frontend
+
+Dentro de `dashboard/frontend`:
+
+```bash
+npm install
+npm run dev
+npm run build
+```
+
+No build de produção, os arquivos gerados são servidos pelo Express principal.
+
+### Fluxo UX atual
+
+O dashboard de comandos segue fluxo guiado por seleção visual:
+
+1. seleção de servidor por cards
+2. seleção de comando em catálogo visual (slash + contexto)
+3. abertura automática do formulário específico do comando/subcomando
+
+Campos manuais de `Guild ID` e `Permissões (separadas por vírgula)` foram removidos da interface.
+
+## Variáveis de ambiente (dashboard)
+
+```env
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+DISCORD_OAUTH_REDIRECT_URI=...
+DASHBOARD_SESSION_SECRET=...
+DASHBOARD_ALLOWED_GUILD_ID=...
+```
+
+Consulte `INTEGRATION_GUIDE.md` para detalhes adicionais de integração e testes.

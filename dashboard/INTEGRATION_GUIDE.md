@@ -1,5 +1,16 @@
 # Guia de Integração: Alternando entre Mocks e Serviços Reais
 
+## Atualização de autenticação (Discord OAuth2)
+
+O dashboard agora usa autenticação via Discord OAuth2 com sessão por cookie HttpOnly.
+
+- Login: `GET /api/auth/discord/login`
+- Callback: `GET /api/auth/discord/callback`
+- Sessão atual: `GET /api/auth/me`
+- Logout: `POST /api/auth/logout`
+
+As rotas de negócio (`/api/csv/upload` e `/api/commands/:commandName`) devem ser chamadas com sessão autenticada (cookie), sem uso de token Bearer manual no frontend.
+
 Este documento explica como alternar entre os mocks e os serviços reais do backend do Dashboard, facilitando desenvolvimento paralelo e testes isolados.
 
 ## 1. Estrutura dos Serviços
