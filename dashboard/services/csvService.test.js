@@ -63,7 +63,7 @@ describe('csvService.parseAndValidate', () => {
     const result = await parseAndValidate(invalidHeaderPath);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('CSV deve conter exatamente as colunas');
+    expect(result.error).toContain('CSV deve conter exatamente 4 colunas');
   });
 
   it('deve retornar erro quando uma linha não tiver campos obrigatórios', async () => {

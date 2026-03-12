@@ -1,180 +1,188 @@
 # LittleBoatPoll
 
-Um bot de Discord feito especialmente e sob medida para o canal de Discord Tripulação de Papel, com sistema de votações ponderadas para escolhas do clube do livro.
+LittleBoatPoll is a Discord bot for running book club polls with weighted voting, draft management, internal creator permissions, and an administrative dashboard backed by Express and a React frontend.
 
-## 🚀 Quick Start para Desenvolvedores
+## Overview
 
-Se você quer **contribuir ou configurar localmente**:
+The project combines three main parts:
 
-1. **Leia:** [docs/development/SETUP.md](docs/development/SETUP.md) (~5 minutos)
-2. **Execute:** Clone, `npm install`, preencha `.env`, `npm test`
-3. **Contribua:** Leia [CONTRIBUTING.md](CONTRIBUTING.md) e [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
+- A Discord bot built with `discord.js`
+- JSON-based persistence isolated by environment (`prod` and `staging`)
+- A web dashboard with Discord OAuth2 authentication and session-based access control
 
-Para documentação técnica completa, veja [docs/](docs/) (setup Discord, staging, arquitetura, etc.)
+Administrative access follows an internal binary permission model:
 
----
+- Poll creators can manage polls and drafts
+- Guild administrators and owners keep full access automatically
+- Regular users interact with polls through reactions only
 
-## Permissões
+The bot can also bind the Discord role named `Mensalistas` to the internal monthly-member logic. When that role exists, members with the role are recognized automatically and the mapping is persisted in `role-bindings.json`.
 
-Sistema binário **interno** para permissões administrativas:
+## Quick Start
 
-- **Criador de Enquetes**: Usuários adicionados internamente com `/criador-de-enquete adicionar`
-- **Administrador e dono do servidor**: acesso total automático
-- **Usuário comum**: apenas vota por reações
+1. Read [docs/development/SETUP.md](docs/development/SETUP.md) for the local setup flow.
+2. Install dependencies with `npm install`.
+3. Copy `.env.example` to `.env` and fill the required variables.
+4. Run `npm test`.
+5. Start the bot with `npm start`.
 
-Não existem níveis intermediários para permissões administrativas. O sistema é gerenciado internamente pelo bot.
+If you plan to contribute, also read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md).
 
-### Mensalistas por cargo do servidor
+## Requirements
 
-O bot também faz vínculo automático do cargo **Mensalistas** (nome do cargo no Discord) com o papel interno de mensalista:
-
-- Se o cargo existir, qualquer membro com esse cargo é reconhecido como mensalista automaticamente.
-- Não é necessário criar um novo cargo se **Mensalistas** já existir no servidor.
-- O vínculo é salvo em `role-bindings.json` para persistir entre reinícios.
-- Se o cargo não existir, o bot mantém o comportamento padrão atual (lista manual em `mensalistas.json`).
-
-### Gerenciar Criadores
-
-**Via Discord:**
-
-```bash
-/criador-de-enquete adicionar @usuario   # Adiciona permissão administrativa
-/criador-de-enquete remover @usuario     # Remove permissão
-/criador-de-enquete listar               # Lista todos os criadores
-```
-
-Ou use o **Context Menu** (botão direito no usuário → Apps → "Add/Del Criador de Enquetes")
-
-📖 **Leia mais:** [Documentação de Migração](docs/technical/MIGRACAO-PERMISSOES-INTERNAS.md)
-
-## Requisitos
-
-- Node.js >= 22
+- Node.js 22 or newer
 - npm
-- Token do bot e client ID
+- Discord bot token and application ID
 
-## Instalação
+## Environment Variables
 
-```bash
-npm install
-```
-
-Crie o arquivo `.env`:
+The minimum bot configuration is:
 
 ```env
-TOKEN=seu_token_aqui
-CLIENT_ID=seu_client_id_aqui
+TOKEN=your_bot_token
+CLIENT_ID=your_application_id
 ```
 
-## Executar
+Dashboard-related variables are required when using OAuth2 login and the administrative UI:
+
+```env
+DISCORD_CLIENT_ID=your_oauth_client_id
+DISCORD_CLIENT_SECRET=your_oauth_client_secret
+DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DASHBOARD_SESSION_SECRET=replace_this_secret
+DASHBOARD_ALLOWED_GUILD_ID=your_primary_guild_id
+DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_SINGLE_INSTANCE=true
+```
+
+`DASHBOARD_SINGLE_INSTANCE=true` is required when running `APP_ENV=prod` with the default in-memory session store.
+Use a persistent session store (for example Redis) if you need restarts without logout or horizontal scaling.
+
+Use `.env.staging` for the staging bot if you want isolated credentials and data.
+
+## Main Commands
 
 ```bash
 npm start
+npm run deploy
+npm run start:staging
+npm run deploy:staging
+npm test
+npm run test:coverage
+npm run test:dashboard
+npm run test:automation
+npm run test:full
 ```
 
-Registrar comandos manualmente:
+Frontend commands for the dashboard live at the repository root as npm aliases:
 
 ```bash
-npm run deploy
+npm run dashboard:frontend:install
+npm run dashboard:frontend:dev
+npm run dashboard:frontend:dev:staging
+npm run dashboard:frontend:build
 ```
 
-Registrar comandos automaticamente na inicialização:
+## Dashboard
 
-```env
-DEPLOY=true
-```
+The dashboard uses Discord OAuth2 plus `express-session` with the `dashboard.sid` cookie. Protected routes do not use manual bearer tokens from the frontend.
 
-## 🧪 Bot de Homologação (Staging)
+Main auth endpoints:
 
-O projeto suporta execução em dois ambientes isolados:
+- `GET /api/auth/discord/login`
+- `GET /api/auth/discord/callback`
+- `GET /api/auth/me`
+- `GET /api/auth/guilds`
+- `GET /api/auth/guilds/:guildId/members?query=`
+- `GET /api/auth/guilds/:guildId/channels`
+- `POST /api/auth/logout`
 
-- **Produção** (`APP_ENV=prod`) - Bot principal com dados em `data/environments/prod/`
-- **Staging** (`APP_ENV=staging`) - Bot de testes com dados em `data/environments/staging/`
+Main dashboard endpoints:
 
-### 📁 Arquivos de dados por ambiente
+- `GET /api/commands/catalog`
+- `GET /api/commands/context-targets/polls?guildId=...`
+- `GET /api/commands/context-targets/drafts`
+- `POST /api/commands/:commandName`
+- `POST /api/csv/upload`
+- `GET /api/health`
 
-Cada ambiente usa a mesma estrutura de arquivos, mudando apenas a pasta (`data/environments/prod/` ou `data/environments/staging/`):
+For dashboard-specific details, see [dashboard/README.md](dashboard/README.md).
+
+## Environments
+
+The bot supports isolated production and staging execution:
+
+- `APP_ENV=prod` uses `data/environments/prod/`
+- `APP_ENV=staging` uses `data/environments/staging/`
+
+Each environment keeps its own copies of:
 
 - `active-polls.json`
 - `draft-polls.json`
 - `mensalistas.json`
 - `criadores-internos.json`
 - `historico-votacoes.json`
-- `role-bindings.json` (**vínculo automático do cargo Mensalistas**)
+- `role-bindings.json`
 
-> ✅ Em produção, edite os arquivos em `data/environments/prod/`.
-> ✅ Em homologação, edite os arquivos em `data/environments/staging/`.
-
-### Executar bot de staging
-
-**Todas as plataformas (Windows/Linux/Mac):**
+Recommended staging command:
 
 ```bash
 npm run start:staging
 ```
 
-**Ou manualmente:**
-
-Windows (PowerShell):
+Windows PowerShell alternative:
 
 ```powershell
 $env:APP_ENV="staging"; npm start
 ```
 
-Linux/Mac:
+Linux and macOS alternative:
 
 ```bash
 APP_ENV=staging npm start
 ```
 
-O bot de staging permite validar funcionalidades "em loco" (no Discord real) sem afetar produção:
+See [docs/technical/staging-bot.md](docs/technical/staging-bot.md) for the full staging guide.
 
-- ✅ Mesmo código-fonte, zero duplicação
-- ✅ Dados completamente isolados por ambiente
-- ✅ Token/Client ID próprios (crie segundo bot no Discord Developer Portal)
-- ✅ Execução sob demanda, apenas quando necessário
+## Testing
 
-📖 **Guia completo:** [Bot de Homologação](docs/staging-bot.md)
+The repository contains unit, dashboard, and automation coverage.
 
-## Testes
-
-### Testes Unitários
-
-Cobertura automática de 100% dos módulos utilitários usando Jest:
+Unit and coverage commands:
 
 ```bash
-npm test              # Executa todos os testes unitários
-npm run test:watch    # Modo watch (re-executa ao salvar)
-npm run test:coverage # Relatório de cobertura de código
+npm test
+npm run test:watch
+npm run test:coverage
 ```
 
-**Módulos testados:**
-
-- `utils/validators.js` - Validação de enquetes e opções
-- `utils/draft-handler.js` - Manipulação de rascunhos
-- `utils/constants.js` - Constantes do sistema
-- `utils/mensalista-binding.js` - Vínculo automático de mensalistas
-
-### Testes de Integração (Automatizados)
-
-Suite que simula usuários reais interagindo com o bot staging, validando funcionalidades fim-a-fim:
+Dashboard API tests:
 
 ```bash
-npm run test:full     # Forma recomendada (inicia bot, testa, para bot)
+npm run test:dashboard
 ```
 
-**Ou manualmente (2 terminais):**
+End-to-end automation against the staging bot:
 
 ```bash
-npm run start:staging # Terminal 1: Inicia bot staging
-npm run test:automation # Terminal 2: Executa testes
+npm run test:full
 ```
 
-Cenários validados:
+Manual two-terminal automation flow:
 
-- ✅ Criação de enquetes
-- ✅ Votação (adicionar/remover votos)
-- ✅ Limites de votação e reações
-- ✅ Permissões administrativas
+```bash
+npm run start:staging
+npm run test:automation
+```
 
-📖 **Documentação completa:** [Testes Automatizados](test-bot/AUTOMATION.md)
+Detailed automation guidance is available in [test-bot/AUTOMATION.md](test-bot/AUTOMATION.md).
+
+## Documentation Map
+
+- [docs/development/SETUP.md](docs/development/SETUP.md): local setup and common development commands
+- [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md): codebase structure and runtime flow
+- [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md): contribution workflow
+- [docs/technical/setup-discord.md](docs/technical/setup-discord.md): Discord application setup
+- [docs/technical/staging-bot.md](docs/technical/staging-bot.md): staging environment guide
+- [docs/technical/MIGRACAO-PERMISSOES-INTERNAS.md](docs/technical/MIGRACAO-PERMISSOES-INTERNAS.md): internal permissions migration history
+- [dashboard/README.md](dashboard/README.md): dashboard API and frontend overview

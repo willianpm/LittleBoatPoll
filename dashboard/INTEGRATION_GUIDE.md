@@ -1,288 +1,95 @@
-# Guia de Integração: Alternando entre Mocks e Serviços Reais
+# Dashboard Integration Guide
 
-Este documento explica como alternar entre os mocks e os serviços reais do backend do Dashboard, facilitando desenvolvimento paralelo e testes isolados.
+This document describes how the dashboard integrates with the bot runtime, how local development is expected to work, and how to test the current API surface.
 
-## 1. Estrutura dos Serviços
+## Current Integration Model
 
-- **Serviços reais:**
-  - `services/csvService.js`
-  - `services/botService.js`
-- **Mocks:**
-  - `services/csvService.mock.js`
-  - `services/botService.mock.js`
+The dashboard is split into:
 
-## 2. Como Alternar
+- Express routes under `dashboard/api`
+- controller and service logic under `dashboard/controllers` and `dashboard/services`
+- a React + Vite frontend under `dashboard/frontend`
 
-### Manualmente no código
+The main backend process is started from `src/core/index.js`, which mounts the dashboard routes and serves the built frontend in production.
 
-Troque o import do serviço real pelo mock conforme necessidade:
+## Authentication and Session Flow
 
-```js
-// Para usar o serviço real:
-const csvService = require('../services/csvService');
-const botService = require('../services/botService');
+The current authentication model is Discord OAuth2 plus `express-session`.
 
-// Para usar o mock:
-const csvService = require('../services/csvService.mock');
-const botService = require('../services/botService.mock');
-```
+Flow summary:
 
-### Com variável de ambiente
+1. the frontend redirects the browser to `GET /api/auth/discord/login`
+2. Discord redirects back to `GET /api/auth/discord/callback`
+3. the backend resolves the authenticated Discord user against guilds currently available to the bot
+4. if the user is allowed, the backend stores dashboard state in the session
+5. the browser keeps the `dashboard.sid` cookie and uses it on subsequent API calls
 
-Utilize uma variável de ambiente para alternar automaticamente:
+Important behavior:
 
-```js
-// Exemplo em controllers/csvController.js
-const useMock = process.env.USE_MOCK === 'true';
-const csvService = useMock ? require('../services/csvService.mock') : require('../services/csvService');
-const botService = useMock ? require('../services/botService.mock') : require('../services/botService');
-```
+- protected routes validate the session on every request
+- access is tied to a guild where the user is recognized as creator, admin, or owner
+- the frontend should rely on cookies instead of bearer tokens
+- `DASHBOARD_FRONTEND_URL` is used as the post-login redirect target when configured
 
-Execute com mock:
+Relevant routes:
 
-```bash
-USE_MOCK=true node dashboard/controllers/csvController.js
-```
+- `GET /api/auth/discord/login`
+- `GET /api/auth/discord/callback`
+- `GET /api/auth/me`
+- `GET /api/auth/guilds`
+- `GET /api/auth/guilds/:guildId/members?query=`
+- `GET /api/auth/guilds/:guildId/channels`
+- `POST /api/auth/logout`
 
-## 3. Recomendações
+## Command Execution API
 
-- Use mocks para desenvolvimento isolado, testes automatizados e integração paralela.
-- Troque para serviços reais quando o Dashboard (#15) estiver finalizado ou para testes de integração completos.
-- Documente sempre qual serviço está sendo utilizado para evitar confusões.
+Route:
 
-## 4. Exemplos de Teste
+- `POST /api/commands/:commandName`
 
-### Teste com serviço real
+Authentication:
 
-```js
-const { parseAndValidate } = require('../services/csvService');
-const { savePoll } = require('../services/botService');
-// ...testes reais
-```
+- session cookie required
 
-### Teste com mock
-
-```js
-const { parseAndValidate } = require('../services/csvService.mock');
-const { savePoll } = require('../services/botService.mock');
-// ...testes simulados
-```
-
----
-
-# Scripts de Teste e Integração
-
-## 1. Rodando todos os testes
-
-Adicione ao seu `package.json`:
-
-```json
-"scripts": {
-  "test:dashboard": "jest dashboard/services/*.test.js dashboard/controllers/*.test.js"
-}
-```
-
-Execute:
-
-```bash
-npm run test:dashboard
-```
-
-## 2. Teste de Integração Simples (Importação de Enquetes via CSV)
-
-O script `dashboard/integrationTest.js` agora suporta importação de múltiplas enquetes via CSV, reaproveitando todas as validações e regras do comando `/enquete`.
-
-**Fluxo atualizado:**
-
-1. O CSV deve conter as colunas obrigatórias: `nome-da-enquete`, `opções`, `max_votos`, `peso_mensalistas` (separadas por ponto e vírgula `;`).
-2. Cada linha é convertida para a estrutura interna de enquete.
-3. Para cada linha:
-   - Os dados são validados usando as mesmas funções do comando `/enquete` (`validatePollOptions`, `parseOptions`).
-   - Apenas enquetes válidas são salvas.
-   - Linhas inválidas são reportadas com o motivo do erro.
-4. Ao final, o script informa:
-   - Quantas enquetes foram criadas com sucesso
-   - Quais linhas falharam e por qual motivo
-
-**Exemplo de uso:**
-
-```js
-const useMock = process.env.USE_MOCK === 'true';
-const csvService = useMock ? require('./services/csvService.mock') : require('./services/csvService');
-const botService = useMock ? require('./services/botService.mock') : require('./services/botService');
-const { validatePollOptions, parseOptions } = require('../src/utils/validators');
-
-(async () => {
-  const csvPath = useMock ? 'mock.csv' : './services/test.csv';
-  const result = await csvService.parseAndValidate(csvPath);
-  let sucesso = 0;
-  let falhas = [];
-  let criadas = [];
-  if (result.valid && Array.isArray(result.data)) {
-    for (let i = 0; i < result.data.length; i++) {
-      const linha = result.data[i];
-      const opcoes = Array.isArray(linha.opcoes)
-        ? linha.opcoes
-        : parseOptions(Array.isArray(linha.opcoes) ? linha.opcoes.join(',') : linha.opcoes);
-      const validation = validatePollOptions(opcoes, linha.maxVotos);
-      if (!validation.valid) {
-        falhas.push({ linha: i + 2, motivo: validation.error });
-        continue;
-      }
-      const dto = {
-        titulo: linha.titulo || linha['nome-da-enquete'],
-        opcoes,
-        maxVotos: linha.maxVotos,
-        usarPesoMensalista: linha.usarPesoMensalista,
-        status: 'rascunho',
-        criadoEm: linha.criadoEm || new Date().toISOString(),
-        editadoEm: linha.editadoEm || new Date().toISOString(),
-      };
-      criadas.push(dto);
-      sucesso++;
-    }
-    if (criadas.length) {
-      await botService.savePoll(criadas);
-    }
-    console.log(`Enquetes criadas com sucesso: ${sucesso}`);
-    if (falhas.length) {
-      console.log('Falhas:');
-      falhas.forEach((f) => console.log(`Linha ${f.linha}: ${f.motivo}`));
-    }
-  } else {
-    console.error('Erro:', result.error);
-  }
-})();
-```
-
-Execute:
-
-```bash
-node dashboard/integrationTest.js
-```
-
-**Resumo das melhorias:**
-
-- Validação de colunas e tipos do CSV
-- Reaproveitamento das regras do comando `/enquete` (sem duplicação de lógica)
-- Feedback detalhado ao usuário sobre sucesso e falhas
-
----
-
-# Integração de Comandos do Bot via Dashboard
-
-## Endpoint HTTP
-
-- **URL:** `/api/commands/:commandName`
-- **Método:** `POST`
-- **Exemplo:** `/api/commands/poll`
-
-## Autenticação
-
-- **Header:** `Authorization: Bearer <token>`
-- O token deve ser obtido pelo fluxo de login do dashboard (feature #15).
-
-## Payload da Requisição
+Minimal payload example:
 
 ```json
 {
-  "options": { /* argumentos do comando */ },
-  "user": { "id": "...", "username": "..." },
-  "guild": { "id": "...", "name": "..." },
-  "member": { "id": "...", "roles": ["..."], ... },
-  "permissions": ["...", "..."]
+  "commandType": 1,
+  "options": {},
+  "guild": { "id": "123" },
+  "target": {}
 }
 ```
 
-### Diagrama do Payload
+Related selector endpoints used by the frontend:
 
-```
-{
-  options: { ... },
-  user: {
-    id: string,
-    username: string,
-    ...
-  },
-  guild: {
-    id: string,
-    name: string,
-    ...
-  },
-  member: {
-    id: string,
-    roles: string[],
-    ...
-  },
-  permissions: string[]
-}
-```
+- `GET /api/commands/catalog`
+- `GET /api/commands/context-targets/polls?guildId=...`
+- `GET /api/commands/context-targets/drafts`
 
-## Resposta
+The backend builds a Discord-like interaction wrapper and executes the existing command handlers directly. This keeps the dashboard aligned with the same business rules used inside Discord.
 
-- Formato igual ao que o bot retornaria no Discord (objeto com `content`, `embeds`, etc).
-- Em caso de erro, retorna `{ error: "mensagem" }` e status HTTP apropriado.
+## CSV Upload API
 
-## Regras de Negócio
+Route:
 
-- O comando só será executado se:
-  - O bot estiver presente na guild informada.
-  - O usuário tiver permissão para executar o comando.
-- O backend valida permissões e contexto.
+- `POST /api/csv/upload`
 
-## Teste de Integração
+Requirements:
 
-- Teste disponível em `dashboard/tests/dashboard-commands.test.js` como referência de uso.
+- session cookie required
+- `multipart/form-data`
+- file field name must be `file`
+- file size limit is 5 MB
 
-## Endpoint de Upload de CSV
+Validation rules:
 
-- **URL:** `/api/csv/upload`
-- **Método:** `POST`
-- **Autenticação:** `Authorization: Bearer <token>` (via header ou query param)
-- **Content-Type:** `multipart/form-data`
+- only CSV files are accepted
+- uploads are stored temporarily in `uploads/`
+- the controller reuses the same validation rules used by the bot command flow
 
-### Payload (Multipart)
-
-```
-POST /api/csv/upload
-Authorization: Bearer <token>
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
-
-------WebKitFormBoundary
-Content-Disposition: form-data; name="file"; filename="enquetes.csv"
-Content-Type: text/csv
-
-[conteúdo do CSV aqui]
-------WebKitFormBoundary--
-```
-
-### Exemplo com cURL
-
-```bash
-curl -X POST http://localhost:3000/api/csv/upload \
-  -H "Authorization: Bearer seu-token-aqui" \
-  -F "file=@enquetes.csv"
-```
-
-### Exemplo com JavaScript (Fetch)
-
-```js
-const formData = new FormData();
-formData.append('file', csvFile); // File object from input
-
-const response = await fetch('/api/csv/upload', {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-  body: formData,
-});
-
-const result = await response.json();
-console.log(result); // { success: true } ou { error: "mensagem" }
-```
-
-### Resposta de Sucesso
+Success response:
 
 ```json
 {
@@ -290,42 +97,82 @@ console.log(result); // { success: true } ou { error: "mensagem" }
 }
 ```
 
-### Resposta de Erro
+## CSV Schema
 
-```json
-{
-  "error": "Descrição do erro"
-}
+Delimiter:
+
+- `;`
+
+Required columns:
+
+1. `nome-da-enquete`
+2. `opcoes`
+3. `max_votos`
+4. `peso_mensalistas`
+
+Example:
+
+```csv
+nome-da-enquete;opcoes;max_votos;peso_mensalistas
+Poll A;Option 1,Option 2;2;sim
+Poll B;Option X,Option Y,Option Z;1;nao
 ```
 
-### Códigos de Status HTTP
+## Frontend Development
 
-- **200** - Upload e processamento concluído com sucesso
-- **400** - Arquivo não enviado, validação falhou, ou apenas CSV aceitos
-- **413** - Arquivo muito grande (máximo 5MB)
-- **500** - Erro interno do servidor
+Recommended root-level commands:
 
-### Regras
+```bash
+npm run dashboard:frontend:install
+npm run dashboard:frontend:dev
+npm run dashboard:frontend:dev:staging
+npm run dashboard:frontend:build
+```
 
-- **Tipo de arquivo:** Apenas `.csv` é aceito (validação por MIME type e extensão)
-- **Tamanho máximo:** 5MB
-- **Formato do CSV:**
-  - Delimitador: ponto e vírgula (`;`)
-  - Colunas obrigatórias: `nome-da-enquete;opções;max_votos;peso_mensalistas`
-  - Ver exemplo de CSV em `README.md` desta pasta
-- **Autenticação:** É obrigatória (validar token via `validateDashboardToken`)
-- **Processamento:** Cada enquete do CSV é validada usando as mesmas regras do comando `/enquete`
+Development notes:
 
-### Fluxo de Processamento
+- `dashboard:frontend:dev` assumes the backend is available on `http://localhost:8000`
+- `dashboard:frontend:dev:staging` proxies to `http://localhost:8001`
+- the production build output from `dashboard/frontend/dist` is served by Express
 
-1. Middleware `multer` valida tipo e tamanho do arquivo
-2. Arquivo é salvo temporariamente em `uploads/`
-3. `csvService.parseAndValidate()` faz parsing e validação
-4. `botService.savePoll()` persiste as enquetes (se válidas)
-5. Arquivo temporário é deletado automaticamente
-6. Resposta é retornada ao cliente
+## Backend Health Check
 
----
+The backend exposes:
 
-Com isso, você pode alternar facilmente entre mocks e serviços reais, garantindo desenvolvimento paralelo, testes isolados e integração segura com o Dashboard (#15).
-Com isso, você pode alternar facilmente entre mocks e serviços reais, garantindo desenvolvimento paralelo, testes isolados e integração segura com o Dashboard (#15).
+- `GET /api/health`
+
+This is useful for verifying which environment is running because the response includes the current `APP_ENV` label.
+
+## Testing
+
+Dashboard route tests are grouped under `dashboard/tests` and run through the root script:
+
+```bash
+npm run test:dashboard
+```
+
+Current automated coverage includes:
+
+- auth route behavior
+- command execution API
+- CSV upload API
+
+## Optional Integration Helper
+
+The repository still includes `dashboard/integrationTest.js`, a standalone helper that can run with real services or mock services depending on `USE_MOCK=true`.
+
+Example:
+
+```bash
+node dashboard/integrationTest.js
+```
+
+This helper is useful for isolated experiments, but it is not the primary dashboard execution path. The main application flow is always routed through the Express API mounted by `src/core/index.js`.
+
+## Recommended Source of Truth
+
+Use the following documentation split to avoid duplication:
+
+- `README.md`: project-level overview and entry points
+- `dashboard/README.md`: operational overview of the dashboard module
+- `dashboard/INTEGRATION_GUIDE.md`: detailed dashboard integration and testing notes

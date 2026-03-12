@@ -1,68 +1,62 @@
-# Testes Automatizados
+# Unit Tests
 
-Este diretório contém os testes automatizados do LittleBoatPoll usando Jest.
+This directory contains the unit-level Jest coverage for LittleBoatPoll.
 
-## 📁 Estrutura
+## Scope
 
-```
-tests/
-├── validators.test.js     - Testes de validação de enquetes
-├── draft-handler.test.js  - Testes de manipulação de rascunhos
-└── constants.test.js      - Testes de constantes do sistema
-```
+The unit suite primarily covers shared utilities under `src/utils` and other isolated logic that can be tested without a live Discord runtime.
 
-## 🚀 Executando os Testes
+Current examples include:
 
-### Executar todos os testes
+- `validators.test.js`
+- `draft-handler.test.js`
+- `constants.test.js`
+- `permissions.test.js`
+- `mensalista-binding.test.js`
+
+## Running Tests
+
+Run the full Jest suite:
 
 ```bash
 npm test
 ```
 
-### Executar em modo watch (re-executa ao salvar)
+Watch mode:
 
 ```bash
 npm run test:watch
 ```
 
-### Executar com cobertura de código
+Coverage report:
 
 ```bash
 npm run test:coverage
 ```
 
-## ✅ Cobertura Atual
+## Adding New Unit Tests
 
-Os testes cobrem:
+Add files using the `*.test.js` naming pattern and keep the path aligned with the source area being tested.
 
-- ✅ `utils/validators.js` - 100% de cobertura
-- ✅ `utils/draft-handler.js` - 100% de cobertura
-- ✅ `utils/constants.js` - 100% de cobertura
-
-## 📝 Escrevendo Novos Testes
-
-Para adicionar novos testes, crie um arquivo `*.test.js` neste diretório seguindo o padrão:
+Example:
 
 ```javascript
-const { minhaFuncao } = require('../utils/meu-modulo');
+const { myFunction } = require('../../../src/utils/my-module');
 
-describe('meu-modulo - minhaFuncao', () => {
-  test('deve fazer algo específico', () => {
-    const result = minhaFuncao('input');
-    expect(result).toBe('expected');
+describe('my-module', () => {
+  test('returns the expected value', () => {
+    expect(myFunction('input')).toBe('expected');
   });
 });
 ```
 
-## 🎯 Metas de Cobertura
+## Guidelines
 
-O projeto mantém meta de 70% de cobertura de código para:
+- prefer deterministic tests without network access
+- cover edge cases such as empty input, invalid types, and missing fields
+- keep test names descriptive enough to explain the expected behavior
+- update related documentation when a new testing area is introduced
 
-- Branches (ramificações)
-- Functions (funções)
-- Lines (linhas)
-- Statements (declarações)
+## Coverage
 
-## 📚 Documentação do Jest
-
-Para mais informações sobre Jest: https://jestjs.io/docs/getting-started
+Coverage thresholds are enforced by the repository test configuration. Use `npm run test:coverage` to inspect current results locally.

@@ -7,6 +7,7 @@ const { client } = require('./client');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const session = require('express-session');
 const config = require('../utils/config');
 const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('../utils/file-handler');
 const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
@@ -773,9 +774,47 @@ client.on('messageReactionRemove', async (reaction, user) => {
 
 const app = express();
 const port = config.PORT; // O Koyeb injeta a porta automaticamente
+const dashboardFrontendDist = path.join(__dirname, '../../dashboard/frontend/dist');
+const isProductionEnv = config.APP_ENV === 'prod';
+const isSingleInstanceDashboard = process.env.DASHBOARD_SINGLE_INSTANCE === 'true';
+
+if (isProductionEnv && !isSingleInstanceDashboard) {
+  console.error('ERRO: sessão do dashboard está usando MemoryStore sem confirmação de instância única.');
+  console.error('Defina DASHBOARD_SINGLE_INSTANCE=true para operação em instância única');
+  console.error('ou configure um session store persistente (ex.: Redis) para produção.');
+  process.exit(1);
+}
+
+if (isProductionEnv && isSingleInstanceDashboard) {
+  console.warn('ATENÇÃO: dashboard em produção com MemoryStore e DASHBOARD_SINGLE_INSTANCE=true.');
+  console.warn('Sessões serão perdidas em restart e não há suporte a múltiplas instâncias.');
+}
+
+if (isProductionEnv) {
+  app.set('trust proxy', 1);
+}
 
 app.use(express.json());
-app.get('/', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
+app.use(
+  session({
+    name: 'dashboard.sid',
+    secret: process.env.DASHBOARD_SESSION_SECRET || 'dashboard-dev-secret-change-me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProductionEnv ? 'auto' : false,
+      maxAge: 12 * 60 * 60 * 1000,
+    },
+  }),
+);
+
+app.get('/api/health', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
+
+// Rotas de autenticação do dashboard
+const { authRouter: dashboardAuthRouter } = require('../../dashboard/api/auth');
+app.use('/api/auth', dashboardAuthRouter);
 
 // Rota para execução de comandos via dashboard
 const dashboardCommandsRouter = require('../../dashboard/api/dashboard-commands');
@@ -784,6 +823,24 @@ app.use('/api/commands', dashboardCommandsRouter);
 // Rota para upload de CSV via dashboard
 const dashboardCsvRouter = require('../../dashboard/api/dashboard-csv');
 app.use('/api/csv', dashboardCsvRouter);
+
+app.use('/api', (req, res) => {
+  return res.status(404).json({ error: 'Endpoint de API não encontrado' });
+});
+
+if (fs.existsSync(dashboardFrontendDist)) {
+  app.use(express.static(dashboardFrontendDist));
+
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+
+    return res.sendFile(path.join(dashboardFrontendDist, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
+}
 
 let keepAliveStarted = false;
 function startKeepAlive() {

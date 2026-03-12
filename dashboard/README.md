@@ -1,102 +1,116 @@
-# Dashboard Backend Integration (Feature #16)
+# Dashboard
 
-Esta pasta contém os serviços e controllers necessários para integração backend do Dashboard com o bot, conforme arquitetura planejada.
+This directory contains the administrative dashboard for LittleBoatPoll.
 
-## Estrutura
+It includes:
 
-- `services/csvService.js`: Parsing, validação e conversão de CSV para JSON.
-- `services/botService.js`: Escrita segura de JSON para o bot.
-- `controllers/csvController.js`: Endpoint para upload e processamento de CSV.
+- backend HTTP routes in `api/`
+- controller and service layers in `controllers/` and `services/`
+- a React + Vite frontend in `frontend/`
+- Discord OAuth2 authentication with `express-session`
 
-## Formato do CSV
+## Authentication Model
 
-O CSV entregue pelo frontend deve seguir esta especificação:
+The dashboard uses Discord OAuth2 login and keeps the authenticated session in the `dashboard.sid` HttpOnly cookie.
 
-### Estrutura Obrigatória
+Protected routes require:
 
-**Delimitador:** ponto e vírgula (`;`)
+- a valid session
+- a guild membership resolved by the bot
+- creator, admin, or owner access validated on the backend
 
-**Colunas obrigatórias** (exatamente estas 4 colunas, nesta ordem):
+The frontend should call protected APIs with browser cookies enabled. It should not send manual bearer tokens.
 
-1. `nome-da-enquete` - Texto do título da enquete
-2. `opções` - Opções separadas por vírgula, barra ou pipe (`,` `|` `/`)
-3. `max_votos` - Número inteiro positivo (quantidade máxima de votos por usuário)
-4. `peso_mensalistas` - `sim` ou `nao` (se deve aplicar peso para mensalistas)
+Auth routes:
 
-### Exemplo de CSV Válido
+- `GET /api/auth/discord/login`
+- `GET /api/auth/discord/callback`
+- `GET /api/auth/me`
+- `GET /api/auth/guilds`
+- `GET /api/auth/guilds/:guildId/members?query=`
+- `GET /api/auth/guilds/:guildId/channels`
+- `POST /api/auth/logout`
+
+## Business Routes
+
+CSV upload:
+
+- endpoint: `POST /api/csv/upload`
+- auth: session cookie
+- content type: `multipart/form-data`
+- required field: `file`
+
+Command execution:
+
+- endpoint: `POST /api/commands/:commandName`
+- auth: session cookie
+- content type: `application/json`
+
+Catalog and visual selectors:
+
+- `GET /api/commands/catalog`
+- `GET /api/commands/context-targets/polls?guildId=...`
+- `GET /api/commands/context-targets/drafts`
+
+Health check:
+
+- `GET /api/health`
+
+## CSV Format
+
+The CSV parser expects `;` as the delimiter.
+
+Required columns:
+
+1. `nome-da-enquete`
+2. `opcoes`
+3. `max_votos`
+4. `peso_mensalistas`
+
+Example:
 
 ```csv
-nome-da-enquete;opções;max_votos;peso_mensalistas
-Enquete 1;Opção A,Opção B;2;sim
-Enquete 2;Opção X,Opção Y,Opção Z;1;nao
-Melhor filme;Star Wars,Matrix,Senhor dos Anéis;1;sim
+nome-da-enquete;opcoes;max_votos;peso_mensalistas
+Poll A;Option 1,Option 2;2;sim
+Poll B;Option X,Option Y,Option Z;1;nao
 ```
 
-## Diagrama do Payload do CSV
+## Frontend
 
-```
-{
-- `api/dashboard-commands.js`: Rota HTTP para execução de comandos do bot (`POST /api/commands/:commandName`)
-- `api/dashboard-csv.js`: Rota HTTP para upload de CSV (`POST /api/csv/upload`) com middleware multer
-- `services/csvService.js`: Parsing, validação e conversão de CSV para JSON.
-- `services/botService.js`: Escrita segura de JSON para o bot.
-- `controllers/csvController.js`: Controller para upload e processamento de CSV.
-- `controllers/csvController.test.js`: Testes unitários do csvController
-- `tests/dashboard-csv.test.js`: Testes de integração da rota HTTP de CSV
-- `tests/dashboard-commands.test.js`: Testes de integração da rota HTTP de comandos
-  "peso_mensalistas": "sim" | "nao"
-}
-```
+The frontend lives in `dashboard/frontend` and uses Vite in development.
 
-Consulte `INTEGRATION_GUIDE.md` para detalhes sobre integração de comandos do bot via dashboard.
-
-## Endpoints HTTP
-
-### 1. Upload de CSV
-
-**Endpoint:** `POST /api/csv/upload`
-
-**Autenticação:** Bearer token (via header)
-
-**Content-Type:** `multipart/form-data`
-
-**Exemplo com cURL:**
+Common commands from the repository root:
 
 ```bash
-curl -X POST http://localhost:3000/api/csv/upload \
-  -H "Authorization: Bearer seu-token" \
-  -F "file=@enquetes.csv"
+npm run dashboard:frontend:install
+npm run dashboard:frontend:dev
+npm run dashboard:frontend:dev:staging
+npm run dashboard:frontend:build
 ```
 
-**Resposta de sucesso:**
+In local development, the frontend proxies `/api` to the backend. In production, the built frontend is served by the main Express app.
 
-```json
-{
-  "success": true
-}
+Current UI flow:
+
+1. choose a guild from visual cards
+2. choose a slash or context command from the catalog
+3. fill the generated command form
+
+Manual text inputs for guild ID and permission lists are no longer part of the UI flow.
+
+## Environment Variables
+
+```env
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+DISCORD_OAUTH_REDIRECT_URI=...
+DASHBOARD_SESSION_SECRET=...
+DASHBOARD_ALLOWED_GUILD_ID=...
+DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_SINGLE_INSTANCE=true
 ```
 
-### 2. Execução de Comandos
+In `APP_ENV=prod`, `DASHBOARD_SINGLE_INSTANCE=true` is required with the default in-memory session store.
+To support restarts without session loss or multiple app instances, use a persistent session store (for example Redis).
 
-**Endpoint:** `POST /api/commands/:commandName`
-
-**Autenticação:** Bearer token (via header)
-
-**Content-Type:** `application/json`
-
-**Exemplo:**
-
-```bash
-curl -X POST http://localhost:3000/api/commands/poll \
-  -H "Authorization: Bearer seu-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "options": {"title": "Minha enquete"},
-    "user": {"id": "123", "username": "user"},
-    "guild": {"id": "456"},
-    "member": {"id": "123"},
-    "permissions": []
-  }'
-```
-
-Consulte `INTEGRATION_GUIDE.md` para detalhes completos sobre ambos os endpoints.
+For detailed integration and testing notes, see [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).

@@ -1,6 +1,6 @@
-# Contributing to Little Boat Poll
+# Contributing to LittleBoatPoll
 
-Thanks for considering a contribution to the **Little Boat Poll** bot! This document outlines our process for collaborative development.
+This document outlines the expected contribution workflow for LittleBoatPoll.
 
 ## Quick Start
 
@@ -24,13 +24,19 @@ Quick version:
 
 ```bash
 npm install
-cp .env.example .env          # Fill with your tokens
-npm test                       # Verify setup works
+cp .env.example .env
+npm test
+```
+
+PowerShell alternative:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
 ## Git Workflow
 
-We use **GitHub Flow** (feature branches → develop → main).
+We use **GitHub Flow** (`feature` branches -> `develop` -> `main`).
 
 **Step-by-step:** [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
 
@@ -45,7 +51,7 @@ git checkout -b feature/your-feature-name
 
 npm test                       # Must pass!
 git add .
-git commit -m "[feat] Brief description of change"
+git commit -m "feat: brief description of change"
 git push origin feature/your-feature-name
 # Create PR on GitHub
 ```
@@ -71,7 +77,7 @@ npm run format:check  # Check what would be formatted
 - 2-space indentation
 - 120 character line limit
 - Descriptive variable/function names
-- Add type-like comments for complex logic
+- Keep comments rare and focused on non-obvious logic
 - Use utility modules in `src/utils/` for shared code
 
 ## Project Structure
@@ -87,7 +93,7 @@ src/
 tests/
   unit/              # Unit tests (mirror src/ structure)
   integration/       # Integration tests
-config/              # Configuration files
+dashboard/           # Dashboard backend, frontend, and tests
 data/environments/   # Data directories (prod/staging)
 docs/development/    # Developer documentation
 ```
@@ -104,7 +110,7 @@ npm run test:coverage       # With coverage report
 
 **Requirements:**
 
-- Minimum coverage as enforced by Jest/CI (currently 25% global on branches, functions, lines, statements)
+- Minimum coverage is enforced by Jest and CI
 - All tests must pass before PR merge
 - Add tests for new utilities or features
 
@@ -148,8 +154,8 @@ Before submitting your PR:
 
 - [ ] Created from `develop` branch (not `main`)
 - [ ] Branch name follows format: `feature/name` or `bugfix/issue-number`
-- [ ] Commit messages are descriptive with prefix: `[feat]`, `[fix]`, `[docs]`, etc.
-- [ ] `npm test` passes with 70%+ coverage
+- [ ] Commit messages are descriptive with prefix: `feat:`, `fix:`, `docs:`, etc.
+- [ ] `npm test` passes
 - [ ] `npm run lint` passes (or auto-fixed with `npm run format`)
 - [ ] Related issue is linked in PR description
 - [ ] Documentation is updated if behavior changed
@@ -163,27 +169,11 @@ When opening an issue, include:
 - **Reproduction steps:** How to trigger the problem
 - **Expected behavior:** What should happen
 - **Actual behavior:** What actually happens
-- **Environment:** Bot version, Discord server type (prod/staging)
+- **Environment:** bot version, Discord server type (`prod`/`staging`)
 - **Screenshots/logs:** If applicable
 
 ## Questions or Need Help?
 
-- Open a [GitHub Discussion](https://github.com/../discussions)
+- Open an issue in the repository
 - Review existing [documentation](docs/)
 - Check [CHANGELOG.md](CHANGELOG.md) for recent changes
-
----
-
-**Thank you for contributing!** 🚀
-
-- Expected behavior
-- Actual behavior
-- Logs or screenshots if possible
-- Bot version (check CHANGELOG.md)
-
-## Testing guidelines
-
-- All utilities in `utils/` should have corresponding tests in `tests/`.
-- Use descriptive test names that explain what is being tested.
-- Aim for high coverage of edge cases (empty values, null, wrong types, etc.).
-- Run `npm run test:coverage` to check coverage before submitting PR.

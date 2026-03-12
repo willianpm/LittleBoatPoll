@@ -1,310 +1,193 @@
-# Guia de Teste - Sistema de Rascunhos de Enquetes
+# Draft Poll Test Guide
 
-Este arquivo documenta como testar a funcionalidade de rascunhos.
-Use os comandos abaixo para testar a nova feature.
+This document describes how to manually validate the draft poll workflow implemented by the `/rascunho` command.
 
-## Índice
+## Scope
 
-- [Exemplo 1: Criar um Rascunho Simples](#exemplo-1-criar-um-rascunho-simples)
-- [Exemplo 2: Editar o Rascunho](#exemplo-2-editar-o-rascunho)
-- [Exemplo 3: Visualizar Detalhes](#exemplo-3-visualizar-detalhes)
-- [Exemplo 4: Listar Todos os Rascunhos](#exemplo-4-listar-todos-os-rascunhos)
-- [Exemplo 5: Publicar o Rascunho](#exemplo-5-publicar-o-rascunho)
-- [Exemplo 6: Deletar um Rascunho](#exemplo-6-deletar-um-rascunho)
-- [Fluxo Completo de Teste](#fluxo-completo-de-teste)
-- [Estrutura de Arquivos Criados](#estrutura-de-arquivos-criados)
-- [Possíveis Erros e Soluções](#possíveis-erros-e-soluções)
-- [Dicas Importantes](#dicas-importantes)
-- [Performance e Limites](#performance-e-limites)
-- [Dados Salvos](#dados-salvos)
+Use this guide to validate:
 
-## Exemplo 1: Criar um Rascunho Simples
+- draft creation
+- draft editing
+- draft inspection
+- draft listing
+- draft publishing
+- draft deletion
 
-**Comando:**
+## Example 1: Create a Draft
+
+Command:
+
+```text
 /rascunho criar
-titulo: "Qual é o melhor livro de Machado de Assis?"
-opcoes: "Brás Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó"
+titulo: "Which Machado de Assis book should we read next?"
+opcoes: "Memorias Postumas de Bras Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó"
 max_votos: 1
-peso_mensalista: Não
+peso_mensalista: Nao
+```
 
-**Resultado Esperado:**
-✅ Rascunho Criado com Sucesso!
-ID do Rascunho: `A1B2C3D4` (exemplo)
-Próximos Passos:
-• Use /rascunho editar para fazer alterações
-• Use /rascunho exibir para visualizar os detalhes
-• Use /rascunho publicar para ativar a enquete para votação
+Expected result:
 
-## Exemplo 2: Editar o Rascunho
+- the bot returns a success confirmation
+- a draft ID is generated
+- the response suggests `/rascunho editar`, `/rascunho exibir`, and `/rascunho publicar`
+- the draft is saved into draft persistence
 
-**Comandos (Nessa Ordem):**
+## Example 2: Edit the Draft
 
-1. Mudar o título:
-   /rascunho editar
-   id: A1B2C3D4
-   titulo: "Votação: Qual obra de Machado você prefere?"
+Starting from the generated draft ID, validate these edits.
 
-   **Resultado:** Apenas o título é atualizado, resto mantém-se igual
+Change only the title:
 
-2. Mudar max_votos e peso:
-   /rascunho editar
-   id: A1B2C3D4
-   max_votos: 2
-   peso_mensalista: Sim
+```text
+/rascunho editar
+id: A1B2C3D4
+titulo: "Vote: Which Machado de Assis title do you prefer?"
+```
 
-   **Resultado:** max_votos virou 2, peso agora tem 2x para mensalistas
+Expected result:
 
-3. Adicionar mais uma opção:
-   /rascunho editar
-   id: A1B2C3D4
-   opcoes: "Brás Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó, Memórias Póstumas de Brás Cubas"
+- only the title changes
+- other fields remain unchanged
 
-   **Resultado:** Agora tem 5 opções em vez de 4
+Change vote limit and mensalista weighting:
 
-## Exemplo 3: Visualizar Detalhes
+```text
+/rascunho editar
+id: A1B2C3D4
+max_votos: 2
+peso_mensalista: Sim
+```
 
-**Comando:**
+Expected result:
+
+- `max_votos` becomes `2`
+- monthly members now count with weight `2`
+
+Replace the options list:
+
+```text
+/rascunho editar
+id: A1B2C3D4
+opcoes: "Memorias Postumas de Bras Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó, Memorial de Aires"
+```
+
+Expected result:
+
+- the draft now contains the new option set
+- validation still respects the Discord option limits
+
+## Example 3: Show Draft Details
+
+Command:
+
+```text
 /rascunho exibir
 id: A1B2C3D4
+```
 
-**Resultado Esperado (Embed):**
+Expected result:
 
-- Título: "Votação: Qual obra de Machado você prefere?"
-- Opções listadas (1. Brás Cubas, 2. Dom Casmurro, etc)
-- ID: `A1B2C3D4`
-- Criador: [@NomeDoUsuário]
-- Máximo de Votos: 2
-- Peso Mensalista: Sim (2x)
-- Criado em: [data/hora]
-- Editado em: [data/hora - atualizado]
-- Status: 📝 Rascunho (não publicado)
+- title is shown correctly
+- options are listed in order
+- draft ID is visible
+- creator is identified
+- max vote value is correct
+- mensalista weighting is shown correctly
+- created and updated timestamps are present
+- status indicates a non-published draft
 
-## Exemplo 4: Listar Todos os Rascunhos
+## Example 4: List Drafts
 
-**Comando:**
+Command:
+
+```text
 /rascunho listar
+```
 
-**Resultado Esperado (Embed):**
-📝 Rascunhos de Enquetes (3)
+Expected result:
 
-ID: `A1B2C3D4`
-Título: Votação: Qual obra de Machado você prefere?
-Opções: 5
-Criador: @Usuario1
-Criado em: 26 de fevereiro de 2026 às 10:30
+- the created draft appears in the list
+- each entry includes ID, title, option count, creator, and creation timestamp
+- published or deleted drafts no longer appear
 
----
+## Example 5: Publish the Draft
 
-ID: `X9Y8Z7W6`
-Título: Qual episódio da série assistir?
-Opções: 3
-Criador: @Usuario2
-Criado em: 25 de fevereiro de 2026 às 15:45
+Command:
 
----
-
-[etc...]
-
-## Exemplo 5: Publicar o Rascunho
-
-**Comando:**
+```text
 /rascunho publicar
 id: A1B2C3D4
-canal: #votações
+canal: #votacoes
+```
 
-**O Que Acontece:**
+Expected result:
 
-1. Bot envia a enquete para o canal #votações
-2. Reações (🇦 🇧 🇨 🇩 🇪) são adicionadas automaticamente
-3. A enquete começa a aceitar votos
-4. Rascunho é removido de draft-polls.json
-5. Enquete agora está em active-polls.json
+1. the bot sends the poll to the target channel
+2. reaction options are added automatically
+3. the poll starts accepting votes
+4. the draft is removed from draft persistence
+5. the active poll is stored in active poll persistence
 
-RESULTADO ESPERADO (Embed da enquete):
-📚 Votação: Qual obra de Machado você prefere? 📚
+Validate the published poll message:
 
-Selecione até 2 opções:
+- poll title is correct
+- vote limit text matches the draft configuration
+- mensalista weighting rule is correct
+- the poll message contains its message ID
 
-🇦 Brás Cubas
+## Example 6: Delete the Draft
 
-🇧 Dom Casmurro
+Command:
 
-🇨 Quincas Borba
-
-🇩 Esaú e Jacó
-
-🇪 Memórias Póstumas de Brás Cubas
-
----
-
-Regras 📊
-• Você pode votar em até 2 opções
-• Mensalistas têm peso 2 nos votos
-
----
-
-ID: [mensagem_id]
-5 opções disponíveis
-
-## Exemplo 6: Deletar um Rascunho
-
-**Comando:**
+```text
 /rascunho deletar
 id: A1B2C3D4
+```
 
-**Resultado Esperado:**
-✅ Rascunho Deletado
+Expected result:
 
-Título: Votação: Qual obra de Machado você prefere?
-ID: `A1B2C3D4`
+- the bot confirms deletion
+- the title and ID are shown in the confirmation
+- the draft no longer appears in `/rascunho listar`
 
-O rascunho foi permanentemente removido
+## Full Validation Flow
 
-⚠️ AVISO: Não pode ser recuperado!
+Recommended end-to-end sequence:
 
-## Fluxo Completo de Teste
+1. create a draft with `/rascunho criar`
+2. confirm it appears in `/rascunho listar`
+3. inspect it with `/rascunho exibir`
+4. edit it with `/rascunho editar`
+5. confirm the updated values with `/rascunho exibir`
+6. publish it with `/rascunho publicar`
+7. confirm it disappears from `/rascunho listar`
+8. confirm the live poll appears in the target channel
 
-**Passo a Passo para Testar Tudo:**
+## Error Cases to Validate
 
-1. /rascunho criar
-   titulo: "Votação de Livros"
-   opcoes: "Livro A, Livro B, Livro C"
-   max_votos: 1
-   peso_mensalista: Não
+- unknown draft ID
+- fewer than 2 options
+- `max_votos` larger than the option count
+- missing creator permissions
+- more than 20 options
 
-   [Bot retorna ID: ABC12345]
+## Limits and Expectations
 
-2. /rascunho listar
-   [Você verá ABC12345 na lista]
+- options per poll: 2 to 20
+- max votes: must respect the configured validation rules
+- title length: Discord slash command and embed constraints apply
+- publishing is slower than in-memory edits because it sends a message and adds reactions
 
-3. /rascunho exibir
-   id: ABC12345
-   [Vê todos os detalhes]
+## Persistence Check
 
-4. /rascunho editar
-   id: ABC12345
-   max_votos: 2
-   [Agora permite 2 votos]
+After creating or editing a draft, confirm that the saved object includes:
 
-5. /rascunho editar
-   id: ABC12345
-   titulo: "Votação Oficial de Livros - Fevereiro 2026"
-   [Título atualizado]
-
-6. /rascunho exibir
-   id: ABC12345
-   [Confirma todas as mudanças]
-
-7. /rascunho publicar
-   id: ABC12345
-   canal: #votacoes
-   [Enquete ao vivo!]
-
-8. /rascunho listar
-   [ABC12345 não aparece mais - foi publicado]
-
-## Estrutura de Arquivos Criados
-
-**Arquivos Novos ou Modificados:**
-
-1. commands/draft.js
-   - Novo arquivo com todos os subcomandos
-   - Arquivo: 700+ linhas
-   - Contém: criar, editar, listar, exibir, publicar, deletar
-
-2. draft-polls.json
-   - Novo arquivo de persistência
-   - Armazena rascunhos em disco
-   - Formato: Array de objetos
-
-3. index.js (modificado)
-   - Adicionada Map client.draftPolls
-   - Adicionada função saveDraftPolls()
-   - Adicionada função loadDraftPolls()
-   - Adicionada chamada na inicialização
-
-4. DRAFT_POLLS_GUIDE.md
-   - Documentação completa do sistema
-   - Exemplos de uso
-   - Referência de comandos
-
-5. CHANGELOG_v1.1.md
-   - Histórico de mudanças
-   - Detalhes da implementação
-
-## Possíveis Erros e Soluções
-
-**Erro:** "Rascunho com ID não encontrado"
-→ Verifique o ID com /rascunho listar
-→ IDs são case-sensitive
-
-**Erro:** "A enquete precisa ter pelo menos 2 opções"
-→ Adicione mais opções ou corrija a separação por vírgula
-
-**Erro:** "O número máximo de votos não pode ser maior que o número de opções"
-→ Aumente opções ou diminua max_votos
-
-**Erro:** "Permissão negada"
-→ Verifique se possui o cargo Criador
-→ Use /criador-de-enquete listar para ver os criadores cadastrados
-
-**Erro:** "Discord limita a 20 reações por mensagem"
-→ Use máximo 20 opções por enquete
-
-## Dicas Importantes
-
-✅ BOA PRÁTICA:
-
-1. Sempre use /rascunho exibir antes de publicar
-2. Crie rascunhos durante a semana
-3. Publique quando tudo estiver pronto
-4. Use títulos descritivos
-5. Mantenha backup dos rascunhos importantes
-
-❌ EVITE:
-
-1. Deletar sem ter certeza
-2. Publicar sem revisar
-3. Esquecete nomes dos rascunhos
-4. Mudar configurações depois de publicado
-   (nesse caso, crie um novo rascunho)
-
-## Performance e Limites
-
-**Limites:**
-
-- Opções por enquete: 2-20 (limitação do Discord)
-- Máximo de votos: 1-19 (máximo = opções - 1)
-- Rascunhos simultâneos: Ilimitado
-- Tamanho do titulo: até 256 caracteres
-- Tamanho de cada opção: até 256 caracteres
-
-**Performance:**
-
-- Carregar rascunhos: ~10ms (para 1000 rascunhos)
-- Criar rascunho: ~5ms
-- Editar rascunho: ~5ms
-- Publicar rascunho: ~1000ms (enviar mensagem + reações)
-
-## Dados Salvos
-
-**Exemplo de `draft-polls.json` com um Rascunho:**
-
-[
-{
-"id": "ABC12345",
-"titulo": "Votação Oficial de Livros - Fevereiro 2026",
-"opcoes": [
-"Livro A",
-"Livro B",
-"Livro C"
-],
-"maxVotos": 2,
-"usarPesoMensalista": false,
-"criadorId": "123456789012345678",
-"criadorNome": "NomeDoUsuário",
-"criadoEm": "2026-02-26T10:30:00.000Z",
-"editadoEm": "2026-02-26T11:45:00.000Z",
-"status": "rascunho"
-}
-]
+- `id`
+- `titulo`
+- `opcoes`
+- `maxVotos`
+- `usarPesoMensalista`
+- `criadorId`
+- `criadoEm`
+- `editadoEm`
+- `status`

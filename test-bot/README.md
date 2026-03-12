@@ -1,82 +1,71 @@
-# 🧪 Test Bot - Diretório Isolado para Testes Automatizados
+# Test Bot
 
-Estrutura dedicada para sistema de testes automatizados do LittleBoatPoll.
+This directory contains the Discord-based automation tooling used to validate the staging bot.
 
-## 📁 Estrutura
+## Directory Layout
 
-```
+```text
 test-bot/
-├── .env.test                 # Variáveis de ambiente (use git-secret para produção)
-├── .env.test.example         # Exemplo com valores padrão
-├── run-full-tests.js         # Orquestrador principal
-├── run-full-tests.bat        # Wrapper para Windows
-├── run-full-tests.sh         # Wrapper para Linux/Mac
-├── test-runner.js            # Sistema de testes automatizados
-├── AUTOMATION.md             # Documentação completa
-└── README.md                 # Visão geral rápida
+  .env.test.example
+  run-full-tests.js
+  run-full-tests.bat
+  run-full-tests.sh
+  test-runner.js
+  AUTOMATION.md
+  README.md
 ```
 
-## 🚀 Início Rápido
+## Quick Start
 
-### 1. Configuração
+1. Copy the example file:
 
 ```bash
-# Copiar arquivo de exemplo
 cp test-bot/.env.test.example test-bot/.env.test
-
-# Editar com suas credenciais Discord
-# TEST_BOT_TOKEN, STAGING_BOT_ID, TEST_CHANNEL_ID, TEST_GUILD_ID
 ```
 
-### 2. Executar Testes
+PowerShell alternative:
+
+```powershell
+Copy-Item test-bot/.env.test.example test-bot/.env.test
+```
+
+2. Fill the required values in `test-bot/.env.test`:
+
+- `TEST_BOT_TOKEN`
+- `STAGING_BOT_ID`
+- `TEST_CHANNEL_ID`
+- `TEST_GUILD_ID`
+
+3. Run the automation flow:
 
 ```bash
-# Opção 1: Via npm (recomendado)
 npm run test:full
+```
 
-# Opção 2: Direto pelo script
+Alternative entry points:
+
+```bash
 node test-bot/run-full-tests.js
-
-# Opção 3: Windows
-test-bot/run-full-tests.bat
-
-# Opção 4: Linux/Mac
-bash test-bot/run-full-tests.sh
+npm run test:automation
 ```
 
-## 📋 Responsabilidades
+## Responsibilities
 
-- **Arquivos `.env*`**: Configurações sensíveis (tokens, IDs)
-- **`run-full-tests.*`**: Orquestração dos testes (iniciar bot, aguardar, executar)
-- **`test-runner.js`**: Cenários de teste e validações
+- `.env.test.example`: example automation configuration
+- `run-full-tests.*`: orchestration wrappers for full staging validation
+- `test-runner.js`: Discord-based automation scenarios
 
-## 🔐 Segurança
+## Security Notes
 
-⚠️ **Nunca commitar** `test-bot/.env.test` com credenciais reais
+Do not commit `test-bot/.env.test` with real credentials.
 
-**Soluções:**
+In CI, use environment secrets for:
 
-1. Adicione à `.gitignore` (já feito)
-2. Use `git-secret` para credenciais em CI/CD
-3. Use variáveis de ambiente do GitHub Actions
+- `TEST_BOT_TOKEN`
+- `STAGING_BOT_ID`
+- `TEST_CHANNEL_ID`
+- `TEST_GUILD_ID`
 
-## 🔄 Integração CI/CD
+## Related Documentation
 
-Para integrar com GitHub Actions, use secrets:
-
-```yaml
-env:
-  TEST_BOT_TOKEN: ${{ secrets.TEST_BOT_TOKEN }}
-  STAGING_BOT_ID: ${{ secrets.STAGING_BOT_ID }}
-  TEST_CHANNEL_ID: ${{ secrets.TEST_CHANNEL_ID }}
-  TEST_GUILD_ID: ${{ secrets.TEST_GUILD_ID }}
-```
-
-## 📚 Documentação
-
-Para detalhes completos sobre testes, cenários e troubleshooting:
-👉 [test-bot/AUTOMATION.md](AUTOMATION.md)
-
----
-
-**Separação de responsabilidades: Testes isolados do código principal** ✅
+See [AUTOMATION.md](AUTOMATION.md) for the full automation guide.

@@ -27,7 +27,7 @@ async function parseAndValidate(filePath) {
       return { valid: false, error: 'Arquivo CSV vazio.' };
     }
     // Colunas obrigatórias
-    const requiredColumns = ['nome-da-enquete', 'opções/opcoes', 'max_votos/maxVotos', 'peso_mensalistas'];
+    const requiredColumns = ['nome-da-enquete', 'opcoes (ou opções)', 'max_votos (ou maxVotos)', 'peso_mensalistas'];
     const csvColumns = Object.keys(records[0] || {});
     const hasNome = csvColumns.includes('nome-da-enquete');
     const hasOpcoes = csvColumns.includes('opções') || csvColumns.includes('opcoes');
@@ -36,7 +36,10 @@ async function parseAndValidate(filePath) {
     const hasExactCount = csvColumns.length === requiredColumns.length;
     if (!hasExactCount || !hasNome || !hasOpcoes || !hasMaxVotos || !hasPesoMensalistas) {
       console.error('[csvService] Erro: Colunas obrigatórias ausentes ou incorretas.');
-      return { valid: false, error: `CSV deve conter exatamente as colunas: ${requiredColumns.join(', ')}` };
+      return {
+        valid: false,
+        error: `CSV deve conter exatamente 4 colunas separadas por ";": nome-da-enquete, opcoes, max_votos, peso_mensalistas. Colunas encontradas: ${csvColumns.join(', ') || '(nenhuma)'}`,
+      };
     }
     // Mapeia cada linha para estrutura interna
     const mappedPolls = [];

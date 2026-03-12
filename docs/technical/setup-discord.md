@@ -1,465 +1,145 @@
-/\*\*
+# Discord Setup
 
-- ============================================
-- SETUP COMPLETO DO DISCORD
-- Passo a Passo para Registrar o Bot
-- ============================================
-  \*/
+This guide covers the Discord-side configuration required for LittleBoatPoll.
 
-// ============================================
-// 1. CRIAR A APLICAÇÃO NO DEVELOPER PORTAL
-// ============================================
+## Create the Discord Application
 
-/\*
-PASSO A PASSO:
+1. Open https://discord.com/developers/applications.
+2. Select `New Application`.
+3. Choose a name such as `LittleBoatPoll`.
+4. Save the application.
 
-1. Acesse: https://discord.com/developers/applications
-2. Clique em "New Application" (canto superior direito)
-3. Dê um nome: "LittleBoatPoll"
-4. Clique em "Create"
+## Create the Bot User
 
-🎉 Pronto! Agora você tem uma aplicação
-\*/
+1. Open the `Bot` section in the application.
+2. Select `Add Bot`.
+3. Copy the bot token.
 
-// ============================================
-// 2. ENCONTRAR CLIENT_ID
-// ============================================
+Keep the token secret. If it is ever exposed, regenerate it immediately.
 
-/\*
-COMO ENCONTRAR:
+## Copy the Application ID
 
-1. Você está na página da aplicação
-2. Vá em "General Information" (abra se não estiver)
-3. Procure por "APPLICATION ID"
-   ↓
-   COPIE ESTE NÚMERO
+In `General Information`, copy the `Application ID` value.
 
-Exemplo:
-CLIENT_ID = "1234567890123456789"
+This becomes `CLIENT_ID` in your environment file.
 
-PASSO NO .env:
-CLIENT_ID=1234567890123456789
-\*/
+## Configure Gateway Intents
 
-// ============================================
-// 3. CRIAR O BOT
-// ============================================
+In the `Bot` section, enable the intents required by the runtime.
 
-/\*
-PASSO A PASSO:
+Required:
 
-1. Na sua aplicação, clique em "Bot" (lado esquerdo)
-2. Clique em "Add Bot"
-3. Um novo bot foi criado!
+- Message Content Intent
 
-⚠️ IMPORTANTE: Nunca compartilhe o TOKEN
-\*/
+Recommended:
 
-// ============================================
-// 4. COPIAR TOKEN DO BOT
-// ============================================
+- Server Members Intent
 
-/\*
-COMO ENCONTRAR E COPIAR O TOKEN:
+The bot also uses standard guild and reaction intents from code, but those do not require special toggles in the Developer Portal.
 
-1. Clique em "Bot" (lado esquerdo)
-2. Procure pela seção "TOKEN"
-3. Clique em "Copy"
+## Invite the Bot to a Guild
 
-Exemplo de token (NUNCA compartilhe):
-TOKEN=MTQ3NjE5ODg2MjI1MDMxMTc5MQ.Gv_xx.dXXXXXXXXXXXXXXXXXXXXXX
+Open the `OAuth2` section and use `URL Generator`.
 
-PASSO NO .env:
-TOKEN=MTQ3NjE5ODg2MjI1MDMxMTc5MQ.Gv_xx.dXXXXXXXXXXXXXXXXXX
+Scopes:
 
-⚠️ SE COMPARTILHOU:
+- `bot`
+- `applications.commands`
 
-- Clique em "Regenerate" para gerar um novo
-- NUNCA commit .env no Git!
-  \*/
+Recommended permissions:
 
-// ============================================
-// 5. HABILITAR PRIVILEGED GATEWAY INTENTS
-// ============================================
-
-/\*
-IMPORTANTE: SEM ISSO, O BOT NÃO LÊ REAÇÕES!
-
-PASSO A PASSO:
-
-1. Clique em "Bot" (lado esquerdo)
-2. Scroll para baixo até "PRIVILEGED GATEWAY INTENTS"
-3. Habilite:
-   ✅ Message Content Intent (OBRIGATÓRIO)
-   ✅ Server Members Intent (opcional)
-
-4. Clique em "Save Changes"
-
-O QUE CADA UM FAZ:
-
-- Message Content Intent:
-  • Permite ler o conteúdo das mensagens
-  • Necessário para processar comandos
-  • Discord requer justificação se não moderado
-
-- Presence Intent:
-  • Ver status dos usuários (online/away/dnd)
-  • Menos importante para votações
-
-- Server Members Intent:
-  • Ver membros que entram/saem
-  • Menos importante para votações
-
-⚠️ NOTE: GatewayIntentBits.GuildMessageReactions
-Não aparece no Developer Portal como "privileged"
-Mas está habilitado automaticamente em index.js
-\*/
-
-// ============================================
-// 6. CONFIGURAR PERMISSÕES DO BOT
-// ============================================
-
-/\*
-PASSO A PASSO:
-
-1. Clique em "Bot" (lado esquerdo)
-2. Em "INTENTS", verifique se habilitou Message Content Intent
-3. Scroll para "Permissions"
-4. Habilite as permissões necessárias:
-
-✅ ESSENCIAIS:
-
+- View Channels
 - Send Messages
 - Embed Links
-- Read Message History
 - Add Reactions
-
-✅ RECOMENDADAS:
-
-- Read Message/Channel
+- Read Message History
+- Use Application Commands
 - Manage Messages
-- Use External Emojis
 
-As permissões podem ser configuradas também:
+Open the generated URL in the browser and authorize the bot in your target guild.
 
-- Globalmente (aqui no portal)
-- Por servidor (depois)
-- Por canal (depois)
-  \*/
+## Capture Required IDs
 
-// ============================================
-// 7. ADICIONAR BOT AO SEU SERVIDOR DISCORD
-// ============================================
+### Application ID
 
-/\*
-PASSO A PASSO:
+Use the value from `General Information` as:
 
-1. No Developer Portal, clique em "OAuth2" (lado esquerdo)
-2. Escolha "URL Generator"
-3. Em "SCOPES", habilite:
-   ✅ bot
-   ✅ applications.commands
+```env
+CLIENT_ID=your_application_id
+```
 
-   Isso gera a URL de convite!
+### Guild ID
 
-4. Em "PERMISSIONS" (abaixo), habilite:
-   ✅ Send Messages
-   ✅ Embed Links
-   ✅ Add Reactions
-   ✅ Read Messages/Channels
-   ✅ Read Message History
+Enable Discord Developer Mode and copy the server ID if you need a guild-specific value for dashboard restrictions or manual validation.
 
-5. Copie a URL gerada (no final)
-6. Abra a URL em um navegador
-7. Selecione seu servidor Discord
-8. Autorize
+## Base Environment File
 
-🎉 Bot adicionado ao servidor!
-\*/
+Example `.env`:
 
-// ============================================
-// 8. ENCONTRAR GUILD_ID (Server ID)
-// ============================================
+```env
+TOKEN=your_bot_token
+CLIENT_ID=your_application_id
+APP_ENV=prod
+DEBUG=false
+DEPLOY=false
+PORT=8000
+```
 
-/\*
-PASSO A PASSO:
+## Optional Dashboard OAuth Setup
 
-1. Abra Discord e clique no seu servidor
-2. Clique em "User Settings" (engrenagem, canto inferior esquerdo)
-3. Vá em "Advanced" (lado esquerdo)
-4. Habilite "Developer Mode"
-5. Feche User Settings
+If you use the dashboard, configure Discord OAuth2 values in the same application or in a dedicated dashboard application.
 
-AGORA: 6. Clique com botão direito no nome do seu servidor 7. Selecione "Copy Server ID"
+Required variables:
 
-Exemplo:
-GUILD_ID = "123456789012345678"
+```env
+DISCORD_CLIENT_ID=your_oauth_client_id
+DISCORD_CLIENT_SECRET=your_oauth_client_secret
+DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DASHBOARD_SESSION_SECRET=replace_this_secret
+DASHBOARD_ALLOWED_GUILD_ID=your_guild_id
+DASHBOARD_FRONTEND_URL=http://localhost:5173
+```
 
-OBS: Alguns comandos usam este ID
-\*/
+The OAuth redirect URI configured in the Discord Developer Portal must exactly match `DISCORD_OAUTH_REDIRECT_URI`.
 
-// ============================================
-// 9. ARQUIVO .env COMPLETO
-// ============================================
+## Verification Checklist
 
-/\*
-Crie o arquivo .env na raiz do projeto:
+- [ ] `TOKEN` is copied from the bot section
+- [ ] `CLIENT_ID` is copied from general information
+- [ ] required intents are enabled
+- [ ] the bot has been invited to the guild
+- [ ] the environment file exists locally
+- [ ] `npm install` completed successfully
 
-------- ARQUIVO .env -------
+## First Runtime Check
 
-# Token do seu Bot Discord
+Run:
 
-# NUNCA compartilhe este token!
+```bash
+npm run deploy
+npm start
+```
 
-# Se compartilhou, clique em "Regenerate" no portal
+Expected outcome:
 
-TOKEN=SEU_TOKEN_AQUI
+- the bot logs in successfully
+- commands register without API permission errors
+- the HTTP server responds on the configured port
 
-# ID da sua aplicação (Client ID)
+## Common Problems
 
-# Encontre em: Developer Portal > General Information
+### Invalid token
 
-CLIENT_ID=SEU_CLIENT_ID_AQUI
+The token value is incorrect or expired. Regenerate it in the Discord Developer Portal and update the environment file.
 
-# ID do seu servidor Discord (Guild ID)
+### Bot does not come online
 
-# Ative Developer Mode e copie
+Verify `TOKEN`, `CLIENT_ID`, and the enabled intents.
 
-GUILD_ID=SEU_GUILD_ID_AQUI
+### Missing Access errors
 
-------- FIM DO ARQUIVO .env -------
+The bot is in the guild but does not have enough channel or server permissions.
 
-⚠️ NUNCA faça commit deste arquivo no Git!
-✅ Adicione .env ao .gitignore:
+### OAuth callback fails
 
-echo ".env" >> .gitignore
-git add .gitignore
-git commit -m "Add .env to gitignore"
-\*/
-
-// ============================================
-// 10. VERIFICAR SE ESTÁ TUDO CERTO
-// ============================================
-
-/\*
-CHECKLIST:
-
-□ Arquivo .env criado com TOKEN, CLIENT_ID, GUILD_ID
-□ Token copiado do Developer Portal (sem espacos)
-□ Privileged Gateway Intents habilitados
-□ Bot adicionado ao servidor Discord
-□ Developer Mode habilitado no Discord (para copiar IDs)
-□ npm install executado (dependências instaladas)
-
-TESTE:
-npm run install
-node deploy-commands.js
-node index.js
-
-Esperado:
-✅ LittleBoatPoll está ONLINE como LittleBoatPoll#XXXX!
-📊 Gerenciador de Clube do Livro iniciado
-
-Se não funcionar, verifique:
-
-1. TOKEN está correto?
-2. CLIENT_ID está correto?
-3. Bot foi adicionado ao servidor?
-4. Privileged Gateway Intents habilitados?
-   \*/
-
-// ============================================
-// 11. ESTRUTURA DE PERMISSÕES
-// ============================================
-
-/\*
-NÍVEIS DE PERMISSÃO (DO MAIS RESTRITIVO AO MAIS AMPLO):
-
-1. CANAL
-   - Permissões específicas para um canal
-   - Exemplo: Bot pode ver #votacoes mas não #admin
-
-2. SERVIDOR (Guild)
-   - Permissões gerais para todo o servidor
-   - Exemplo: Criador vs Membro comum
-
-3. GLOBAL (Developer Portal)
-   - Permissões base do bot
-   - Já fazemos aqui
-
-COMO DEFINIR PERMISSÕES POR CANAL:
-
-1. No Discord, clique direito no canal
-2. "Edit Channel"
-3. "Permissions"
-4. Procure o role do bot (LittleBoatPoll)
-5. Configure permissões específicas
-
-No futuro, você pode querer:
-
-- Bot pode ver apenas #votacoes
-- Criador pode usar todos os comandos
-- Membros comuns podem só votar
-  \*/
-
-// ============================================
-// 12. PROBLEMAS COMUNS DURANTE SETUP
-// ============================================
-
-/\*
-PROBLEMA: "Invalid Token"
-CAUSA: Token copiado errado
-SOLUÇÃO: Regenere o token e copie novamente
-
-PROBLEMA: Bot não aparece online
-CAUSA: Token errado no .env
-SOLUÇÃO: Verifique se o token está certo (sem espaços)
-
-PROBLEMA: "Missing Access"
-CAUSA: Bot não tem permissão para executar ação
-SOLUÇÃO: Dê permissão "Send Messages" ao bot
-
-PROBLEMA: Comandos não aparecem no Discord
-CAUSA: deploy-commands.js não executado
-SOLUÇÃO: Rode node deploy-commands.js
-
-PROBLEMA: "This token is being used by another bot"
-CAUSA: Você copiou um token já em uso
-SOLUÇÃO: Regenere um novo token
-
-PROBLEMA: "Unknown Application"
-CAUSA: CLIENT_ID incorreto
-SOLUÇÃO: Verifique CLIENT_ID no Developer Portal
-\*/
-
-// ============================================
-// 13. SEGURANÇA E BOAS PRÁTICAS
-// ============================================
-
-/\*
-✅ FAÇA:
-
-- Mantenha .env seguro
-- Use .gitignore para não expor token
-- Regenere token se compartilhar acidentalmente
-- Especifique permissões mínimas necessárias
-- Use ephemeral: true para mensagens sensíveis
-
-❌ NÃO FAÇA:
-
-- Nunca compartilhe seu TOKEN
-- Nunca faça commit de .env no Git
-- Não use tokens compartilhados
-- Não habilite permissões desnecessárias
-- Não esqueça de fazer logout da aplicação no portal
-  \*/
-
-// ============================================
-// 14. RESUMO DO FLUXO COMPLETO
-// ============================================
-
-/\*
-1️⃣ Criar aplicação no Developer Portal
-→ Copia CLIENT_ID
-→ Salva em .env
-
-2️⃣ Criar Bot na aplicação
-→ Copia TOKEN
-→ Salva em .env
-
-3️⃣ Habilitar Privileged Gateway Intents
-→ Message Content Intent (obrigatório)
-
-4️⃣ Configurar permissões
-→ Send Messages, Add Reactions, etc
-
-5️⃣ Gerar URL de convite (OAuth2)
-→ Adiciona bot ao servidor
-
-6️⃣ Encontrar GUILD_ID
-→ Ativa Developer Mode
-→ Copia Server ID
-→ Salva em .env
-
-7️⃣ npm install
-→ Instala dependências
-
-8️⃣ node deploy-commands.js
-→ Registra comandos slash
-
-9️⃣ node index.js
-→ Bot online!
-
-🎉 PRONTO!
-
-Estrutura .env final:
-TOKEN=seu_token_aqui
-CLIENT_ID=seu_client_id_aqui
-GUILD_ID=seu_guild_id_aqui
-\*/
-
-// ============================================
-// 15. SISTEMA DE PERMISSÕES INTERNO (v2.0+)
-// ============================================
-
-/\*
-⭐ Sistema Interno de Permissões Administrativas + Vínculo Opcional de Mensalistas
-
-MUDANÇA IMPORTANTE:
-
-- ❌ NÃO precisa criar cargo "Criador de Enquetes" no Discord
-- ✅ Permissões gerenciadas internamente pelo bot
-- ✅ Baseado em IDs de usuários, não em cargos
-- ✅ Mais simples, mais seguro, mais flexível
-- ✅ Se já existir cargo "Mensalistas", o bot faz vínculo automático para peso mensalista
-- ✅ Vínculo de mensalistas persistido em `role-bindings.json`
-- ℹ️ Se o cargo "Mensalistas" não existir, o bot usa a lista interna de `mensalistas.json`
-
-COMO ADICIONAR CRIADORES:
-
-1. Use comandos:
-   /criador-de-enquete adicionar @usuario
-   /criador-de-enquete remover @usuario
-   /criador-de-enquete listar
-
-2. Ou use Context Menu:
-   - Clique direito no usuário
-   - Apps → "Add/Del Criador de Enquetes"
-
-VERIFICAÇÃO DE PERMISSÕES (ordem):
-
-1. É Administrador do Discord? → ✅ Acesso total
-2. É dono do servidor? → ✅ Acesso total
-3. ID está em criadores-internos.json? → ✅ Acesso total
-4. Nenhum dos acima? → ❌ Apenas pode votar
-
-ARQUIVO DE DADOS:
-
-criadores-internos.json:
-{
-"criadores": [
-"300728666042662912",
-"123456789012345678"
-]
-}
-
-VANTAGENS:
-
-✅ Sem configuração no Discord
-✅ Sem problemas de hierarquia
-✅ Não pode ser deletado acidentalmente
-✅ Persistente e confiável
-✅ Controle total pelo bot
-
-MIGRAÇÃO DO SISTEMA ANTIGO:
-
-Se você usava cargos (v1.x):
-
-1. Identifique quem tinha o cargo "Criador de Enquetes"
-2. Adicione-os com /criador-de-enquete adicionar @usuario
-3. (Opcional) Delete o cargo antigo
-
-Leia mais: docs/MIGRACAO-PERMISSOES-INTERNAS.md
-\*/
-
-console.log('Guia de Setup Discord carregado!');
+The configured redirect URI in Discord does not match `DISCORD_OAUTH_REDIRECT_URI` exactly.

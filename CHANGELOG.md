@@ -2,230 +2,267 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.6.0
+
+### New Features
+
+#### Web Dashboard
+
+- Added a full-featured administrative dashboard with React and Vite.
+- Integrated Discord OAuth2 authentication for secure access control.
+- Optional dashboard login for poll creation and management.
+- Session-based authentication with `express-session` and secure cookies.
+- Guild-based access validation using Discord member verification.
+
+#### CSV Poll Creation
+
+- Added bulk poll creation via CSV upload.
+- Supported CSV format: `;` delimiter with columns `nome-da-enquete`, `opcoes`, `max_votos`, `peso_mensalistas`.
+- CSV upload via `POST /api/csv/upload` with multipart form-data.
+- Server-side validation of CSV structure and poll constraints.
+- Error reporting for invalid or malformed CSV entries.
+
+#### Related Features
+
+- Poll management through web interface.
+- View poll status and results in real-time via the dashboard.
+- Admin command catalog accessible via dashboard API.
+- Dedicated API endpoints for dashboard interaction.
+
+### Code Quality
+
+- Consolidated shared logic across commands into reusable utility modules.
+- Improved test coverage to 67+ unit tests across multiple suites.
+- Applied consistent ESLint rules with `--max-warnings=0` enforcement.
+- Maintained strict Prettier formatting standards.
+
+### Dependencies
+
+Updated core dependencies to latest stable versions:
+
+- `discord.js` ^14.25.1 (up-to-date)
+- `express` ^5.2.1 (latest)
+- `express-session` ^1.18.2 (new, for dashboard auth)
+- `csv-parse` ^6.1.0 (new, for CSV parsing)
+- `multer` ^2.1.1 (new, for file uploads)
+- `jest` ^30.2.0 (dev, updated)
+- `eslint` ^8.56.0 (dev, updated)
+- `prettier` ^3.1.0 (dev, updated)
+
+### Documentation
+
+- Added `dashboard/INTEGRATION_GUIDE.md` for integrating the dashboard with external systems.
+- Added dashboard README with API and setup instructions.
+- Updated main README with quick-start flow and dashboard environment variables.
+- Documented OAuth2 environment configuration in detail.
+- Added CSV format specification and validation rules.
+
+### Validation
+
+- 67+ unit tests across 5+ suites, covering core, commands, and utils.
+- Dashboard integration tests for authentication and CSV uploads.
+- No circular dependencies detected.
+- All imports validated against the new structure.
+- ESLint and Prettier validation passing with zero warnings.
+
+### Breaking Changes
+
+- None. Version 2.6.0 is fully backward-compatible with existing Discord nodes.
+- Dashboard is optional; bots can run with or without it.
+- Existing installations continue to work without environment changes.
+
 ## 2.2.0
 
-### 🏗️ Restructuring: Arquitetura por Domínios
+### Restructuring
 
-- **Reorganização de pastas:** transição de estrutura plana para **domain-driven**:
-  - `src/commands/admin/` - Comandos administrativos (encerrar enquete, toggle opções)
-  - `src/commands/polls/` - Comandos de enquetes (criar, draft, votação)
-  - `src/commands/users/` - Comandos de usuários (mensalistas, criadores, toggles)
-  - `src/utils/` - Utilitários centralizados (validators, permissions, handlers)
-  - `src/core/index.js` - Carregador recursivo de comandos
-- **Ambientes isolados:** estrutura `data/environments/{prod|staging}/` com variável `APP_ENV` para controle
-- **Código mais limpo:** 12 arquivos refatorados, eliminou dead code (funções não utilizadas, imports orphans)
+- Reorganized the repository from a flatter layout to a domain-oriented structure.
+- Moved commands into `src/commands/admin`, `src/commands/polls`, and `src/commands/users`.
+- Centralized shared helpers in `src/utils`.
+- Consolidated command loading in `src/core/index.js`.
+- Introduced environment-isolated data directories under `data/environments/{prod|staging}` controlled by `APP_ENV`.
+- Removed dead code and orphaned imports during the refactor.
 
-### 🔧 Qualidade de Código: ESLint Strict + Prettier
+### Code Quality
 
-- **ESLint com `--max-warnings=0`:** 32 warnings eliminadas através de refatoração real (não mascaramento)
-  - Removidos: 7 imports orphans, 5 variáveis não usadas, 8 parâmetros não utilizados
-  - Refatorados: 40+ linhas longas (>120 chars), padronização de quotes
-- **Prettier automático:** aplicado a 7 arquivos, formatação consistente `printWidth: 120`
-- **Sem compromisso funcional:** todas as mudanças foram estilo/estrutura puro — 0 impacto em lógica
+- Enabled strict ESLint execution with `--max-warnings=0`.
+- Removed unused imports, variables, and parameters through real refactoring instead of suppression.
+- Applied consistent Prettier formatting.
+- Kept the changes behavior-preserving.
 
-### 🤖 CI/CD: GitHub Actions Pipeline
+### CI/CD
 
-- **Workflow `.github/workflows/test.yml`:** jobs paralelos de lint e test
-  - Lint: ESLint + Prettier check em cada commit
-  - Test: Jest suite (67 testes) com `coverageThreshold: 25%`
-- **Reparação de flakiness:** removida dependência frágil em `coverage-summary.json`; delegado a Jest native `coverageThreshold`
+- Added `.github/workflows/test.yml` with parallel lint and test jobs.
+- Configured Jest coverage threshold enforcement.
+- Removed a fragile dependency on `coverage-summary.json`.
 
-### 📚 Documentação Expandida
+### Documentation
 
-- **Guias de desenvolvimento:** criados `/docs/development/{SETUP.md, GIT-WORKFLOW.md, ARCHITECTURE.md}`
-- **Documentação técnica:** `/docs/technical/` padronizado com setup Discord, staging, migração de permissões, relatório de refactoring
-- **README modernizado:** quick start em 5 min, caminhos atualizados, remota referência não-implementada de `adminRoleIdsByGuild`
-- **Comentários do Copilot resolvidos:** 100% de feedback de PR reviewers endereçado
+- Added the development guides under `docs/development`.
+- Standardized the technical documentation under `docs/technical`.
+- Updated the README with an improved quick start and current paths.
 
-### ✅ Validação
+### Validation
 
-- ✅ 67 testes unitários passando (5 suites, ~1.2s)
-- ✅ Sem dependências circulares
-- ✅ Todos os imports alinhados à nova estrutura
-- ✅ ESLint strict mode validando (`$? == 0`)
-- ✅ Prettier formatado
-- ✅ GitHub Actions workflow verde (lint ✓, test ✓)
+- 67 unit tests passing across 5 suites.
+- No circular dependencies detected.
+- Imports aligned with the new structure.
+- ESLint and Prettier validation passing.
 
 ## 2.1.0
 
-### 🔐 Autorização Administrativa: Suporte a Múltiplos Cargos por Servidor
+### Administrative Authorization
 
-- **Autorização por cargo remota:** novos sistema com `adminRoleIdsByGuild` para autorizar múltiplos cargos como administradores
-- **Suporte a múltiplos cargos por servidor:** cada servidor pode ter um ou mais cargos autorizados para gerenciar enquetes
-- **Melhorias técnicas:** refatoração em `normalizeRoleBindings` com validação robusta e merge seguro de configurações
-- **Persistência aprimorada:** sistema de role-bindings melhorado para evitar conflitos cross-server
-- **Cobertura de testes expandida:** novos testes para cenários multi-cargo e validação de permissões
-- **Documentação atualizada:** guia completo de configuração de cargos administrativos por servidor
+- Added remote role-based authorization with `adminRoleIdsByGuild`.
+- Allowed multiple administrative roles per server.
+- Improved `normalizeRoleBindings` with safer validation and merge behavior.
+- Expanded tests for multi-role and permission scenarios.
+- Updated the corresponding documentation.
 
 ## 2.0.2
 
-### 🏗️ Estrutura: Condensação e Reorganização
+### Repository Condensation
 
-- **`test-bot` refatorado em layout plano:** removidas três camadas de subpastas (`config/`, `scripts/`, `automation/`) e centralizados todos os arquivos em `test-bot/`, simplificando a hierarquia.
-- **Paths e referências atualizadas:** sincronizados `.gitignore`, `README.md`, `test-bot/README.md`, `test-bot/AUTOMATION.md`, `.github/workflows/test.yml.example` e `package.json` scripts para apontar para novos caminhos.
-- **Documentação redundante eliminada:** removido `docs/IMPLEMENTACAO-STAGING.md` (sumário de implementação), mantendo `docs/staging-bot.md` como guia canônico.
+- Flattened the `test-bot` layout and centralized its files in a single directory.
+- Updated paths in scripts and documentation to match the new structure.
+- Removed redundant staging documentation and kept `docs/technical/staging-bot.md` as the canonical staging guide.
 
-### 📖 Documentação: Padronização de Guias de Teste
+### Documentation Cleanup
 
-- **Conversão de formato:** transformados `docs/test-draft-polls.js` e `docs/test-new-commands.js` para `.md` (markdown nativo).
-- **Limpeza de código legado:** removidos marcadores de comentário (`//`, `/* */`), blocos wrapper e linhas `console.log`.
-- **Padronização visual:** headings e rótulos (`**Comando:**`, `**Resultado:**`, `**Passos:**`) alinhados ao padrão da pasta `docs`.
-- **Navegação adicionada:** índices rápidos no topo de ambos os documentos com links para seções de teste.
+- Converted `docs/test-draft-polls.js` and `docs/test-new-commands.js` to Markdown.
+- Removed comment wrappers, scaffolding code, and console output from the guides.
+- Standardized headings and test instructions.
 
-### 🔧 Código: Refatoração e Deduplicação
+### Refactoring
 
-- **`test-bot/test-runner.js`:** extração de helpers para polling de enquete, sincronização de reações e provisioning automático.
-- **`index.js`:** consolidação de lógica duplicada em vote-limit normalization, reaction payload hydration e command execution paths.
-- **Preservação de comportamento:** refatorações mantiveram 100% de compatibilidade — testes unitários passando (60/60).
+- Extracted helpers in `test-bot/test-runner.js` for poll lookup, reaction sync, and provisioning.
+- Consolidated duplicated logic in the runtime for vote-limit normalization, reaction hydration, and command execution.
+- Preserved behavior while keeping all unit tests passing.
 
 ## 2.0.1
 
-### ✨ Mensalistas: vínculo automático por cargo
+### Monthly Member Role Binding
 
-- **Binding automático por nome de cargo:** quando existir um cargo chamado `Mensalistas`, o bot vincula automaticamente esse cargo ao papel interno de mensalista.
-- **Sem duplicação de cargos:** o bot não cria cargo novo quando `Mensalistas` já existe no servidor.
-- **Persistência por servidor:** o mapeamento `guildId -> roleId` é salvo em `role-bindings.json`, evitando reconfiguração após reinício.
-- **Fallback seguro:** se o cargo `Mensalistas` não existir, o bot mantém o comportamento padrão por lista interna (`mensalistas.json`) sem quebrar execução.
-- **Encerramento de votação ajustado:** a seção "Mensalistas que votaram" agora considera quem efetivamente votou com peso 2.
+- Automatically binds the Discord role named `Mensalistas` to the internal monthly-member logic.
+- Avoids creating duplicate roles when `Mensalistas` already exists.
+- Persists the `guildId -> roleId` mapping in `role-bindings.json`.
+- Falls back safely to the internal `mensalistas.json` list when the role does not exist.
+- Adjusts poll closing output so weighted monthly-member voters are reported correctly.
 
-### 📚 Documentação
+### Documentation
 
-- Atualizada documentação principal, wiki e docs internas para refletir o novo comportamento de mensalistas por cargo com persistência.
-- Removidas instruções conflitantes sobre dependência/obrigatoriedade de cargos no caso de mensalistas.
+- Updated the main documentation and wiki to match the new role-binding behavior.
+- Removed conflicting guidance about requiring Discord roles for monthly-member support.
 
 ## 2.0.0
 
-### 🚀 BREAKING CHANGES: Sistema de Permissões Interno
+### Breaking Changes: Internal Permission System
 
-**Migração completa das permissões administrativas de cargos do Discord para gerenciamento interno.**
+Administrative permissions were migrated from Discord role dependency to an internal permission model.
 
-#### ✨ Novidades
+#### New Features
 
-- **Novo comando `/criador-de-enquete`**: Gerencia criadores de enquetes por ID de usuário
-  - `/criador-de-enquete adicionar @usuario` - Adiciona usuário à lista de criadores
-  - `/criador-de-enquete remover @usuario` - Remove usuário da lista
-  - `/criador-de-enquete listar` - Lista todos os criadores cadastrados
-- **Context Menu atualizado**: "Add/Del Criador de Enquetes" agora gerencia permissões internas
-- **Novo arquivo de dados**: `criadores-internos.json` - Armazena IDs de usuários com permissões
-- **Sistema mais simples**: Não requer criação de cargos no Discord para permissões administrativas
-- **Maior segurança**: Permissões não podem ser deletadas acidentalmente
-- **Proteção inteligente**: Impede remoção do último criador
+- Added the `/criador-de-enquete` command to manage poll creators by user ID.
+- Updated the creator toggle user context menu to work with internal permissions.
+- Added `criadores-internos.json` for persistence.
+- Simplified the administrative model so Discord role creation is no longer required.
+- Added protection against removing the last remaining creator.
 
-#### ⚠️ Breaking Changes
+#### Breaking Changes
 
-- ❌ **Comando `/criadores` descontinuado**: Agora mostra aviso de migração para `/criador-de-enquete`
-- ❌ **Cargos de criador não são mais usados**: Arquivo `cargos-criadores.json` mantido apenas para compatibilidade
-- ⚠️ **Requer migração manual**: Usuários com cargo "Criador de Enquetes" devem ser re-adicionados com `/criador-de-enquete adicionar`
+- `/criadores` was deprecated and now shows a migration notice.
+- The old creator-role model is no longer active.
+- Existing servers require manual migration of previous creator users.
 
-#### 📁 Arquivos Modificados
+#### Files and Documentation
 
-- `utils/permissions.js` - Verifica `criadores-internos.json` em vez de cargos
-- `utils/file-handler.js` - Adicionadas funções `loadCriadores()` e `saveCriadores()`
-- `commands/criador-de-enquete.js` - **NOVO** comando para gerenciar criadores
-- `commands/criadores.js` - **DESCONTINUADO** (mostra aviso)
-- `commands/criador-toggle-context.js` - Atualizado para sistema interno
+- Updated `utils/permissions.js` and `utils/file-handler.js`.
+- Added the new command implementation and updated related context menu behavior.
+- Added `docs/technical/MIGRACAO-PERMISSOES-INTERNAS.md`.
+- Updated the README and wiki pages.
 
-#### 📚 Documentação
+#### Migration
 
-- Criado `docs/MIGRACAO-PERMISSOES-INTERNAS.md` - Guia completo de migração
-- Atualizado `README.md` - Instruções do novo sistema
-- Atualizado `permissoes.md` (wiki) - Documentação completa
+For existing servers:
 
-#### ✅ Vantagens do Novo Sistema
+1. identify users who previously had the creator role
+2. re-add them with `/criador-de-enquete adicionar`
+3. optionally remove the old Discord role
 
-- ✅ Não precisa criar cargos no servidor Discord para permissões administrativas
-- ✅ Sem problemas com hierarquia de cargos
-- ✅ Configuração instantânea
-- ✅ Mais controle e flexibilidade
-- ✅ Logs detalhados de todas as alterações
-
-#### 🔄 Migração
-
-Para migrar de servidores existentes:
-
-1. Identifique usuários com o cargo "Criador de Enquetes"
-2. Use `/criador-de-enquete adicionar @usuario` para cada um
-3. (Opcional) Delete o cargo antigo do servidor
-
-**Leia:** [Documentação completa de migração](docs/MIGRACAO-PERMISSOES-INTERNAS.md)
+Read: [Internal permissions migration guide](docs/technical/MIGRACAO-PERMISSOES-INTERNAS.md)
 
 ---
 
 ## 1.4.0
 
-### Infraestrutura de Testes
+### Test Infrastructure
 
-- **Adicionar testes automatizados:** Implementada suíte de testes abrangente usando Jest.
-  - 59 testes unitários cobrindo 100% dos módulos utilitários
-  - Testes executados em ~1,3s com limite de cobertura de 70%
-  - Scripts de teste: `npm test`, `npm run test:watch`, `npm run test:coverage`
-- **Documentação de testes:** Adicionado README detalhado no diretório de testes.
+- Added a broader Jest-based automated test suite.
+- Reached 59 unit tests with full utility coverage at that stage.
+- Added test scripts for standard, watch, and coverage execution.
+- Added test documentation.
 
-### Melhorias de Desempenho
+### Performance Improvements
 
-- **Otimizar sincronização de reações de enquete:** Paralelizado o carregamento de reações para reduzir tempo de inicialização em ~50-70%.
-  - Eliminadas chamadas duplicadas de API ao Discord
-  - Cache de usuários de reação para evitar buscas redundantes
-  - Carregar dados de mensalistas uma vez em vez de por enquete
-- **Registro melhorado:** Adicionados indicadores de progresso, informações de tempo e emojis de status visuais.
+- Optimized poll reaction synchronization during startup.
+- Reduced duplicated Discord API calls.
+- Reused reaction-user caching.
+- Loaded monthly-member data once instead of once per poll.
 
-### Documentação
+### Documentation
 
-- **Atualizar README:** Refletir as novas capacidades e scripts de teste.
-- **Relatório de refatoração:** Consolidada documentação técnica em `/docs`.
+- Updated the README to reflect the test workflow.
+- Consolidated technical documentation under `docs`.
 
-### Consolidação
+### Consolidation
 
-- Inclui todas as melhorias arquitetônicas da v1.3.0 (módulos utilitários, deduplicação de código).
+- Included the architectural improvements introduced in version 1.3.0.
 
 ## 1.3.0
 
-### Qualidade de Código e Refatoração
+### Refactoring and Code Quality
 
-- **Refatoração importante:** Reduzida duplicação de código em 75-87% em toda a base de código.
-- **Módulos utilitários criados:**
-  - `utils/file-handler.js`: Centraliza todas as operações de entrada/saída de arquivo JSON (9 funções).
-  - `utils/validators.js`: Centraliza lógica de validação de enquete (verificação de duplicatas, limites de opções).
-  - `utils/constants.js`: Constantes compartilhadas para emojis, cores e limites.
-  - `utils/draft-handler.js`: Auxiliares de manipulação de rascunhos.
-  - `utils/error-handler.js`: Tratamento de erros padronizado.
-- **Arquivos refatorados:** Atualizados 9 arquivos para usar os novos módulos utilitários (index.js, todos os arquivos de comando).
-- **Manutenibilidade melhorada:** Eliminados padrões duplicados de entrada/saída de arquivo, lógica de validação e listas de emojis.
-- **Documentação:** Adicionado relatório de refatoração técnico abrangente.
+- Reduced duplicated logic substantially across the codebase.
+- Added shared utility modules:
+  - `utils/file-handler.js`
+  - `utils/validators.js`
+  - `utils/constants.js`
+  - `utils/draft-handler.js`
+  - `utils/error-handler.js`
+- Updated the main runtime and command files to reuse the new utilities.
+- Improved maintainability by centralizing file I/O, validation, and constants.
+- Added a technical refactoring report.
 
 ## 1.2.2
 
-- Renomear "Criador" para "Criador de Enquetes" para maior clareza em todo o projeto.
-- Unificar menus de contexto de mensalista: combinar "Adicionar Mensalista" e "Remover Mensalista" em um único menu de contexto "Adicionar/Remover Mensalistas" com funcionalidade de alternância.
-- Unificar menus de contexto de criador em "Adicionar/Remover Criador de Enquetes" para manter consistência.
-- Usar prefixo abreviado "Adicionar/Remover" para menus de contexto para estar em conformidade com o limite de 32 caracteres do Discord.
-- Refatorar arquitetura de menu de contexto para reduzir duplicação e melhorar manutenibilidade.
+- Renamed the creator role label throughout the project for clarity.
+- Unified the mensalista context menus into a single toggle action.
+- Unified the creator context menu for consistency.
+- Shortened labels to fit Discord's 32-character context menu limit.
+- Refactored context menu architecture to reduce duplication.
 
 ## 1.2.1
 
-- Adicionar menu de contexto para alternar a função "Criador de Enquetes" para um usuário.
+- Added a context menu action to toggle creator-role access for a user.
 
 ## 1.2.0
 
-- Adicionar gerenciamento de opções de enquete em rascunho (adicionar/remover opções sem digitar todas as opções novamente).
-- Melhorar validações de rascunho (duplicatas, limites, ajustes de votos máximos).
-- Corrigir tempos limite de interação para comandos mais lentos.
-- Centralizar auxiliares de persistência de rascunho.
-- Adicionar menus de contexto: "Adicionar Mensalista", "Remover Mensalista" e "Adicionar/Remover da enquete".
-- Tornar respostas de adição/remoção de mensalista efêmeras (privadas para executor de comando).
-- Corrigir aviso de descontinuação do Discord.js: migrar de `ephemeral: true` para `flags: MessageFlags.Ephemeral`.
-- **Integrar deploy-commands.js em index.js:** Comandos agora são registrados como parte do processo de inicialização do bot principal.
-  - Use `npm run deploy` ou `node index.js --deploy` para registrar comandos
-  - Processo de implantação é automático na primeira inicialização se a variável de ambiente `DEPLOY=true` estiver configurada
-- **Implantação automática ao iniciar:** `npm start` agora sempre implanta comandos antes de iniciar o bot, garantindo que os comandos estejam sempre atualizados.
-  - Use `npm run start:quick` para pular a implantação para inicialização mais rápida quando os comandos não foram alterados.
+- Added draft poll option management so options can be added or removed without retyping the full list.
+- Improved draft validation for duplicates, limits, and vote-count adjustments.
+- Fixed interaction timeout issues for slower commands.
+- Centralized draft persistence helpers.
+- Added context menus for mensalista and poll-option toggling.
+- Made mensalista add and remove responses ephemeral.
+- Updated Discord.js ephemeral handling to `flags: MessageFlags.Ephemeral`.
+- Integrated command deployment into the main bot startup flow.
+- Allowed explicit deployment with `npm run deploy` or `node index.js --deploy`.
+- Added automatic deployment on startup when `DEPLOY=true` is configured.
 
 ## 1.1.0
 
-- Adicionar sistema de enquete em rascunho (criar, editar, listar, mostrar, publicar, deletar).
-- Persistir enquetes em rascunho no disco.
-- Adicionar visualização antes de publicar.
+- Added the draft poll system with create, edit, list, show, publish, and delete operations.
+- Persisted draft polls to disk.
+- Added preview support before publishing.
 
 ## 1.0.0
 
-- Lançamento inicial com enquetes diretas, votos ponderados e resumo de resultados.
+- Initial release with direct polls, weighted voting, and result summaries.
