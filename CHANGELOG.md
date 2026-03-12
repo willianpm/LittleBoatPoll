@@ -59,7 +59,7 @@ Updated core dependencies to latest stable versions:
 
 ### Validation
 
-- 67+ unit tests across 5+ suites, covering core, commands, and utils.
+- 100 unit tests across 11 suites, covering core, commands, utils, and dashboard.
 - Dashboard integration tests for authentication and CSV uploads.
 - No circular dependencies detected.
 - All imports validated against the new structure.
