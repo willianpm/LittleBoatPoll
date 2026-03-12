@@ -1,112 +1,104 @@
-# Dashboard (Backend + Frontend)
+# Dashboard
 
-Esta pasta contém a implementação completa do dashboard administrativo do bot:
+This directory contains the administrative dashboard for LittleBoatPoll.
 
-- backend de integração (`api/`, `controllers/`, `services/`)
-- frontend React + Vite (`frontend/`)
-- autenticação via Discord OAuth2 (sessão HttpOnly)
+It includes:
 
-## Autenticação
+- backend HTTP routes in `api/`
+- controller and service layers in `controllers/` and `services/`
+- a React + Vite frontend in `frontend/`
+- Discord OAuth2 authentication with `express-session`
 
-O acesso ao dashboard é feito por login com Discord:
+## Authentication Model
 
-1. frontend redireciona para `GET /api/auth/discord/login`
-2. callback OAuth em `GET /api/auth/discord/callback`
-3. sessão é mantida por cookie HttpOnly (`dashboard.sid`)
-4. APIs protegidas exigem sessão válida e permissão de Criador/Admin/Dono
+The dashboard uses Discord OAuth2 login and keeps the authenticated session in the `dashboard.sid` HttpOnly cookie.
 
-### Endpoints de auth
+Protected routes require:
+
+- a valid session
+- a guild membership resolved by the bot
+- creator, admin, or owner access validated on the backend
+
+The frontend should call protected APIs with browser cookies enabled. It should not send manual bearer tokens.
+
+Auth routes:
 
 - `GET /api/auth/discord/login`
 - `GET /api/auth/discord/callback`
 - `GET /api/auth/me`
-- `GET /api/auth/guilds` (lista servidores acessíveis ao usuário autenticado)
+- `GET /api/auth/guilds`
 - `GET /api/auth/guilds/:guildId/members?query=`
 - `GET /api/auth/guilds/:guildId/channels`
 - `POST /api/auth/logout`
 
-## Endpoints de negócio
+## Business Routes
 
-### Upload CSV
+CSV upload:
 
-- **Endpoint:** `POST /api/csv/upload`
-- **Auth:** sessão autenticada (cookie)
-- **Content-Type:** `multipart/form-data`
-- **Campo obrigatório:** `file`
+- endpoint: `POST /api/csv/upload`
+- auth: session cookie
+- content type: `multipart/form-data`
+- required field: `file`
 
-Resposta de sucesso:
+Command execution:
 
-```json
-{
-  "success": true
-}
-```
+- endpoint: `POST /api/commands/:commandName`
+- auth: session cookie
+- content type: `application/json`
 
-### Execução de comandos
+Catalog and visual selectors:
 
-- **Endpoint:** `POST /api/commands/:commandName`
-- **Auth:** sessão autenticada (cookie)
-- **Content-Type:** `application/json`
+- `GET /api/commands/catalog`
+- `GET /api/commands/context-targets/polls?guildId=...`
+- `GET /api/commands/context-targets/drafts`
 
-Payload mínimo:
+Health check:
 
-```json
-{
-  "commandType": 1,
-  "options": {},
-  "guild": { "id": "123" },
-  "target": {}
-}
-```
+- `GET /api/health`
 
-### Catálogo e alvos visuais
+## CSV Format
 
-- `GET /api/commands/catalog` — Lista todos os comandos disponíveis do bot (slash + contexto), incluindo metadados para renderização da UI.
-- `GET /api/commands/context-targets/polls?guildId=...` — Retorna enquetes ativas para seleção visual em comandos contextuais de mensagem.
-- `GET /api/commands/context-targets/drafts` — Retorna rascunhos disponíveis para seleção visual do ID em ações de `/rascunho`.
+The CSV parser expects `;` as the delimiter.
 
-## Formato do CSV
-
-Delimitador obrigatório: `;`
-
-Colunas obrigatórias (nesta ordem):
+Required columns:
 
 1. `nome-da-enquete`
-2. `opções`
+2. `opcoes`
 3. `max_votos`
 4. `peso_mensalistas`
 
-Exemplo:
+Example:
 
 ```csv
-nome-da-enquete;opções;max_votos;peso_mensalistas
-Enquete 1;Opção A,Opção B;2;sim
-Enquete 2;Opção X,Opção Y,Opção Z;1;nao
+nome-da-enquete;opcoes;max_votos;peso_mensalistas
+Poll A;Option 1,Option 2;2;sim
+Poll B;Option X,Option Y,Option Z;1;nao
 ```
 
 ## Frontend
 
-Dentro de `dashboard/frontend`:
+The frontend lives in `dashboard/frontend` and uses Vite in development.
+
+Common commands from the repository root:
 
 ```bash
-npm install
-npm run dev
-npm run build
+npm run dashboard:frontend:install
+npm run dashboard:frontend:dev
+npm run dashboard:frontend:dev:staging
+npm run dashboard:frontend:build
 ```
 
-No build de produção, os arquivos gerados são servidos pelo Express principal.
+In local development, the frontend proxies `/api` to the backend. In production, the built frontend is served by the main Express app.
 
-### Fluxo UX atual
+Current UI flow:
 
-O dashboard de comandos segue fluxo guiado por seleção visual:
+1. choose a guild from visual cards
+2. choose a slash or context command from the catalog
+3. fill the generated command form
 
-1. seleção de servidor por cards
-2. seleção de comando em catálogo visual (slash + contexto)
-3. abertura automática do formulário específico do comando/subcomando
+Manual text inputs for guild ID and permission lists are no longer part of the UI flow.
 
-Campos manuais de `Guild ID` e `Permissões (separadas por vírgula)` foram removidos da interface.
-
-## Variáveis de ambiente (dashboard)
+## Environment Variables
 
 ```env
 DISCORD_CLIENT_ID=...
@@ -114,6 +106,7 @@ DISCORD_CLIENT_SECRET=...
 DISCORD_OAUTH_REDIRECT_URI=...
 DASHBOARD_SESSION_SECRET=...
 DASHBOARD_ALLOWED_GUILD_ID=...
+DASHBOARD_FRONTEND_URL=http://localhost:5173
 ```
 
-Consulte `INTEGRATION_GUIDE.md` para detalhes adicionais de integração e testes.
+For detailed integration and testing notes, see [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).

@@ -1,176 +1,175 @@
-# Setup Local - Little Boat Poll
+# Local Setup
 
-Guia rápido para configurar seu ambiente de desenvolvimento local (~5 minutos).
+This guide covers the minimum local setup for developing LittleBoatPoll.
 
-## Pré-requisitos
+## Prerequisites
 
-- **Node.js** 22.x ou superior ([Baixar](https://nodejs.org))
-- **Git** 2.x ou superior ([Baixar](https://git-scm.com))
-- **Discord Developer Portal** account com permissão para criar aplicações
+- Node.js 22 or newer
+- npm
+- Git
+- Access to the Discord Developer Portal
 
-## Step 1: Clonar o Repositório
+## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/seu-usuario/LittleBoatPoll.git
+git clone https://github.com/willianpm/LittleBoatPoll.git
 cd LittleBoatPoll
-git checkout develop  # Sempre trabalhe na branch develop
 ```
 
-## Step 2: Instalar Dependências
+## 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-Se encontrar erro, tente limpar cache:
+If the installation fails because of a corrupted cache:
 
 ```bash
 npm cache clean --force
 npm install
 ```
 
-## Step 3: Configurar Variáveis de Ambiente
+## 3. Configure Environment Variables
 
-1. Copie o template:
+Copy the example file:
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
-2. Preencha o arquivo `.env` com seus valores:
+PowerShell alternative:
 
-   **Para Discord Dev Portal:**
-   - Vá para https://discord.com/developers/applications
-   - Clique em "New Application"
-   - Na seção "General Information", copie **Application ID** → `CLIENT_ID`
-   - Vá em "Bot" → "Token" → "Copy" → `TOKEN`
+```powershell
+Copy-Item .env.example .env
+```
 
-   **.env preenchido:**
+Minimum bot configuration:
 
-   ```env
-   TOKEN=seu_token_super_secreta_aqui
-   CLIENT_ID=seu_client_id_aqui
-   APP_ENV=prod
-   DEBUG=false
-   DEPLOY=true
-   ```
+```env
+TOKEN=your_bot_token
+CLIENT_ID=your_application_id
+APP_ENV=prod
+DEBUG=false
+DEPLOY=false
+PORT=8000
+```
 
-   > ⚠️ **IMPORTANTE:** Nunca commite o arquivo `.env` com tokens reais!
+If you want to use the dashboard locally, also configure:
 
-## Step 4: Verificar Setup
+```env
+DISCORD_CLIENT_ID=your_oauth_client_id
+DISCORD_CLIENT_SECRET=your_oauth_client_secret
+DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DASHBOARD_SESSION_SECRET=replace_this_secret
+DASHBOARD_ALLOWED_GUILD_ID=your_guild_id
+DASHBOARD_FRONTEND_URL=http://localhost:5173
+```
+
+For staging, copy `.env.staging.example` to `.env.staging` and use different credentials.
+
+Do not commit real tokens or secrets.
+
+## 4. Verify the Setup
 
 ```bash
 npm test
 ```
 
-Se ver "Tests passed" e um relatório de coverage gerado, seu setup está correto! ✅
-
-## Step 5: Iniciar o Bot (Opcional)
+You can also run the dashboard-specific test suite:
 
 ```bash
-npm start          # Inicia bot com deploy de comandos
-npm run dev        # Inicia em modo watch (recarrega ao editar)
-npm start:quick    # Inicia sem deploy (mais rápido)
+npm run test:dashboard
 ```
 
-## Estrutura do Projeto
+## 5. Start the Application
 
+Bot runtime:
+
+```bash
+npm start
 ```
+
+Register slash and context commands explicitly:
+
+```bash
+npm run deploy
+```
+
+Staging runtime:
+
+```bash
+npm run start:staging
+```
+
+Dashboard frontend in development:
+
+```bash
+npm run dashboard:frontend:install
+npm run dashboard:frontend:dev
+```
+
+## Common Commands
+
+```bash
+npm start
+npm run deploy
+npm run start:staging
+npm run deploy:staging
+npm test
+npm run test:watch
+npm run test:coverage
+npm run test:dashboard
+npm run test:automation
+npm run test:full
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:check
+```
+
+## Project Layout
+
+```text
 src/
-├── core/index.js       ← Arquivo principal do bot
-├── commands/           ← Todos os comandos (estruturados por tipo)
-│   ├── polls/          ← Comandos de enquetes
-│   ├── users/          ← Comandos de usuários
-│   └── admin/          ← Comandos administrativos
-└── utils/              ← Código compartilhado (sem dependência circular)
-
+   commands/
+   core/
+   utils/
+dashboard/
+   api/
+   controllers/
+   services/
+   frontend/
 tests/
-├── unit/               ← Testes unitários (espelhando src/)
-└── integration/        ← Testes de integração
-
-data/environments/
-├── prod/               ← Dados de produção
-└── staging/            ← Dados de teste/staging
-
+   unit/
+   integration/
 docs/
-├── development/        ← Documentação de desenvolvimento
-└── technical/          ← Documentação técnica
-```
-
-## Comandos Úteis
-
-```bash
-# Desenvolvimento
-npm start              # Iniciar bot (com deploy de comandos)
-npm run dev            # Iniciar em watch mode
-npm start:quick        # Iniciar sem deploy (rápido)
-
-# Testes
-npm test               # Rodar todos os testes
-npm run test:watch     # Watch mode (rerun on change)
-npm run test:coverage  # Com relatório de cobertura
-
-# Linting & Formatação
-npm run lint           # Check ESLint
-npm run format         # Auto-format com Prettier
-npm run format:check   # Verificar o que seria formatado
-
-# CI/CD Local
-npm run test:ci        # Simular execução CI/CD
+   development/
+   technical/
+data/
+   environments/
 ```
 
 ## Troubleshooting
 
-### ❌ "TOKEN não está definido no .env"
+### Missing `TOKEN` or `CLIENT_ID`
 
-**Solução:** Verifique se o arquivo `.env` existe e contém `TOKEN=...`
+The bot exits during startup if either value is missing from `.env` or `.env.staging`.
 
-```bash
-cat .env | grep TOKEN  # Deve mostrar TOKEN=seu_token
-```
+### Port `8000` already in use
 
-### ❌ "Tests failing"
+Set a different `PORT` value in your environment file.
 
-Tente:
+### OAuth callback issues
 
-```bash
-npm cache clean --force
-rm -rf node_modules
-npm install
-npm test
-```
+Make sure `DISCORD_OAUTH_REDIRECT_URI` matches the callback configured in the Discord application exactly.
 
-### ❌ Discord API "401 Unauthorized"
+### Frontend cannot reach the backend
 
-O token expirou ou está inválido. Gere um novo:
+Confirm that the backend is running and that the Vite proxy target matches the active backend port.
 
-1. https://discord.com/developers/applications
-2. Vá em "Bot" → "Token" → "Regenerate"
-3. Atualize seu `.env`
+## Next Reading
 
-### ❌ "EADDRINUSE: address already in use :::8000"
-
-A porta 8000 está sendo usada. Mude em `.env`:
-
-```env
-PORT=8001  # ou outro número disponível
-```
-
-### ❌ "Cannot find module 'discord.js'"
-
-Você pulou o `npm install`. Execute:
-
-```bash
-npm install
-```
-
-## Próximos Passos
-
-1. ✅ Leia [GIT-WORKFLOW.md](GIT-WORKFLOW.md) para saber como contribuir
-2. ✅ Leia [ARCHITECTURE.md](ARCHITECTURE.md) para entender estrutura
-3. ✅ Veja [../CONTRIBUTING.md](../CONTRIBUTING.md) para diretrizes completas
-4. ✅ Explore a pasta `tests/` para entender como testar
-
----
-
-**Pronto para começar?** 🚀 Vá para [GIT-WORKFLOW.md](GIT-WORKFLOW.md) e crie sua primeira feature!
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [GIT-WORKFLOW.md](GIT-WORKFLOW.md)
+- [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
+- [../../dashboard/README.md](../../dashboard/README.md)

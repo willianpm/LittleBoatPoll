@@ -1,474 +1,199 @@
-# Exemplos de Teste - Novos Comandos v1.2
-
-Adicionar e remover opções individualmente.
-
-## Índice
-
-- [Teste 1: Adicionar Opções Individuais](#teste-1-adicionar-opções-individuais)
-- [Teste 2: Remover Opção por Texto](#teste-2-remover-opção-por-texto)
-- [Teste 3: Remover Opção por Número](#teste-3-remover-opção-por-número)
-- [Teste 4: Adicionar e Remover Múltiplas Vezes](#teste-4-adicionar-e-remover-múltiplas-vezes)
-- [Teste 5: Validação de Duplicatas](#teste-5-validação-de-duplicatas)
-- [Teste 6: Validação de Limite (20 Opções)](#teste-6-validação-de-limite-20-opções)
-- [Teste 7: Validação de Mínimo (2 Opções)](#teste-7-validação-de-mínimo-2-opções)
-- [Teste 8: Opção Não Encontrada](#teste-8-opção-não-encontrada)
-- [Teste 9: Case-Insensitive](#teste-9-case-insensitive)
-- [Teste 10: Ajuste Automático de Max Votos](#teste-10-ajuste-automático-de-max-votos)
-- [Teste 11: Fluxo Completo (Criar → Adicionar → Remover → Publicar)](#teste-11-fluxo-completo-criar--adicionar--remover--publicar)
-- [Teste 12: Combinação com Outros Comandos de Edição](#teste-12-combinação-com-outros-comandos-de-edição)
-- [Resumo de Funcionalidades Testadas](#resumo-de-funcionalidades-testadas)
-- [Possíveis Erros e Soluções](#possíveis-erros-e-soluções)
-
-## Teste 1: Adicionar Opções Individuais
-
-**Passos:**
-
-1. Criar rascunho inicial:
-   /rascunho criar
-   titulo: "Votação de Livros"
-   opcoes: "Livro A, Livro B, Livro C"
-   max_votos: 2
-   peso_mensalista: Não
-
-   [Bot retorna ID: ABC12345]
-
-2. Visualizar opções atuais:
-   /rascunho exibir
-   id: ABC12345
-
-   **Resultado:**
-   Opções:
-   1. Livro A
-   2. Livro B
-   3. Livro C
-
-3. Adicionar novas opções:
-   /rascunho adicionar-opcao
-   id: ABC12345
-   opcoes: Livro D, Livro E
-
-   **Resultado:**
-   ✅ Opções Adicionadas!
-   Opções Adicionadas: Livro D, Livro E
-   Total de Opções: 5
-   Todas as Opções: Livro A, Livro B, Livro C, Livro D, Livro E
-
-4. Confirmar:
-   /rascunho exibir
-   id: ABC12345
-
-   **Resultado:**
-   Opções:
-   1. Livro A
-   2. Livro B
-   3. Livro C
-   4. Livro D
-   5. Livro E
-
-## Teste 2: Remover Opção por Texto
-
-**Continuando do Teste 1:**
-
-5. Remover opção específica:
-   /rascunho remover-opcao
-   id: ABC12345
-   opcao: Livro B
-
-   **Resultado:**
-   ✅ Opção Removida!
-   Opção Removida: Livro B
-   Total de Opções: 4
-   Opções Restantes: Livro A, Livro C, Livro D, Livro E
-
-6. Confirmar:
-   /rascunho exibir
-   id: ABC12345
-
-   **Resultado:**
-   Opções:
-   1. Livro A
-   2. Livro C
-   3. Livro D
-   4. Livro E
-
-## Teste 3: Remover Opção por Número
-
-**Continuando:**
-
-7. Remover a 3ª opção (Livro D):
-   /rascunho remover-opcao
-   id: ABC12345
-   opcao: 3
+# New Draft Command Test Guide
 
-   **Resultado:**
-   ✅ Opção Removida!
-   Opção Removida: Livro D
-   Total de Opções: 3
-   Opções Restantes: Livro A, Livro C, Livro E
+This document focuses on the option-management commands added to the `/rascunho` workflow.
 
-8. Confirmar:
-   /rascunho exibir
-   id: ABC12345
+## Scope
 
-   **Resultado:**
-   Opções:
-   1. Livro A
-   2. Livro C
-   3. Livro E
+Use this guide to validate:
 
-## Teste 4: Adicionar e Remover Múltiplas Vezes
+- `/rascunho adicionar-opcao`
+- `/rascunho remover-opcao`
+- duplicate handling
+- option count limits
+- minimum option count enforcement
+- automatic `max_votos` adjustments when options are removed
 
-9. Adicionar mais opções:
-   /rascunho adicionar-opcao
-   id: ABC12345
-   opcoes: Livro F, Livro G, Livro H
+## Test 1: Add Options Individually
 
-   **Resultado:** Total de 6 opções
+1. Create a draft:
 
-10. Remover uma:
-    /rascunho remover-opcao
-    id: ABC12345
-    opcao: Livro C
+```text
+/rascunho criar
+titulo: "Book Selection Vote"
+opcoes: "Book A, Book B, Book C"
+max_votos: 2
+peso_mensalista: Nao
+```
 
-    **Resultado:** Total de 5 opções
+2. Confirm the starting options with `/rascunho exibir`.
 
-11. Adicionar mais uma:
-    /rascunho adicionar-opcao
-    id: ABC12345
-    opcoes: Livro I
+3. Add new options:
 
-    **Resultado:** Total de 6 opções
+```text
+/rascunho adicionar-opcao
+id: ABC12345
+opcoes: Book D, Book E
+```
 
-12. Visualizar final:
-    /rascunho exibir
-    id: ABC12345
+Expected result:
 
-    **Resultado:**
-    Opções:
-    1. Livro A
-    2. Livro E
-    3. Livro F
-    4. Livro G
-    5. Livro H
-    6. Livro I
+- the new options are appended
+- the total option count increases correctly
+- `/rascunho exibir` shows the updated order
 
-## Teste 5: Validação de Duplicatas
+## Test 2: Remove an Option by Text
 
-13. Tentar adicionar opção duplicada:
-    /rascunho adicionar-opcao
-    id: ABC12345
-    opcoes: Livro A
+Command:
 
-    **Resultado:**
-    ❌ Erro! As seguintes opções já existem no rascunho: Livro A
+```text
+/rascunho remover-opcao
+id: ABC12345
+opcao: Book B
+```
 
-14. Tentar adicionar múltiplas, algumas duplicadas:
-    /rascunho adicionar-opcao
-    id: ABC12345
-    opcoes: Livro J, Livro A, Livro K
+Expected result:
 
-    **Resultado:**
-    ❌ Erro! As seguintes opções já existem no rascunho: Livro A
+- the specific option is removed
+- the remaining options keep their order
+- the response identifies the removed option
 
-## Teste 6: Validação de Limite (20 Opções)
+## Test 3: Remove an Option by Number
 
-15. Criar rascunho com 18 opções:
-    /rascunho criar
-    titulo: "Teste Limite"
-    opcoes: "Op1, Op2, Op3, Op4, Op5, Op6, Op7, Op8, Op9, Op10, Op11, Op12, Op13, Op14, Op15, Op16, Op17, Op18"
-    max_votos: 5
+Command:
 
-    [ID: XYZ789]
+```text
+/rascunho remover-opcao
+id: ABC12345
+opcao: 3
+```
 
-16. Adicionar 2 opções (OK - total 20):
-    /rascunho adicionar-opcao
-    id: XYZ789
-    opcoes: Op19, Op20
+Expected result:
 
-    **Resultado:** ✅ Sucesso! Total: 20 opções
+- the third option is removed
+- `/rascunho exibir` reflects the new numbering
 
-17. Tentar adicionar mais 1 (falha):
-    /rascunho adicionar-opcao
-    id: XYZ789
-    opcoes: Op21
+## Test 4: Repeated Add and Remove Operations
 
-    **Resultado:**
-    ❌ Erro! O Discord limita a 20 reações por mensagem.
-    Total de opções: 21. Remova 1 opção(ões).
+Validate that the command sequence remains stable after several edits:
 
-## Teste 7: Validação de Mínimo (2 Opções)
+1. add multiple options
+2. remove one option
+3. add another option
+4. inspect the final order with `/rascunho exibir`
 
-18. Criar rascunho com 3 opções:
-    /rascunho criar
-    titulo: "Teste Mínimo"
-    opcoes: "A, B, C"
-    max_votos: 1
+Expected result:
 
-    [ID: MIN123]
+- no duplicate corruption
+- no unexpected reordering
+- no stale values in the confirmation messages
 
-19. Remover uma opção:
-    /rascunho remover-opcao
-    id: MIN123
-    opcao: B
+## Test 5: Duplicate Validation
 
-    **Resultado:** ✅ Sucesso! Restam: A, C
+Attempt to add an option that already exists:
 
-20. Tentar remover mais uma (falha):
-    /rascunho remover-opcao
-    id: MIN123
-    opcao: A
+```text
+/rascunho adicionar-opcao
+id: ABC12345
+opcoes: Book A
+```
 
-    **Resultado:**
-    ❌ Erro! A enquete precisa ter pelo menos 2 opções.
-    Não é possível remover mais opções.
+Expected result:
 
-## Teste 8: Opção Não Encontrada
+- the command rejects the addition
+- the error identifies the duplicated option
 
-21. Tentar remover opção inexistente:
-    /rascunho remover-opcao
-    id: ABC12345
-    opcao: Livro Z
+Also validate a mixed input where only some options are duplicates.
 
-    **Resultado:**
-    ❌ Erro! Opção "Livro Z" não encontrada.
+## Test 6: Maximum Option Limit
 
-    Opções disponíveis:
-    1. Livro A
-    2. Livro E
-    3. Livro F
-    4. Livro G
-    5. Livro H
-    6. Livro I
+Create a draft with 18 options, add 2 more, and then try to add one extra option.
 
-22. Tentar remover por número inválido:
-    /rascunho remover-opcao
-    id: ABC12345
-    opcao: 99
+Expected result:
 
-    **Resultado:** (mesmo erro acima)
+- reaching 20 options succeeds
+- exceeding 20 options fails with a Discord reaction limit message
 
-## Teste 9: Case-Insensitive
+## Test 7: Minimum Option Count
 
-23. Adicionar opção com maiúsculas:
-    /rascunho adicionar-opcao
-    id: ABC12345
-    opcoes: LIVRO J
+Create a draft with 3 options and remove one.
 
-    **Resultado:** ✅ Sucesso!
+Expected result:
 
-24. Tentar adicionar mesmo texto em minúsculas:
-    /rascunho adicionar-opcao
-    id: ABC12345
-    opcoes: livro j
+- the draft with 2 options remains valid
 
-    **Resultado:**
-    ❌ Erro! As seguintes opções já existem no rascunho: livro j
+Try to remove one more.
 
-25. Remover usando case diferente:
-    /rascunho remover-opcao
-    id: ABC12345
-    opcao: LiVrO j
+Expected result:
 
-    **Resultado:** ✅ Sucesso! (remove "LIVRO J")
+- the command is rejected because a poll must keep at least 2 options
 
-## Teste 10: Ajuste Automático de Max Votos
+## Test 8: Unknown Option Handling
 
-26. Criar rascunho com 5 opções e max_votos=3:
-    /rascunho criar
-    titulo: "Teste Max Votos"
-    opcoes: "A, B, C, D, E"
-    max_votos: 3
+Try to remove:
 
-    [ID: MAX456]
+- an option text that does not exist
+- an invalid numeric index
 
-27. Remover 2 opções (ficam 3):
-    /rascunho remover-opcao
-    id: MAX456
-    opcao: D
+Expected result:
 
-    /rascunho remover-opcao
-    id: MAX456
-    opcao: E
+- the command fails
+- the response explains that the option was not found
+- available options are listed or implied clearly enough for correction
 
-    **Resultado:**
-    Total: 3 opções (A, B, C)
-    max_votos: 3 (continua igual)
+## Test 9: Case-Insensitive Matching
 
-28. Remover mais 1 (ficam 2):
-    /rascunho remover-opcao
-    id: MAX456
-    opcao: C
+Validate that duplicate detection and removal behave correctly when the text casing changes.
 
-    **Resultado:**
-    Total: 2 opções (A, B)
-    max_votos: 2 (ajustado automaticamente de 3 para 2)
+Expected result:
 
-29. Adicionar 3 opções:
-    /rascunho adicionar-opcao
-    id: MAX456
-    opcoes: C, D, E
+- duplicate checks are case-insensitive
+- removal by text also works when letter casing differs
 
-    **Resultado:**
-    Total: 5 opções (A, B, C, D, E)
-    max_votos: 2 (NÃO muda - mantém o valor atual)
+## Test 10: Automatic `max_votos` Adjustment
 
-30. Visualizar para confirmar:
-    /rascunho exibir
-    id: MAX456
+Create a draft with 5 options and `max_votos=3`, then remove options until only 2 remain.
 
-    **Resultado:**
-    Opções: A, B, C, D, E (5 opções)
-    Máximo de Votos: 2
+Expected result:
 
-## Teste 11: Fluxo Completo (Criar → Adicionar → Remover → Publicar)
+- `max_votos` is reduced automatically when the remaining option count would otherwise make it invalid
+- adding options later does not automatically raise `max_votos` again
 
-31. Criar rascunho inicial:
-    /rascunho criar
-    titulo: "Escolha Final de Livros"
-    opcoes: "1984, Brave New World"
-    max_votos: 1
-    peso_mensalista: Sim
+## Test 11: Full Edit Flow
 
-    [ID: FINAL99]
+Recommended sequence:
 
-32. Adicionar mais opções progressivamente:
-    /rascunho adicionar-opcao
-    id: FINAL99
-    opcoes: Fahrenheit 451, Animal Farm
+1. create draft
+2. add options progressively
+3. remove one or more options
+4. inspect with `/rascunho exibir`
+5. publish with `/rascunho publicar`
 
-    Total: 4 opções
+Expected result:
 
-33. Adicionar mais:
-    /rascunho adicionar-opcao
-    id: FINAL99
-    opcoes: The Handmaid's Tale, We
+- the final poll contains exactly the options present in the last draft state
+- the configured vote limit is preserved correctly
+- mensalista weighting matches the selected draft configuration
 
-    Total: 6 opções
+## Test 12: Combined Editing
 
-34. Decidir remover algumas:
-    /rascunho remover-opcao
-    id: FINAL99
-    opcao: We
+Use these commands together on the same draft:
 
-    Total: 5 opções
+- `/rascunho editar`
+- `/rascunho adicionar-opcao`
+- `/rascunho remover-opcao`
+- `/rascunho exibir`
 
-35. Adicionar substituta:
-    /rascunho adicionar-opcao
-    id: FINAL99
-    opcoes: Lord of the Flies
+Expected result:
 
-    Total: 6 opções
+- all commands operate on the same persisted draft state
+- no command silently resets fields changed by another command
 
-36. Visualizar antes de publicar:
-    /rascunho exibir
-    id: FINAL99
+## Summary of Behaviors to Confirm
 
-    **Resultado:**
-    Título: Escolha Final de Livros
-    Opções:
-    1. 1984
-    2. Brave New World
-    3. Fahrenheit 451
-    4. Animal Farm
-    5. The Handmaid's Tale
-    6. Lord of the Flies
-       Máximo de Votos: 1
-       Peso Mensalista: Sim (2x)
-
-37. Publicar:
-    /rascunho publicar
-    id: FINAL99
-    canal: #votacoes
-
-    **Resultado:** ✅ Enquete publicada e ativa!
-
-## Teste 12: Combinação com Outros Comandos de Edição
-
-38. Criar rascunho:
-    /rascunho criar
-    titulo: "Teste Combo"
-    opcoes: "X, Y, Z"
-    max_votos: 1
-
-    [ID: COMBO00]
-
-39. Adicionar opções:
-    /rascunho adicionar-opcao
-    id: COMBO00
-    opcoes: W, V
-
-    Total: 5 opções
-
-40. Editar título:
-    /rascunho editar
-    id: COMBO00
-    titulo: "Teste Combinado Final"
-
-    ✅ Título atualizado
-
-41. Remover opção:
-    /rascunho remover-opcao
-    id: COMBO00
-    opcao: Y
-
-    Total: 4 opções
-
-42. Editar max_votos:
-    /rascunho editar
-    id: COMBO00
-    max_votos: 2
-
-    ✅ Max votos atualizado
-
-43. Adicionar mais:
-    /rascunho adicionar-opcao
-    id: COMBO00
-    opcoes: U
-
-    Total: 5 opções
-
-44. Visualizar resultado final:
-    /rascunho exibir
-    id: COMBO00
-
-    **Resultado:**
-    Título: Teste Combinado Final
-    Opções: X, Z, W, V, U
-    Máximo de Votos: 2
-
-## Resumo de Funcionalidades Testadas
-
-✅ Adicionar opções individuais
-✅ Adicionar múltiplas opções de uma vez
-✅ Remover opção por texto exato
-✅ Remover opção por número (1-based)
-✅ Validação de duplicatas (case-insensitive)
-✅ Validação de limite máximo (20 opções)
-✅ Validação de mínimo (2 opções)
-✅ Mensagem de erro quando opção não encontrada
-✅ Ajuste automático de max_votos
-✅ Case-insensitive ao comparar opções
-✅ Combinação com outros comandos de edição
-✅ Fluxo completo: criar → adicionar → remover → publicar
-
-## Possíveis Erros e Soluções
-
-**Erro:** "As seguintes opções já existem"
-→ Solução: Verifique se não está tentando adicionar opção duplicada
-→ Lembre que é case-insensitive ("Livro A" = "livro a")
-
-**Erro:** "Opção não encontrada"
-→ Solução: Use /rascunho exibir para ver lista de opções
-→ Copie o texto exato ou use o número da opção
-
-**Erro:** "Limite de 20 reações"
-→ Solução: Remova opções antes de adicionar novas
-→ Use /rascunho remover-opcao
-
-**Erro:** "Precisa ter pelo menos 2 opções"
-→ Solução: Não é possível remover mais opções
-→ Adicione novas opções antes de remover
-
-**Erro:** "Permissão negada"
-→ Solução: Você precisa ter o cargo Criador
-→ Verifique com /rascunho listar quem criou
+- options can be added without replacing the full list
+- options can be removed by text or by index
+- duplicates are rejected
+- option limits are enforced
+- minimum option count is enforced
+- `max_votos` stays valid after removals
+- the final published poll matches the edited draft
