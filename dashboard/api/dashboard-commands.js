@@ -486,6 +486,10 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       (await guildObj.members?.fetch?.(req.dashboardAuth.userId).catch(() => null)) ||
       req.dashboardAuth.member;
 
+    if (effectiveType === 1 && !target?.channelId) {
+      return errorResponse(res, 400, 'channelId é obrigatório para comandos de chat (tipo 1)');
+    }
+
     const executionChannel = resolveExecutionChannel(guildObj, target || {});
     if (!executionChannel && (effectiveType === 1 || effectiveType === 3)) {
       return errorResponse(res, 404, 'Servidor não encontrado ou sem canal de texto disponível para execução');

@@ -63,7 +63,11 @@ DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=replace_this_secret
 DASHBOARD_ALLOWED_GUILD_ID=your_guild_id
 DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_SINGLE_INSTANCE=true
 ```
+
+When using `APP_ENV=prod` with the default dashboard session setup, `DASHBOARD_SINGLE_INSTANCE=true` is required.
+For production with restarts and/or multiple instances, configure a persistent session store (for example Redis).
 
 For staging, copy `.env.staging.example` to `.env.staging` and use different credentials.
 

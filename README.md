@@ -52,7 +52,11 @@ DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=replace_this_secret
 DASHBOARD_ALLOWED_GUILD_ID=your_primary_guild_id
 DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_SINGLE_INSTANCE=true
 ```
+
+`DASHBOARD_SINGLE_INSTANCE=true` is required when running `APP_ENV=prod` with the default in-memory session store.
+Use a persistent session store (for example Redis) if you need restarts without logout or horizontal scaling.
 
 Use `.env.staging` for the staging bot if you want isolated credentials and data.
 

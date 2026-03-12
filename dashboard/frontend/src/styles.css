@@ -138,6 +138,39 @@ textarea {
   border-radius: 50%;
 }
 
+.channel-selector-row {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.channel-selector-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.channel-selector-row select {
+  flex: 1;
+  min-width: 180px;
+  max-width: 320px;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: #111827;
+}
+
+.channel-selector-row select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
 .command-groups {
   display: grid;
   gap: 16px;

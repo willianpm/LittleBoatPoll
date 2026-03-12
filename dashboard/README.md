@@ -107,6 +107,10 @@ DISCORD_OAUTH_REDIRECT_URI=...
 DASHBOARD_SESSION_SECRET=...
 DASHBOARD_ALLOWED_GUILD_ID=...
 DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_SINGLE_INSTANCE=true
 ```
+
+In `APP_ENV=prod`, `DASHBOARD_SINGLE_INSTANCE=true` is required with the default in-memory session store.
+To support restarts without session loss or multiple app instances, use a persistent session store (for example Redis).
 
 For detailed integration and testing notes, see [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).

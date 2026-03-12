@@ -159,6 +159,7 @@ export default function App() {
   const [memberQuery, setMemberQuery] = useState('');
 
   const [channels, setChannels] = useState([]);
+  const [selectedChannelId, setSelectedChannelId] = useState('');
   const [pollTargets, setPollTargets] = useState([]);
   const [draftTargets, setDraftTargets] = useState([]);
 
@@ -230,6 +231,8 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedGuildId || !session) return;
+
+    setSelectedChannelId('');
 
     async function loadGuildAuxData() {
       try {
@@ -342,6 +345,11 @@ export default function App() {
     };
 
     if (!command || !selectedGuildId) {
+      setFailure();
+      return;
+    }
+
+    if (command.type === 1 && !selectedChannelId) {
       setFailure();
       return;
     }
@@ -475,6 +483,10 @@ export default function App() {
         messageId: contextMessageForm.pollMessageId || `dashboard-${Date.now()}`,
         messageContent: contextMessageForm.optionText,
       };
+    }
+
+    if (command.type === 1) {
+      target = { channelId: selectedChannelId };
     }
 
     setCommandLoadingKey(commandKey);
@@ -898,22 +910,42 @@ export default function App() {
         {guildsLoading ? (
           <p>Carregando servidores...</p>
         ) : (
-          <div className="guild-cards">
-            {guilds.map((guild) => (
-              <button
-                key={guild.id}
-                type="button"
-                className={`guild-card ${selectedGuildId === guild.id ? 'selected' : ''}`}
-                onClick={() => setSelectedGuildId(guild.id)}
-              >
-                {guild.icon ? <img src={guild.icon} alt={guild.name} className="guild-avatar" /> : <span>🛳️</span>}
-                <div>
-                  <strong>{guild.name}</strong>
-                  <p>{guild.isActive ? 'Servidor ativo' : 'Servidor disponível'}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="guild-cards">
+              {guilds.map((guild) => (
+                <button
+                  key={guild.id}
+                  type="button"
+                  className={`guild-card ${selectedGuildId === guild.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedGuildId(guild.id)}
+                >
+                  {guild.icon ? <img src={guild.icon} alt={guild.name} className="guild-avatar" /> : <span>🛳️</span>}
+                  <div>
+                    <strong>{guild.name}</strong>
+                    <p>{guild.isActive ? 'Servidor ativo' : 'Servidor disponível'}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {selectedGuildId && (
+              <div className="channel-selector-row">
+                <label htmlFor="global-channel-select">Canal de publicação</label>
+                <select
+                  id="global-channel-select"
+                  value={selectedChannelId}
+                  onChange={(event) => setSelectedChannelId(event.target.value)}
+                >
+                  <option value="">Selecione um canal...</option>
+                  {channels.map((channel) => (
+                    <option key={channel.id} value={channel.id}>
+                      #{channel.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </>
         )}
       </section>
 

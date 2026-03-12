@@ -115,7 +115,7 @@ describe('Dashboard Commands API', () => {
 
     const res = await request(app)
       .post('/api/commands/poll')
-      .send({ guild: { id: 'guild-1' }, user: { id: 'user-1' } })
+      .send({ guild: { id: 'guild-1' }, user: { id: 'user-1' }, target: { channelId: 'channel-1' } })
       .set('Authorization', 'Bearer fake');
 
     expect(res.statusCode).toBe(200);
@@ -141,7 +141,7 @@ describe('Dashboard Commands API', () => {
 
     const res = await request(app)
       .post('/api/commands/poll')
-      .send({ guild: { id: 'guild-1' } })
+      .send({ guild: { id: 'guild-1' }, target: { channelId: 'channel-1' } })
       .set('Authorization', 'Bearer fake');
 
     expect(res.statusCode).toBe(500);
@@ -163,6 +163,70 @@ describe('Dashboard Commands API', () => {
     expect(res.statusCode).toBe(503);
     expect(res.body.success).toBe(false);
     expect(res.body.error).toMatch(/Bot está offline/);
+  });
+
+  it('should return 400 for chat-input command without channelId', async () => {
+    client.commands.set('enquete', {
+      data: {
+        toJSON: () => ({ name: 'enquete', description: 'Cria enquete', type: 1, options: [] }),
+      },
+      execute: jest.fn(),
+    });
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: {
+        cache: new Map([['channel-1', { id: 'channel-1', isTextBased: () => true, send: jest.fn() }]]),
+      },
+      systemChannel: null,
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    // No target.channelId provided
+    const res = await request(app)
+      .post('/api/commands/enquete')
+      .send({ guild: { id: 'guild-1' }, commandType: 1 })
+      .set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/channelId é obrigatório/i);
+  });
+
+  it('should execute chat-input command when channelId is provided', async () => {
+    const executeMock = jest.fn(async (interaction) => {
+      await interaction.reply({ content: 'Enquete criada!' });
+    });
+
+    client.commands.set('enquete', {
+      data: {
+        toJSON: () => ({ name: 'enquete', description: 'Cria enquete', type: 1, options: [] }),
+      },
+      execute: executeMock,
+    });
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: {
+        cache: new Map([['channel-1', { id: 'channel-1', isTextBased: () => true, send: jest.fn() }]]),
+      },
+      systemChannel: null,
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    const res = await request(app)
+      .post('/api/commands/enquete')
+      .send({ guild: { id: 'guild-1' }, commandType: 1, target: { channelId: 'channel-1' } })
+      .set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toBe('Enquete criada!');
+    expect(executeMock).toHaveBeenCalledTimes(1);
   });
 
   it('should execute user context command with selected target', async () => {

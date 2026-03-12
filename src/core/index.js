@@ -775,6 +775,24 @@ client.on('messageReactionRemove', async (reaction, user) => {
 const app = express();
 const port = config.PORT; // O Koyeb injeta a porta automaticamente
 const dashboardFrontendDist = path.join(__dirname, '../../dashboard/frontend/dist');
+const isProductionEnv = config.APP_ENV === 'prod';
+const isSingleInstanceDashboard = process.env.DASHBOARD_SINGLE_INSTANCE === 'true';
+
+if (isProductionEnv && !isSingleInstanceDashboard) {
+  console.error('ERRO: sessão do dashboard está usando MemoryStore sem confirmação de instância única.');
+  console.error('Defina DASHBOARD_SINGLE_INSTANCE=true para operação em instância única');
+  console.error('ou configure um session store persistente (ex.: Redis) para produção.');
+  process.exit(1);
+}
+
+if (isProductionEnv && isSingleInstanceDashboard) {
+  console.warn('ATENÇÃO: dashboard em produção com MemoryStore e DASHBOARD_SINGLE_INSTANCE=true.');
+  console.warn('Sessões serão perdidas em restart e não há suporte a múltiplas instâncias.');
+}
+
+if (isProductionEnv) {
+  app.set('trust proxy', 1);
+}
 
 app.use(express.json());
 app.use(
@@ -786,7 +804,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProductionEnv ? 'auto' : false,
       maxAge: 12 * 60 * 60 * 1000,
     },
   }),
