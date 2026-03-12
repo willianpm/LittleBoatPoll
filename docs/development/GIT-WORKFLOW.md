@@ -1,311 +1,110 @@
-# Git Workflow - Little Boat Poll
+# Git Workflow
 
-Nosso processo de contribuição usa **GitHub Flow** - simples, iterativo, ideal para equipes pequenas.
+This repository follows a GitHub Flow style based on the `develop` branch.
 
-## Resumo Visual
+## Branch Strategy
 
-```
-origin/develop  ← main branch de desenvolvimento
-    ↑
-    │ (criar feature branch)
-    │
-feature/sua-feature
-    │
-    │ (editar código)
-    ├─ git add / commit
-    │
-    │ (push e criar PR)
-    ├─ Create Pull Request
-    │
-    │ (review automático: testes + linter)
-    ├─ GitHub Actions
-    │
-    │ (review manual + aprovação)
-    ├─ Code Review
-    │
-    │ (merge para develop)
-    └─→ Merge to develop
-```
+- Base branch for active development: `develop`
+- Create short-lived branches from `develop`
+- Open pull requests back to `develop`
+- Merge after checks and review approval
 
-## Workflow Passo-a-Passo
+## Branch Naming
 
-### 1️⃣ Configure Git Local
+Use descriptive branch names:
 
-Se for primeira vez no repositório:
+- `feature/add-dashboard-filter`
+- `bugfix/fix-double-vote-check`
+- `docs/update-setup-guide`
+- `refactor/simplify-draft-handler`
+
+Avoid vague names such as `test123` or `feature/misc`.
+
+## Local Setup
+
+If needed:
 
 ```bash
-git config --global user.name "Seu Nome"
-git config --global user.email "seu.email@example.com"
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
 ```
 
-### 2️⃣ Crie uma Feature Branch
+## Standard Contribution Flow
 
-Sempre a partir de `develop`:
+1. Sync local `develop`.
+2. Create a feature branch.
+3. Implement changes and run local checks.
+4. Commit with Conventional Commit prefixes.
+5. Push and open a pull request.
+6. Address CI or review feedback.
+7. Merge into `develop` and delete the branch.
 
-```bash
-git checkout develop          # Mude para develop
-git pull origin develop       # Atualize com últimas mudanças
-git checkout -b feature/meu-feature-descritivo
-```
-
-**Convenção de nome da branch:**
-
-- `feature/adicionar-validacao-email` - Nova funcionalidade
-- `bugfix/corrigir-votacao-duplicada` - Correção de bug
-- `docs/melhorar-setup-guide` - Apenas documentação
-- `refactor/simplificar-utils` - Code cleanup
-
-**❌ Evite:**
-
-- `feature/test` - Muito vago
-- `feature/corrige_tudo` - Muito amplo
-- `test123` - Sem contexto
-
-### 3️⃣ Escreva Código e Teste
-
-Faça suas mudanças:
-
-```bash
-# Editar arquivos...
-
-# Testar localmente
-npm test                      # Testes devem passar
-npm run lint                  # Linter deve passar
-npm run format                # Auto-formata código
-```
-
-**Commitando código:**
-
-```bash
-git add .                           # Ou git add arquivo_específico
-
-git commit -m "[feat] Beschreibung curta"
-# Ou
-git commit -m "[fix] Corrigido bug em validação"
-git commit -m "[docs] Atualizado SETUP.md"
-```
-
-**Prefixos de commit recomendados:**
-
-- `[feat]` - Nova funcionalidade
-- `[fix]` - Correção de bug
-- `[docs]` - Documentação
-- `[test]` - Testes
-- `[refactor]` - Code cleanup (sem mudança de comportamento)
-- `[perf]` - Melhoria de performance
-
-### 4️⃣ Push para o Repositório
-
-```bash
-git push origin feature/meu-feature-descritivo
-```
-
-**Primeira vez nesta branch:**
-
-```
-The upstream branch of your current branch does not match...
-git push -u origin feature/meu-feature-descritivo
-```
-
-### 5️⃣ Crie uma Pull Request (PR)
-
-No GitHub:
-
-1. Vá para https://github.com/seu-repo/LittleBoatPoll
-2. Você verá um botão amarelo "Compare & pull request"
-3. Clique nele
-
-**Pre-fill do PR:**
-
-```markdown
-## Descrição
-
-Breve descrição do que foi feito e por quê.
-
-## Tipo de Mudança
-
-- [ ] Nova funcionalidade
-- [ ] Correção de bug
-- [ ] Mudança em documentação
-- [ ] Refactor (sem mudança de comportamento)
-
-## Como Testar?
-
-1. Passo 1
-2. Passo 2
-3. Resultado esperado
-
-## Checklist
-
-- [ ] Código testado localmente (`npm test` passa)
-- [ ] Código lintado (`npm run lint` passa)
-- [ ] Documentação atualizada se necessário
-- [ ] Nenhum commit mergeado sem review
-
-## Screenshots (se aplicável)
-
-Se mudança tem UI, adicione screenshotfor video.
-
-## Link da Issue
-
-Fixes #123 (se existir issue relacionada)
-```
-
-### 6️⃣ Aguarde Revisão Automática
-
-GitHub Actions rodará automaticamente:
-
-- ✅ Testes unitários
-- ✅ ESLint (padrão de código)
-- ✅ Prettier (formatação)
-- ✅ Cobertura (70% mínimo)
-
-Se algum checker falhar:
-
-1. Veja logs no GitHub (seção "Checks" da PR)
-2. Corrija o problema localmente
-3. Commit + push (automático na PR)
-
-**Exemplo:**
-
-```
-Falha em ESLint: Extra semicolon
-
-# Solução:
-npm run format                # Auto-fix
-git add .
-git commit -m "[fix] Prettier: remover ponto-e-vírgula extra"
-git push
-```
-
-### 7️⃣ Code Review Manual
-
-Alguém da equipe revisará seu código:
-
-- Poderá solicitar mudanças (CI/CD ainda passa, mas quer melhorias)
-- Se aprovado: ✅ "Approved"
-
-Se pedir mudanças:
-
-```bash
-# Corrija conforme solicitado
-npm test                      # Certifique-se que passa
-git add .
-git commit -m "[review] Endereço dos comentários da review"
-git push                      # Automático na PR, não precisa de novo push -u
-```
-
-### 8️⃣ Merge para Develop
-
-Quando tudo estiver ✅:
-
-1. Clique em "Squash and Merge" (recomendado para histórico limpo)
-   ou "Create a merge commit" (preserva todos os commits)
-2. Confirme
-3. Clique em "Delete branch" para limpar
-
-Pronto! Sua feature foi mergeada para `develop`.
-
-### 9️⃣ Sincronize Local
-
-Volte para `develop` localmente:
+## Commands
 
 ```bash
 git checkout develop
-git pull origin develop       # Puxe a última versão (sua PR está aqui!)
-git branch -D feature/meu-feature-descritivo  # Apague branch local
-```
+git pull origin develop
+git checkout -b feature/my-descriptive-change
 
-## Cenários Comuns
+npm test
+npm run lint
+npm run format
 
-### 🔀 Conflito de Merge?
-
-Se alguém mergeou outro PR antes do seu:
-
-```bash
-# GitHub vai mostrar: "This branch has conflicts that must be resolved"
-
-# Opção 1: Resolver no GitHub (UI)
-# - Clique em "Resolve conflicts"
-# - Edite o arquivo conflitante manualmente
-# - Clique "Mark as resolved"
-# - Commit
-
-# Opção 2: Resolver localmente
-git fetch origin
-git rebase origin/develop
-# Resolve conflicts nos arquivos
 git add .
-git rebase --continue
-git push --force-with-lease origin feature/seu-feature
+git commit -m "feat: add draft option removal guard"
+git push -u origin feature/my-descriptive-change
 ```
 
-### 📴 Precisa Atualizar Sua Branch com Mudanças em develop?
+## Commit Prefixes
+
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation only
+- `test:` tests
+- `refactor:` internal refactor with no behavior change
+- `perf:` performance improvement
+
+## Pull Request Expectations
+
+- Unit and dashboard tests pass
+- Linting and formatting pass
+- Scope is focused (one concern per PR)
+- Description explains what changed and why
+
+## Common Operations
+
+### Rebase with latest `develop`
 
 ```bash
 git fetch origin
 git rebase origin/develop
-# Resolve qualquer conflito se houver
 git push --force-with-lease
 ```
 
-### 🔙 Precisa Desfazer um Commit?
+### Undo last commit (not pushed)
 
 ```bash
-# Último commit (não foi push ainda)
-git reset --soft HEAD~1       # Mantém arquivos editados
-git reset --hard HEAD~1       # Descarta mudanças
+git reset --soft HEAD~1
+```
 
-# Commit já foi push
-git revert HEAD               # Cria novo commit que desfaz o anterior
+### Revert already-pushed commit
+
+```bash
+git revert HEAD
 git push
 ```
 
-### 🧹 Limpar Branches Locais não Utilizadas
-
-```bash
-git branch -D feature/old-feature    # Força delete
-git fetch --prune                    # Remove branches deletadas no remote
-```
-
-## Regras Importantes
-
-1. ✅ **Sempre trabalhe em `develop`** - nunca em `main` diretamente
-2. ✅ **Crie PRs do seu feature branch** - não commits diretos
-3. ✅ **Testes devem passar** - `npm test` 70%+ cobertura
-4. ✅ **Linter deve passar** - `npm run lint`
-5. ✅ **Um problema por PR** - não misture features
-6. ✅ **Commits descritivos** - `[feat] algo` melhor que `fix stuff`
-7. ✅ **Rebase se confortável** - evita commit merge desnecessários
-
 ## Troubleshooting
 
-### "fatal: origin does not appear to be a git repository"
+### `fatal: origin does not appear to be a git repository`
 
-Não está no diretório do projeto:
+You are likely outside the project directory. Change into the repository root and retry.
 
-```bash
-cd /caminho/para/LittleBoatPoll
-```
+### `Your local changes would be overwritten`
 
-### "error: Your local changes to the following files would be overwritten"
+Commit or stash your changes before switching branches or rebasing.
 
-Mudanças não foram commitadas:
+## Related Documents
 
-```bash
-git status                    # Veja o que mudou
-git add .
-git commit -m "[wip] Work in progress"
-```
-
-### "On branch develop...nothing to commit"
-
-Você está na branch certa e tudo foi commitado. Próximo passo: `git push`.
-
-### PR mostra "1 commit ahead of develop"
-
-Normal! Significa sua branch tem mudanças que `develop` ainda não tem.
-
----
-
-**Próximos passos:** [ARCHITECTURE.md](ARCHITECTURE.md) para entender a estrutura do projeto.
+- [SETUP.md](SETUP.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
