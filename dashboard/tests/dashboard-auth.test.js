@@ -144,3 +144,91 @@ describe('Dashboard Auth API - guild selectors', () => {
     ]);
   });
 });
+
+describe('Dashboard Auth API - OAuth session persistence', () => {
+  const originalEnv = {
+    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
+    DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
+    DISCORD_OAUTH_REDIRECT_URI: process.env.DISCORD_OAUTH_REDIRECT_URI,
+  };
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    process.env.DISCORD_CLIENT_ID = 'client-id';
+    process.env.DISCORD_CLIENT_SECRET = 'client-secret';
+    process.env.DISCORD_OAUTH_REDIRECT_URI = 'https://example.com/api/auth/discord/callback';
+    client.guilds.cache = new Map([
+      [
+        'guild-1',
+        {
+          id: 'guild-1',
+          name: 'Guild One',
+          icon: null,
+          members: {
+            cache: new Map(),
+            fetch: jest.fn(async (userId) => ({
+              user: { id: userId, username: 'tester', bot: false },
+              displayName: 'Tester',
+            })),
+          },
+        },
+      ],
+    ]);
+  });
+
+  afterEach(() => {
+    process.env.DISCORD_CLIENT_ID = originalEnv.DISCORD_CLIENT_ID;
+    process.env.DISCORD_CLIENT_SECRET = originalEnv.DISCORD_CLIENT_SECRET;
+    process.env.DISCORD_OAUTH_REDIRECT_URI = originalEnv.DISCORD_OAUTH_REDIRECT_URI;
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  it('should save session before redirecting to Discord login', async () => {
+    const save = jest.fn((callback) => callback());
+    const app = express();
+
+    app.use((req, _res, next) => {
+      req.session = { save };
+      next();
+    });
+    app.use('/api/auth', authRouter);
+
+    const res = await request(app).get('/api/auth/discord/login');
+
+    expect(res.statusCode).toBe(302);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(res.headers.location).toContain('https://discord.com/api/oauth2/authorize');
+  });
+
+  it('should save dashboard auth in session before redirecting back to frontend', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'discord-token' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'user-1', username: 'tester', avatar: null }),
+      });
+
+    const save = jest.fn((callback) => callback());
+    const app = express();
+
+    app.use((req, _res, next) => {
+      req.session = {
+        discordOauthState: 'expected-state',
+        save,
+      };
+      next();
+    });
+    app.use('/api/auth', authRouter);
+
+    const res = await request(app).get('/api/auth/discord/callback?code=oauth-code&state=expected-state');
+
+    expect(res.statusCode).toBe(302);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(res.headers.location).toBe('/');
+  });
+});

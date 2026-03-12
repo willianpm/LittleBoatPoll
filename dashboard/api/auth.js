@@ -70,6 +70,23 @@ function buildDiscordOAuthUrl(state) {
   return `${DISCORD_API_BASE}/oauth2/authorize?${params.toString()}`;
 }
 
+function persistSession(req) {
+  if (!req?.session || typeof req.session.save !== 'function') {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    req.session.save((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
 async function exchangeCodeForToken(code) {
   const oauthConfig = getOAuthConfig();
   const body = new URLSearchParams({
@@ -214,7 +231,7 @@ async function validateDashboardToken(req, res, next) {
   return next();
 }
 
-router.get('/discord/login', (req, res) => {
+router.get('/discord/login', async (req, res) => {
   const missingKeys = getMissingOAuthKeys();
   if (missingKeys.length > 0) {
     return res.status(500).json({
@@ -225,6 +242,14 @@ router.get('/discord/login', (req, res) => {
 
   const state = crypto.randomBytes(24).toString('hex');
   req.session.discordOauthState = state;
+
+  try {
+    await persistSession(req);
+  } catch (error) {
+    console.error('[dashboard-auth] erro ao persistir sessão antes do login OAuth:', error.message);
+    return res.status(500).json({ error: 'Não foi possível iniciar o login com Discord' });
+  }
+
   return res.redirect(buildDiscordOAuthUrl(state));
 });
 
@@ -244,6 +269,8 @@ router.get('/discord/callback', async (req, res) => {
 
     if (!resolved) {
       req.session.dashboardAuth = null;
+      req.session.discordOauthState = null;
+      await persistSession(req);
       return res.redirect(buildAuthRedirect('forbidden'));
     }
 
@@ -255,6 +282,8 @@ router.get('/discord/callback', async (req, res) => {
       loggedAt: new Date().toISOString(),
     };
     req.session.discordOauthState = null;
+
+    await persistSession(req);
 
     return res.redirect(buildAuthRedirect());
   } catch (error) {
