@@ -1,6 +1,6 @@
 {
   "name": "littleboatpoll",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "Discord bot for managing book club polls with weighted voting, web dashboard, and CSV bulk creation (monthly members get weight 2)",
   "main": "index.js",
   "repository": {
