@@ -245,7 +245,8 @@ export default function App() {
         const draftsPayload = await getDraftContextTargets();
 
         setMembers(membersPayload.members || []);
-        setChannels(channelsPayload.channels || []);
+        // Tipos de canal de voz/palco (discord.js ChannelType): 2 = GuildVoice, 13 = GuildStageVoice
+        setChannels((channelsPayload.channels || []).filter((ch) => ch.type !== 2 && ch.type !== 13));
         setPollTargets(pollsPayload.polls || []);
         setDraftTargets(draftsPayload.drafts || []);
       } catch {
