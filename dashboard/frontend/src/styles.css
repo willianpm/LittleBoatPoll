@@ -1,7 +1,37 @@
 :root {
   font-family: Inter, Arial, sans-serif;
-  color: #111827;
-  background: #f3f4f6;
+  color: #1a2540;
+  background: #dce6f5;
+
+  /* ── Color tokens ─────────────────────────── */
+  --bg: #dce6f5; /* fundo da página — azul-cinza médio */
+  --surface: #e8f0fa; /* cards — azul claro suave */
+  --surface-alt: #dfe8f8; /* thead, metas — tom ligeiramente mais fundo */
+  --border: #b8ccec; /* bordas principais */
+  --border-light: #ccdaf0; /* bordas suaves */
+
+  --text-primary: #1a2540; /* azul-marinho escuro */
+  --text-secondary: #3d5278;
+  --text-muted: #7390b8;
+
+  --accent: #1d4ed8; /* azul royal */
+  --accent-bg: #dbeafe; /* fundo de item selecionado */
+  --accent-text: #1e40af;
+  --accent-ring: rgba(29, 78, 216, 0.25);
+
+  --btn-secondary: #334e7a;
+  --btn-danger: #b52828;
+
+  --code-bg: #111c35; /* dark azulado */
+  --code-text: #c7d8f5;
+
+  --success-bg: #d2f0e4;
+  --success-text: #155a30;
+  --success-border: #6ecfa0;
+
+  --error-bg: #fde4e4;
+  --error-text: #8b1414;
+  --error-border: #f8a4a4;
 }
 
 * {
@@ -38,8 +68,8 @@ canvas {
 
 .card {
   min-width: 0;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
   border-radius: 10px;
   padding: 16px;
 }
@@ -72,9 +102,11 @@ button {
 input,
 textarea,
 select {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
 }
 
 textarea {
@@ -83,7 +115,7 @@ textarea {
 
 .button {
   border: none;
-  background: #2563eb;
+  background: var(--accent);
   color: #fff;
   padding: 10px 14px;
   border-radius: 8px;
@@ -96,11 +128,11 @@ textarea {
 }
 
 .button.secondary {
-  background: #374151;
+  background: var(--btn-secondary);
 }
 
 .button.danger {
-  background: #b91c1c;
+  background: var(--btn-danger);
 }
 
 .guild-cards {
@@ -110,9 +142,9 @@ textarea {
 }
 
 .guild-card {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   text-align: left;
   padding: 10px;
   display: flex;
@@ -122,13 +154,13 @@ textarea {
 }
 
 .guild-card.selected {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 
 .guild-card p {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -149,7 +181,7 @@ textarea {
 .channel-selector-row label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
@@ -158,17 +190,17 @@ textarea {
   min-width: 180px;
   max-width: 320px;
   padding: 6px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
-  background: #fff;
-  color: #111827;
+  background: var(--surface);
+  color: var(--text-primary);
 }
 
 .channel-selector-row select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 
 .command-groups {
@@ -191,22 +223,22 @@ textarea {
 }
 
 .command-option {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   overflow: hidden;
   contain: layout paint;
 }
 
 .command-option.selected {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-ring);
 }
 
 .command-item {
   border: none;
   border-radius: 0;
-  background: #fff;
+  background: var(--surface);
   text-align: left;
   padding: 10px;
   display: grid;
@@ -221,14 +253,14 @@ textarea {
 }
 
 .command-item span {
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
 
 .command-item.selected {
   border-color: transparent;
-  background: #eff6ff;
+  background: var(--accent-bg);
 }
 
 .command-item-header {
@@ -249,7 +281,7 @@ textarea {
 
 .command-panel.expanded {
   grid-template-rows: 1fr;
-  border-top-color: #e5e7eb;
+  border-top-color: var(--border-light);
 }
 
 .command-panel-inner {
@@ -284,14 +316,14 @@ textarea {
   flex-wrap: wrap;
   min-width: 0;
   gap: 8px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 10px;
 }
 
 .csv-guide {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-light);
   margin-top: 6px;
   padding-top: 12px;
   min-width: 0;
@@ -328,15 +360,15 @@ textarea {
 }
 
 .status-alert.success {
-  color: #166534;
-  background: #dcfce7;
-  border-color: #86efac;
+  color: var(--success-text);
+  background: var(--success-bg);
+  border-color: var(--success-border);
 }
 
 .status-alert.error {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fca5a5;
+  color: var(--error-text);
+  background: var(--error-bg);
+  border-color: var(--error-border);
 }
 
 .options-list {
@@ -352,8 +384,8 @@ textarea {
 }
 
 .output-block {
-  background: #111827;
-  color: #e5e7eb;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: 8px;
   padding: 12px;
   overflow-x: auto;
@@ -362,7 +394,7 @@ textarea {
 }
 
 .error-message {
-  color: #b91c1c;
+  color: var(--btn-danger);
   margin-top: 12px;
 }
 
@@ -371,7 +403,7 @@ textarea {
 .csv-info-text {
   margin: 0 0 10px;
   font-size: 14px;
-  color: #374151;
+  color: var(--text-primary);
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -383,7 +415,7 @@ textarea {
   overflow-y: auto;
   max-height: 320px;
   margin-bottom: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
 }
 
@@ -396,14 +428,14 @@ textarea {
 }
 
 .csv-format-table thead {
-  background: #f9fafb;
+  background: var(--surface-alt);
 }
 
 .csv-format-table th,
 .csv-format-table td {
   padding: 9px 12px;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -415,32 +447,32 @@ textarea {
 }
 
 .csv-format-table tbody tr:hover {
-  background: #f3f4f6;
+  background: var(--bg);
 }
 
 .csv-format-table .col-order {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-weight: 600;
   text-align: center;
   width: 32px;
 }
 
 .csv-format-table .col-type {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .col-name {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--accent-bg);
+  color: var(--accent-text);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 12px;
 }
 
 .csv-preview-block {
-  background: #111827;
-  color: #e5e7eb;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: 8px;
   padding: 12px 16px;
   max-width: 100%;
