@@ -245,7 +245,8 @@ export default function App() {
         const draftsPayload = await getDraftContextTargets();
 
         setMembers(membersPayload.members || []);
-        setChannels(channelsPayload.channels || []);
+        // Tipos de canal de voz/palco (discord.js ChannelType): 2 = GuildVoice, 13 = GuildStageVoice
+        setChannels((channelsPayload.channels || []).filter((ch) => ch.type !== 2 && ch.type !== 13));
         setPollTargets(pollsPayload.polls || []);
         setDraftTargets(draftsPayload.drafts || []);
       } catch {
@@ -568,8 +569,6 @@ export default function App() {
               <option value="editar">Editar</option>
               <option value="adicionar-opcao">Adicionar opção</option>
               <option value="remover-opcao">Remover opção</option>
-              <option value="listar">Listar</option>
-              <option value="exibir">Exibir</option>
               <option value="publicar">Publicar</option>
               <option value="deletar">Deletar</option>
             </select>
@@ -683,7 +682,6 @@ export default function App() {
             >
               <option value="adicionar">Adicionar</option>
               <option value="remover">Remover</option>
-              <option value="listar">Listar</option>
             </select>
           </label>
 
@@ -718,7 +716,6 @@ export default function App() {
             >
               <option value="adicionar">Adicionar</option>
               <option value="remover">Remover</option>
-              <option value="listar">Listar</option>
             </select>
           </label>
 

@@ -382,7 +382,10 @@ router.get('/guilds/:guildId/channels', validateDashboardToken, async (req, res)
     await guild.channels.fetch().catch(() => null);
 
     const channels = Array.from(guild.channels.cache.values())
-      .filter((channel) => channel && typeof channel.isTextBased === 'function' && channel.isTextBased())
+      .filter(
+        (channel) =>
+          channel && typeof channel.isTextBased === 'function' && channel.isTextBased() && !channel.isVoiceBased?.(),
+      )
       .map((channel) => ({
         id: channel.id,
         name: channel.name,
