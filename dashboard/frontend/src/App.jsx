@@ -574,7 +574,7 @@ export default function App() {
             </select>
           </label>
 
-          {rascunhoForm.subcommand !== 'listar' && (
+          {rascunhoForm.subcommand !== 'listar' && rascunhoForm.subcommand !== 'criar' && (
             <label>
               ID do rascunho
               <select
@@ -604,7 +604,8 @@ export default function App() {
 
           {(rascunhoForm.subcommand === 'criar' ||
             rascunhoForm.subcommand === 'editar' ||
-            rascunhoForm.subcommand === 'adicionar-opcao') && (
+            rascunhoForm.subcommand === 'adicionar-opcao' ||
+            rascunhoForm.subcommand === 'remover-opcao') && (
             <label>
               Opções (separadas por vírgula)
               <textarea
@@ -654,17 +655,6 @@ export default function App() {
                   </option>
                 ))}
               </select>
-            </label>
-          )}
-
-          {rascunhoForm.subcommand === 'remover-opcao' && (
-            <label>
-              Opção a remover (texto ou número)
-              <input
-                type="text"
-                value={rascunhoForm.opcao}
-                onChange={(event) => setRascunhoForm((prev) => ({ ...prev, opcao: event.target.value }))}
-              />
             </label>
           )}
         </div>
@@ -967,60 +957,62 @@ export default function App() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+      </section>
 
-            <div className="command-group-column">
-              <h3>Importação</h3>
-              <div className="command-list">
-                <div
-                  className={`command-option csv-option ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}
+      <section className="card">
+        <h2>Importação</h2>
+        <div className="command-groups">
+          <div className="command-group-column">
+            <div className="command-list">
+              <div className={`command-option csv-option ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}>
+                <button
+                  type="button"
+                  className={`command-item ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}
+                  onClick={() => toggleCommandPanel(CSV_COMMAND_KEY)}
+                  aria-expanded={expandedCommandKey === CSV_COMMAND_KEY}
                 >
-                  <button
-                    type="button"
-                    className={`command-item ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}
-                    onClick={() => toggleCommandPanel(CSV_COMMAND_KEY)}
-                    aria-expanded={expandedCommandKey === CSV_COMMAND_KEY}
-                  >
-                    <div className="command-item-header">
-                      <strong>Upload CSV</strong>
-                    </div>
-                    <span>Importa e cria enquetes a partir de arquivo CSV</span>
-                  </button>
+                  <div className="command-item-header">
+                    <strong>Upload CSV</strong>
+                  </div>
+                  <span>Importa e cria enquetes a partir de arquivo CSV</span>
+                </button>
 
-                  <div
-                    className={`command-panel ${expandedCommandKey === CSV_COMMAND_KEY ? 'expanded' : ''}`}
-                    aria-hidden={expandedCommandKey !== CSV_COMMAND_KEY}
-                  >
-                    <div className="command-panel-inner">
-                      <div className="command-panel-content form-grid">
-                        <form onSubmit={handleCsvSubmit} className="form-grid">
-                          <label>
-                            Arquivo CSV
-                            <input
-                              type="file"
-                              accept=".csv,text/csv"
-                              onChange={(event) => setCsvFile(event.target.files?.[0] || null)}
-                            />
-                          </label>
-                          <button className="button" type="submit" disabled={csvLoading}>
-                            {csvLoading ? 'Enviando...' : 'Enviar CSV'}
-                          </button>
-                        </form>
-                        <div className={`status-alert-slot ${csvFeedback ? 'visible' : ''}`}>
-                          {csvFeedback && (
-                            <div className={`status-alert ${csvFeedback === 'success' ? 'success' : 'error'}`}>
-                              {csvFeedback === 'success' ? 'Sucesso' : 'Falhou'}
-                            </div>
-                          )}
-                        </div>
-                        <CsvFormatGuide />
+                <div
+                  className={`command-panel ${expandedCommandKey === CSV_COMMAND_KEY ? 'expanded' : ''}`}
+                  aria-hidden={expandedCommandKey !== CSV_COMMAND_KEY}
+                >
+                  <div className="command-panel-inner">
+                    <div className="command-panel-content form-grid">
+                      <form onSubmit={handleCsvSubmit} className="form-grid">
+                        <label>
+                          Arquivo CSV
+                          <input
+                            type="file"
+                            accept=".csv,text/csv"
+                            onChange={(event) => setCsvFile(event.target.files?.[0] || null)}
+                          />
+                        </label>
+                        <button className="button" type="submit" disabled={csvLoading}>
+                          {csvLoading ? 'Enviando...' : 'Enviar CSV'}
+                        </button>
+                      </form>
+                      <div className={`status-alert-slot ${csvFeedback ? 'visible' : ''}`}>
+                        {csvFeedback && (
+                          <div className={`status-alert ${csvFeedback === 'success' ? 'success' : 'error'}`}>
+                            {csvFeedback === 'success' ? 'Sucesso' : 'Falhou'}
+                          </div>
+                        )}
                       </div>
+                      <CsvFormatGuide />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </section>
     </main>
   );

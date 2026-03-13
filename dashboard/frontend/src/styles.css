@@ -47,6 +47,7 @@ body,
 #root {
   width: 100%;
   max-width: 100%;
+  min-height: 100vh;
   overflow-x: hidden;
 }
 
@@ -172,24 +173,25 @@ textarea {
 
 .channel-selector-row {
   margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--surface-alt);
 }
 
 .channel-selector-row label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  white-space: nowrap;
 }
 
 .channel-selector-row select {
-  flex: 1;
-  min-width: 180px;
-  max-width: 320px;
-  padding: 6px 10px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
