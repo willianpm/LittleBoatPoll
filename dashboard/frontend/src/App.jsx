@@ -985,7 +985,7 @@ export default function App() {
                 >
                   <div className="command-panel-inner">
                     <div className="command-panel-content form-grid">
-                      <form onSubmit={handleCsvSubmit} className="form-grid">
+                      <form onSubmit={handleCsvSubmit} className="form-grid csv-upload-form">
                         <label>
                           Arquivo CSV
                           <input
@@ -994,7 +994,7 @@ export default function App() {
                             onChange={(event) => setCsvFile(event.target.files?.[0] || null)}
                           />
                         </label>
-                        <button className="button" type="submit" disabled={csvLoading}>
+                        <button className="button csv-submit-button" type="submit" disabled={csvLoading}>
                           {csvLoading ? 'Enviando...' : 'Enviar CSV'}
                         </button>
                       </form>
