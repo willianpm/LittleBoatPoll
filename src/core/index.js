@@ -773,8 +773,8 @@ client.on('messageReactionRemove', async (reaction, user) => {
 // =====================================
 
 const app = express();
-const port = config.PORT; // O Koyeb injeta a porta automaticamente
-const dashboardFrontendDist = path.join(__dirname, '../../dashboard/frontend/dist');
+const port = config.PORT;
+const dashboardFrontendDist = path.join(__dirname, '../../public');
 const isProductionEnv = config.APP_ENV === 'prod';
 const isSingleInstanceDashboard = process.env.DASHBOARD_SINGLE_INSTANCE === 'true';
 
