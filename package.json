@@ -33,7 +33,8 @@
     "lint": "eslint src/ tests/ --max-warnings=0",
     "lint:fix": "eslint src/ tests/ --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "keywords": [
     "discord",
