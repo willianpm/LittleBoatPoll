@@ -2,6 +2,7 @@ const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, Message
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { getLatestUserDraft } = require('../../utils/draft-handler');
 const { COLORS } = require('../../utils/constants');
+const logger = require('../../utils/logger');
 
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message),
@@ -38,7 +39,7 @@ module.exports = {
 
       // Carrega os rascunhos
       if (!client.draftPolls) {
-        console.error('client.draftPolls não inicializado!');
+        logger.error('client.draftPolls não inicializado!');
         return await interaction.reply({
           content: '❌ Erro interno: Sistema de rascunhos não inicializado. Por favor, contate um Criador.',
           flags: MessageFlags.Ephemeral,
@@ -64,7 +65,7 @@ module.exports = {
 
       // Validação extra de segurança
       if (!rascunho || !rascunho.opcoes || !Array.isArray(rascunho.opcoes)) {
-        console.error('Rascunho corrompido:', rascunho);
+        logger.error(`Rascunho corrompido: ${JSON.stringify(rascunho)}`);
         return await interaction.reply({
           content: '❌ Erro: Rascunho corrompido. Por favor, crie um novo rascunho.',
           flags: MessageFlags.Ephemeral,
@@ -134,10 +135,10 @@ module.exports = {
 
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
-      console.log(`Opção ${acao.toLowerCase()} via context menu: "${textoSelecionado}" (Rascunho: ${rascunho.id})`);
+      logger.info(`Opção ${acao.toLowerCase()} via context menu: "${textoSelecionado}" (Rascunho: ${rascunho.id})`);
     } catch (error) {
-      console.error('Erro ao processar toggle de opção (context menu):', error);
-      console.error('Stack trace:', error.stack);
+      logger.error(`Erro ao processar toggle de opção (context menu): ${error.message}`);
+      logger.error(`Stack trace: ${error.stack}`);
 
       try {
         if (!interaction.replied && !interaction.deferred) {
@@ -151,7 +152,7 @@ module.exports = {
           });
         }
       } catch (replyError) {
-        console.error('Erro ao enviar mensagem de erro:', replyError);
+        logger.error(`Erro ao enviar mensagem de erro: ${replyError.message}`);
       }
     }
   },

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { loadMensalistas, saveMensalistas } = require('../../utils/file-handler');
+const logger = require('../../utils/logger');
 
 /**
  * COMANDO: /mensalista
@@ -82,7 +83,7 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [addEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`Mensalista adicionado: ${usuario.username} (${usuario.id})`);
+        logger.info(`Mensalista adicionado: ${usuario.username} (${usuario.id})`);
       }
 
       // ====================================
@@ -117,7 +118,7 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`Mensalista removido: ${usuario.username} (${usuario.id})`);
+        logger.info(`Mensalista removido: ${usuario.username} (${usuario.id})`);
       }
 
       // ====================================
@@ -155,10 +156,10 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [listEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`Lista de mensalistas solicitada: ${mensalistasData.mensalistas.length} membros`);
+        logger.info(`Lista de mensalistas solicitada: ${mensalistasData.mensalistas.length} membros`);
       }
     } catch (error) {
-      console.error('Erro ao gerenciar mensalistas:', error);
+      logger.error(`Erro ao gerenciar mensalistas: ${error.message}`);
       await interaction.reply({
         content: '❌ Erro ao processar o comando!',
         flags: MessageFlags.Ephemeral,
