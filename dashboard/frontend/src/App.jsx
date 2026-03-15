@@ -237,21 +237,17 @@ export default function App() {
 
     setSelectedChannelId('');
 
-    async function loadGuildAuxData() {
+    async function loadGuildStaticData() {
       try {
-        const [membersPayload, channelsPayload, pollsPayload, mensalistasPayload, criadoresPayload] = await Promise.all(
-          [
-            getGuildMembers(selectedGuildId, memberQuery),
-            getGuildChannels(selectedGuildId),
-            getPollContextTargets(selectedGuildId),
-            getGroupMembers(selectedGuildId, 'mensalistas'),
-            getGroupMembers(selectedGuildId, 'criadores'),
-          ],
-        );
+        const [channelsPayload, pollsPayload, mensalistasPayload, criadoresPayload] = await Promise.all([
+          getGuildChannels(selectedGuildId),
+          getPollContextTargets(selectedGuildId),
+          getGroupMembers(selectedGuildId, 'mensalistas'),
+          getGroupMembers(selectedGuildId, 'criadores'),
+        ]);
 
         const draftsPayload = await getDraftContextTargets();
 
-        setMembers(membersPayload.members || []);
         // Tipos de canal de voz/palco (discord.js ChannelType): 2 = GuildVoice, 13 = GuildStageVoice
         setChannels((channelsPayload.channels || []).filter((ch) => ch.type !== 2 && ch.type !== 13));
         setPollTargets(pollsPayload.polls || []);
@@ -259,7 +255,6 @@ export default function App() {
         setMensalistaIds(mensalistasPayload.ids || []);
         setCriadorIds(criadoresPayload.ids || []);
       } catch {
-        setMembers([]);
         setChannels([]);
         setPollTargets([]);
         setDraftTargets([]);
@@ -268,7 +263,22 @@ export default function App() {
       }
     }
 
-    loadGuildAuxData();
+    loadGuildStaticData();
+  }, [selectedGuildId, session]);
+
+  useEffect(() => {
+    if (!selectedGuildId || !session) return;
+
+    async function loadMembers() {
+      try {
+        const membersPayload = await getGuildMembers(selectedGuildId, memberQuery);
+        setMembers(membersPayload.members || []);
+      } catch {
+        setMembers([]);
+      }
+    }
+
+    loadMembers();
   }, [selectedGuildId, session, memberQuery]);
 
   useEffect(() => {
@@ -521,19 +531,21 @@ export default function App() {
       if (command.name === 'mensalista' && options?.subcommand !== 'listar') {
         const userId = mensalistaForm.usuario;
         if (options.subcommand === 'adicionar') {
-          setMensalistaIds((prev) => [...prev, userId]);
+          setMensalistaIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
         } else if (options.subcommand === 'remover') {
           setMensalistaIds((prev) => prev.filter((id) => id !== userId));
         }
+        setMensalistaForm((prev) => ({ ...prev, usuario: '' }));
       }
 
       if (command.name === 'criador-de-enquete' && options?.subcommand !== 'listar') {
         const userId = criadorForm.usuario;
         if (options.subcommand === 'adicionar') {
-          setCriadorIds((prev) => [...prev, userId]);
+          setCriadorIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
         } else if (options.subcommand === 'remover') {
           setCriadorIds((prev) => prev.filter((id) => id !== userId));
         }
+        setCriadorForm((prev) => ({ ...prev, usuario: '' }));
       }
     } catch {
       setCommandFeedback(commandKey, 'error');

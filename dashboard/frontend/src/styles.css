@@ -100,7 +100,7 @@ canvas {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 400;
-  color: var(--muted, #888);
+  color: var(--text-muted);
   font-style: italic;
 }
 
