@@ -8,6 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
+const { createClient } = require('redis');
+const { RedisStore } = require('connect-redis');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('../utils/file-handler');
@@ -770,18 +772,21 @@ const app = express();
 const port = config.PORT;
 const dashboardFrontendDist = path.join(__dirname, '../../public');
 const isProductionEnv = config.APP_ENV === 'prod';
-const isSingleInstanceDashboard = process.env.DASHBOARD_SINGLE_INSTANCE === 'true';
+const redisUrl = process.env.REDIS_URL;
 
-if (isProductionEnv && !isSingleInstanceDashboard) {
-  logger.error('Sessão do dashboard está usando MemoryStore sem confirmação de instância única.');
-  logger.error('Defina DASHBOARD_SINGLE_INSTANCE=true para operação em instância única');
-  logger.error('ou configure um session store persistente (ex.: Redis) para produção.');
+let sessionStore;
+if (redisUrl) {
+  const redisClient = createClient({ url: redisUrl });
+  redisClient.on('error', (err) => logger.error('Redis client error:', err));
+  redisClient.connect().catch((err) => logger.error('Redis connection failed:', err));
+  sessionStore = new RedisStore({ client: redisClient, ttl: 12 * 60 * 60 });
+  logger.info('Sessão do dashboard utilizando RedisStore.');
+} else if (isProductionEnv) {
+  logger.error('Produção requer REDIS_URL configurado para persistência de sessão.');
+  logger.error('Defina REDIS_URL=redis://redis:6379 no arquivo .env');
   process.exit(1);
-}
-
-if (isProductionEnv && isSingleInstanceDashboard) {
-  logger.warn('Dashboard em produção com MemoryStore e DASHBOARD_SINGLE_INSTANCE=true.');
-  logger.warn('Sessões serão perdidas em restart e não há suporte a múltiplas instâncias.');
+} else {
+  logger.warn('REDIS_URL não configurado. Usando MemoryStore (apenas para desenvolvimento).');
 }
 
 if (isProductionEnv) {
@@ -795,6 +800,7 @@ app.use(
     secret: process.env.DASHBOARD_SESSION_SECRET || 'dashboard-dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
