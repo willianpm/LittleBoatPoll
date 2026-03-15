@@ -9,6 +9,7 @@ const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const config = require('../utils/config');
+const logger = require('../utils/logger');
 const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('../utils/file-handler');
 const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
 
@@ -17,8 +18,6 @@ config.logConfig();
 
 // Controle de verbosidade de logs (DEBUG=true para logs detalhados)
 const DEBUG_MODE = config.DEBUG_MODE;
-
-// ...existing code...
 
 // =====================================
 // FUNÇÕES AUXILIARES
@@ -30,7 +29,7 @@ function saveActivePolls() {
     const pollsArray = Array.from(client.activePolls.entries());
     saveJsonFile(config.DATA_FILES.activePolls, pollsArray);
   } catch (error) {
-    console.error('Erro ao salvar votações ativas:', error);
+    logger.error(`Erro ao salvar votações ativas: ${error.message}`);
   }
 }
 
@@ -40,7 +39,7 @@ function saveDraftPolls() {
     const draftsArray = Array.from(client.draftPolls.values());
     saveJsonFile(config.DATA_FILES.draftPolls, draftsArray);
   } catch (error) {
-    console.error('Erro ao salvar rascunhos:', error);
+    logger.error(`Erro ao salvar rascunhos: ${error.message}`);
   }
 }
 
@@ -78,7 +77,7 @@ async function replyInteractionExecutionError(interaction) {
       });
     }
   } catch (replyError) {
-    console.error('Não foi possível responder à interação:', replyError.message);
+    logger.error(`Não foi possível responder à interação: ${replyError.message}`);
   }
 }
 
@@ -86,14 +85,14 @@ async function executeInteractionCommand(interaction, commandTypeLabel, notFound
   const command = client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`${notFoundLabel}: ${interaction.commandName}`);
+    logger.error(`${notFoundLabel}: ${interaction.commandName}`);
     return;
   }
 
   try {
     await command.execute(interaction, client);
   } catch (error) {
-    console.error(`Erro ao executar o comando${commandTypeLabel}:`, error);
+    logger.error(`Erro ao executar o comando${commandTypeLabel}: ${error.message}`);
     await replyInteractionExecutionError(interaction);
   }
 }
@@ -136,9 +135,9 @@ async function bindMensalistasRolesOnStartup() {
   }
 
   if (vinculados > 0) {
-    console.log(`- Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
+    logger.info(`Binding automático de mensalista ativo em ${vinculados} servidor(es)`);
   } else {
-    console.log('Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
+    logger.info('Cargo "Mensalistas" não encontrado. Mantendo comportamento padrão de mensalistas internos.');
   }
 }
 
@@ -164,10 +163,10 @@ function loadActivePolls() {
       });
 
       client.activePolls = new Map(normalizedPolls);
-      console.log(`${normalizedPolls.length} votação(ões) ativa(s) carregada(s)`);
+      logger.info(`${normalizedPolls.length} votação(ões) ativa(s) carregada(s)`);
     }
   } catch (error) {
-    console.error('Erro ao carregar votações ativas:', error);
+    logger.error(`Erro ao carregar votações ativas: ${error.message}`);
   }
 }
 
@@ -182,7 +181,7 @@ function loadDraftPolls() {
     if (fs.existsSync(config.DATA_FILES.draftPolls)) {
       const draftsArray = loadJsonFile(config.DATA_FILES.draftPolls, []);
 
-      // Limpeza automática: remove rascunhos com mais de 60 dias
+      // Limpeza automática: remove rascunhos com mais de 90 dias
       const agora = Date.now();
       const LIMITE_MS = 90 * 24 * 60 * 60 * 1000; // 90 dias em ms
       let removidos = 0;
@@ -218,15 +217,12 @@ function loadDraftPolls() {
         // Salva imediatamente se houve remoção
         const draftsToSave = Array.from(client.draftPolls.values());
         saveJsonFile(config.DATA_FILES.draftPolls, draftsToSave);
-        console.log(`Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
-        console.info(
-          `[INFO] Foram removidos ${removidos} rascunho(s) antigo(s) de enquete (90+ dias) durante a inicialização.`,
-        );
+        logger.info(`Limpeza automática: ${removidos} rascunho(s) antigo(s) removido(s) (90+ dias)`);
       }
-      console.log(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
+      logger.info(`${normalizedDrafts.length} rascunho(s) de enquete(s) carregado(s)`);
     }
   } catch (error) {
-    console.error('Erro ao carregar rascunhos:', error);
+    logger.error(`Erro ao carregar rascunhos: ${error.message}`);
   }
 }
 
@@ -257,19 +253,19 @@ async function syncPollReactions() {
 
       // Se não tiver channelId, pula (enquetes antigas antes da atualização)
       if (!poll.channelId) {
-        console.log(`[${enquetesProcessadas}/${totalEnquetes}] "${poll.titulo}" sem channelId - pulando`);
+        logger.info(`[${enquetesProcessadas}/${totalEnquetes}] "${poll.titulo}" sem channelId - pulando`);
         continue;
       }
 
-      console.log(`Sincronizando "${poll.titulo}"... [${enquetesProcessadas}/${totalEnquetes}]`);
+      logger.info(`Sincronizando "${poll.titulo}"... [${enquetesProcessadas}/${totalEnquetes}]`);
 
       // Busca o canal
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`Erro ao buscar canal: ${err.message}`);
+        logger.error(`Erro ao buscar canal: ${err.message}`);
         return null;
       });
       if (!channel) {
-        console.log('Canal não encontrado - marcando para remoção');
+        logger.warn('Canal não encontrado - marcando para remoção');
         enquetesOrfas.push(messageId);
         continue;
       }
@@ -283,13 +279,13 @@ async function syncPollReactions() {
         const canRead = permissions?.has('ReadMessageHistory');
 
         if (!canRead) {
-          console.log(`Falta permissão "Ler Histórico" em ${channel.name}`);
+          logger.warn(`Falta permissão "Ler Histórico" em ${channel.name}`);
         }
       }
 
       // Tenta buscar a mensagem
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`Mensagem não encontrada: ${err.message}`);
+        logger.error(`Mensagem não encontrada: ${err.message}`);
         return null;
       });
       if (!message) {
@@ -364,15 +360,15 @@ async function syncPollReactions() {
       poll.votos = votosAtualizados;
 
       const totalVotos = Object.keys(votosAtualizados).length;
-      console.log(`  — ${totalVotos} voto(s) sincronizado(s)`);
+      logger.info(`${totalVotos} voto(s) sincronizado(s)`);
     } catch (error) {
-      console.error(`Erro ao sincronizar enquete "${poll.titulo}":`, error.message);
+      logger.error(`Erro ao sincronizar enquete "${poll.titulo}": ${error.message}`);
     }
   }
 
   // Remove enquetes órfãs (mensagens deletadas)
   if (enquetesOrfas.length > 0) {
-    console.log(`\nRemovendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    logger.info(`Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -385,9 +381,9 @@ async function syncPollReactions() {
   const enquetesAtivas = client.activePolls.size;
 
   if (enquetesAtivas > 0) {
-    console.log(`\n— ${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s\n`);
+    logger.info(`${enquetesAtivas} enquete(s) sincronizada(s) em ${elapsed}s`);
   } else {
-    console.log(`\n— Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)\n`);
+    logger.info(`Sincronização concluída em ${elapsed}s (nenhuma enquete ativa)`);
   }
 }
 
@@ -401,7 +397,7 @@ async function enforceVoteLimits() {
       if (!poll.channelId) continue;
 
       const channel = await client.channels.fetch(poll.channelId).catch((err) => {
-        console.log(`Erro ao buscar canal ${poll.channelId}: ${err.message}`);
+        logger.error(`Erro ao buscar canal ${poll.channelId}: ${err.message}`);
         return null;
       });
       if (!channel) {
@@ -418,17 +414,17 @@ async function enforceVoteLimits() {
         const canManage = permissions?.has('ManageMessages');
 
         if (!canView || !canRead || !canManage) {
-          console.log(
-            `Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões:\n` +
-              `   Ver Canal: ${canView ? 'Sim' : 'NÃO'}\n` +
-              `   Ler Histórico: ${canRead ? 'Sim' : 'NÃO'}\n` +
-              `   Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`,
+          logger.warn(
+            `Enquete "${poll.titulo}" no canal "${channel.name}" - Permissões: ` +
+              `Ver Canal: ${canView ? 'Sim' : 'NÃO'} | ` +
+              `Ler Histórico: ${canRead ? 'Sim' : 'NÃO'} | ` +
+              `Gerenciar Mensagens: ${canManage ? 'Sim' : 'NÃO'}`,
           );
         }
       }
 
       const message = await channel.messages.fetch(messageId).catch((err) => {
-        console.log(`Erro ao buscar mensagem ${messageId} no canal ${channel.name}: ${err.message} (${err.code})`);
+        logger.error(`Erro ao buscar mensagem ${messageId} no canal ${channel.name}: ${err.message} (${err.code})`);
         return null;
       });
       if (!message) {
@@ -456,7 +452,7 @@ async function enforceVoteLimits() {
 
         // Se excedeu o limite
         if (numVotos > poll.maxVotos) {
-          console.log(`"${poll.titulo}" - ${userVotes.usuario}: ${numVotos} votos (limite: ${poll.maxVotos})`);
+          logger.warn(`"${poll.titulo}" - ${userVotes.usuario}: ${numVotos} votos (limite: ${poll.maxVotos})`);
 
           // Determina quantos votos remover (remove os últimos adicionados)
           const votosParaRemover = numVotos - poll.maxVotos;
@@ -469,13 +465,11 @@ async function enforceVoteLimits() {
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
-                    console.error(
-                      'Sem permissão para remover reação de ' +
-                        userVotes.usuario +
-                        '. O bot precisa de "Gerenciar Mensagens"',
+                    logger.error(
+                      `Sem permissão para remover reação de ${userVotes.usuario}. O bot precisa de "Gerenciar Mensagens"`,
                     );
                   } else {
-                    console.error(`Erro ao remover reação: ${err.message}`);
+                    logger.error(`Erro ao remover reação: ${err.message}`);
                   }
                 });
               }
@@ -502,24 +496,24 @@ async function enforceVoteLimits() {
             }
 
             violacoesSencontradas++;
-            console.log(`Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario}`);
+            logger.info(`Removidos ${votosParaRemover} voto(s) em excesso de ${userVotes.usuario}`);
           } catch (error) {
-            console.error('Erro ao remover votos de ' + userVotes.usuario + ':', error.message);
+            logger.error(`Erro ao remover votos de ${userVotes.usuario}: ${error.message}`);
           }
         }
       }
 
       if (violacoesSencontradas > 0) {
-        console.log(`"${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados`);
+        logger.info(`"${poll.titulo}": ${violacoesSencontradas} usuário(s) tiveram votos ajustados`);
       }
     } catch (error) {
-      console.error('Erro ao verificar limites de "' + poll.titulo + '":', error.message);
+      logger.error(`Erro ao verificar limites de "${poll.titulo}": ${error.message}`);
     }
   }
 
   // Remove enquetes órfãs (se ainda não foram removidas na sincronização)
   if (enquetesOrfas.length > 0) {
-    console.log(`Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
+    logger.info(`Removendo ${enquetesOrfas.length} enquete(s) órfã(s)...`);
     for (const messageId of enquetesOrfas) {
       client.activePolls.delete(messageId);
     }
@@ -528,7 +522,7 @@ async function enforceVoteLimits() {
   // Salva após aplicar limites
   saveActivePolls();
   if (client.activePolls.size > 0) {
-    console.log('Verificação de limites concluída');
+    logger.info('Verificação de limites concluída');
   }
 }
 
@@ -555,7 +549,7 @@ function loadCommandsRecursively(dir) {
           commands.push({ file, command, path: filePath });
         }
       } catch (error) {
-        console.error(`Erro ao carregar comando ${file}:`, error);
+        logger.error(`Erro ao carregar comando ${file}: ${error.message}`);
       }
     }
   }
@@ -570,7 +564,7 @@ for (const { command } of loadedCommands) {
   client.commands.set(command.data.name, command);
 }
 
-console.log(`${client.commands.size} comando(s) carregado(s)`);
+logger.info(`${client.commands.size} comando(s) carregado(s)`);
 
 // =====================================
 // DEPLOY DE COMANDOS
@@ -593,8 +587,8 @@ async function deployCommands() {
     const clientId = config.CLIENT_ID;
 
     if (!clientId) {
-      console.error('   ERRO: CLIENT_ID não está definido no arquivo .env');
-      console.error('   Adicione: CLIENT_ID=seu_client_id_aqui');
+      logger.error('CLIENT_ID não está definido no arquivo .env');
+      logger.error('Adicione: CLIENT_ID=seu_client_id_aqui');
       return false;
     }
 
@@ -605,7 +599,7 @@ async function deployCommands() {
 
     return true;
   } catch (error) {
-    console.error('Erro ao registrar comandos:', error);
+    logger.error(`Erro ao registrar comandos: ${error.message}`);
     return false;
   }
 }
@@ -616,23 +610,23 @@ async function deployCommands() {
 
 // Evento: Bot conectado e pronto
 client.once('clientReady', async () => {
-  console.log(`${client.user.tag} está ONLINE\n`);
+  logger.info(`${client.user.tag} está ONLINE`);
   client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 
   await bindMensalistasRolesOnStartup();
 
   // Deploy de comandos se requisitado via variável de ambiente ou flag
   if (config.DEPLOY) {
-    console.log('Registrando comandos...');
+    logger.info('Registrando comandos...');
     const deploySuccess = await deployCommands();
     if (deploySuccess) {
-      console.log('Deploy concluído com sucesso\n');
+      logger.info('Deploy concluído com sucesso');
       // Se foi deployment via linha de comando, sai após sucesso
       if (process.argv.includes('--deploy')) {
         process.exit(0);
       }
     } else {
-      console.error('Deploy falhou\n');
+      logger.error('Deploy falhou');
       if (process.argv.includes('--deploy')) {
         process.exit(1);
       }
@@ -728,7 +722,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     saveActivePolls();
   } catch (error) {
     if (DEBUG_MODE) {
-      console.error('Erro ao processar reação:', error);
+      logger.error(`Erro ao processar reação: ${error.message}`);
     }
   }
 });
@@ -763,7 +757,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     saveActivePolls();
   } catch (error) {
     if (DEBUG_MODE) {
-      console.error('Erro ao remover reação:', error);
+      logger.error(`Erro ao remover reação: ${error.message}`);
     }
   }
 });
@@ -773,21 +767,21 @@ client.on('messageReactionRemove', async (reaction, user) => {
 // =====================================
 
 const app = express();
-const port = config.PORT; // O Koyeb injeta a porta automaticamente
-const dashboardFrontendDist = path.join(__dirname, '../../dashboard/frontend/dist');
+const port = config.PORT;
+const dashboardFrontendDist = path.join(__dirname, '../../public');
 const isProductionEnv = config.APP_ENV === 'prod';
 const isSingleInstanceDashboard = process.env.DASHBOARD_SINGLE_INSTANCE === 'true';
 
 if (isProductionEnv && !isSingleInstanceDashboard) {
-  console.error('ERRO: sessão do dashboard está usando MemoryStore sem confirmação de instância única.');
-  console.error('Defina DASHBOARD_SINGLE_INSTANCE=true para operação em instância única');
-  console.error('ou configure um session store persistente (ex.: Redis) para produção.');
+  logger.error('Sessão do dashboard está usando MemoryStore sem confirmação de instância única.');
+  logger.error('Defina DASHBOARD_SINGLE_INSTANCE=true para operação em instância única');
+  logger.error('ou configure um session store persistente (ex.: Redis) para produção.');
   process.exit(1);
 }
 
 if (isProductionEnv && isSingleInstanceDashboard) {
-  console.warn('ATENÇÃO: dashboard em produção com MemoryStore e DASHBOARD_SINGLE_INSTANCE=true.');
-  console.warn('Sessões serão perdidas em restart e não há suporte a múltiplas instâncias.');
+  logger.warn('Dashboard em produção com MemoryStore e DASHBOARD_SINGLE_INSTANCE=true.');
+  logger.warn('Sessões serão perdidas em restart e não há suporte a múltiplas instâncias.');
 }
 
 if (isProductionEnv) {
@@ -874,6 +868,6 @@ client.once('clientReady', async () => {
 
   // Inicia o keep-alive e exibe logs finais
   startKeepAlive();
-  originalConsoleLog(`Keep-alive rodando na porta ${port}`);
-  originalConsoleLog(`${client.user.tag} está ONLINE`);
+  logger.info(`Keep-alive rodando na porta ${port}`);
+  logger.info(`${client.user.tag} está ONLINE`);
 });

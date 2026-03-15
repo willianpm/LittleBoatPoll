@@ -1,4 +1,5 @@
 const path = require('path');
+const logger = require('./logger');
 
 /**
  * Configuração centralizada para suporte multi-ambiente
@@ -11,7 +12,7 @@ const APP_ENV = process.env.APP_ENV || 'prod';
 // Valida ambiente
 const VALID_ENVS = ['prod', 'staging'];
 if (!VALID_ENVS.includes(APP_ENV)) {
-  console.error(`ERRO: APP_ENV inválido: "${APP_ENV}". Valores aceitos: ${VALID_ENVS.join(', ')}`);
+  logger.error(`ERRO: APP_ENV inválido: "${APP_ENV}". Valores aceitos: ${VALID_ENVS.join(', ')}`);
   process.exit(1);
 }
 
@@ -26,12 +27,12 @@ const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 
 if (!TOKEN) {
-  console.error('ERRO: TOKEN não está definido no .env');
+  logger.error('ERRO: TOKEN não está definido no .env');
   process.exit(1);
 }
 
 if (!CLIENT_ID) {
-  console.error('ERRO: CLIENT_ID não está definido no .env');
+  logger.error('ERRO: CLIENT_ID não está definido no .env');
   process.exit(1);
 }
 
@@ -76,15 +77,14 @@ function getConfig() {
  * Exibe resumo da configuração no console
  */
 function logConfig() {
-  console.log('╔════════════════════════════════════════╗');
-  console.log('║    Configuração do Little Boat Poll    ║');
-  console.log('╚════════════════════════════════════════╝');
-  console.log(`Ambiente:     ${APP_ENV.toUpperCase()}`);
-  console.log(`Instância:    ${INSTANCE_ID}`);
-  console.log(`Debug:        ${DEBUG_MODE ? 'Ativado' : 'Desativado'}`);
-  console.log(`Data Dir:     ${DATA_DIR}`);
-  console.log(`Deploy:       ${DEPLOY ? 'Sim' : 'Não'}`);
-  console.log('');
+  logger.info('----------------------------------------');
+  logger.info(`LittleBoatPoll v${logger.version} starting`);
+  logger.info(`Ambiente:  ${APP_ENV.toUpperCase()}`);
+  logger.info(`Instância: ${INSTANCE_ID}`);
+  logger.info(`Debug:     ${DEBUG_MODE ? 'Ativado' : 'Desativado'}`);
+  logger.info(`Data Dir:  ${DATA_DIR}`);
+  logger.info(`Deploy:    ${DEPLOY ? 'Sim' : 'Não'}`);
+  logger.info('----------------------------------------');
 }
 
 module.exports = {

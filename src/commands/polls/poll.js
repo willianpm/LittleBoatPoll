@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { validatePollOptions, parseOptions } = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
+const logger = require('../../utils/logger');
 
 /**
  * COMANDO: /enquete
@@ -141,12 +142,12 @@ module.exports = {
       // Salva as votações ativas em arquivo
       client.saveActivePolls();
 
-      console.log(
+      logger.info(
         `Enquete criada: ${titulo} | ${opcoes.length} opções | Max ${maxVotos} votos | ` +
           `Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`,
       );
     } catch (error) {
-      console.error('Erro ao criar enquete:', error);
+      logger.error(`Erro ao criar enquete: ${error.message}`);
       await interaction.editReply({
         content: '❌ Erro ao criar a enquete!',
       });
