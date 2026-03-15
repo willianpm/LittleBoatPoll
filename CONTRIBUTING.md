@@ -4,14 +4,14 @@ This file describes the required, technical steps for contributing to LittleBoat
 
 ## Preconditions
 
-- Docker and Redis are required (see docs/development/SETUP.md).
+- Docker and Redis are required (see [docs/development/SETUP.md](docs/development/SETUP.md)).
 - All development and tests run inside the project containers.
 - Pre-commit hooks: Husky + commitlint (Conventional Commits) are enforced.
 
 ## Quick start
 
-1. Read: docs/development/SETUP.md (environment and container commands).
-2. Sync develop and create a feature branch (see docs/development/GIT-WORKFLOW.md).
+1. Read: [docs/development/SETUP.md](docs/development/SETUP.md) (environment and container commands).
+2. Sync develop and create a feature branch (see [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)).
 3. Implement changes, add tests, run local checks inside containers.
 4. Push branch and open a PR targeting `develop` with a concise description.
 
@@ -57,7 +57,7 @@ npm run format:check
 
 ## Docker / Runtime notes
 
-- Use `docker-compose up --build` for the development environment (see docs/development/SETUP.md).
+- Use `docker-compose up --build` for the development environment (see [docs/development/SETUP.md](docs/development/SETUP.md)).
 - Execute runtime and test commands inside the project containers unless otherwise noted.
 
 ### Common Docker workflows
@@ -107,10 +107,10 @@ When opening an issue include:
 
 ## Where to find more details
 
-- Setup and container rules: docs/development/SETUP.md
-- Branching and PR expectations: docs/development/GIT-WORKFLOW.md
-- Project overview and environment variables: README.md
-- Release process and changelog: CHANGELOG.md
+- Setup and container rules: [docs/development/SETUP.md](docs/development/SETUP.md)
+- Branching and PR expectations: [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
+- Project overview and environment variables: [README.md](README.md)
+- Release process and changelog: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
