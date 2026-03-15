@@ -20,6 +20,9 @@ rules:
           - 'test:'
           - 'refactor:'
           - 'perf:'
+          - 'ci:'
+          - 'chore:'
+          - 'style:'
       - merge-method: squash
 
   - name: Proteção main
@@ -45,5 +48,7 @@ rules:
           - 'bugfix/*'
           - 'docs/*'
           - 'refactor/*'
+          - 'ci/*'
+          - 'chore/*'
 
 # Observação: Outras regras (labels, milestones, reviewers, etc.) são gerenciadas pelo GitHub e não entram neste YAML.
