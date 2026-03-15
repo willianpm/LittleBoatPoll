@@ -22,7 +22,7 @@ Command:
 titulo: "Which Machado de Assis book should we read next?"
 opcoes: "Memorias Postumas de Bras Cubas, Dom Casmurro, Quincas Borba, Esaú e Jacó"
 max_votos: 1
-peso_mensalista: Nao
+peso_mensalista: No
 ```
 
 Expected result:
@@ -55,7 +55,7 @@ Change vote limit and mensalista weighting:
 /rascunho editar
 id: A1B2C3D4
 max_votos: 2
-peso_mensalista: Sim
+peso_mensalista: Yes
 ```
 
 Expected result:

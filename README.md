@@ -20,8 +20,8 @@ Main components:
 2. Docker is required. Run:
    - `docker-compose up --build`
 3. Configure `.env` (see below).
-4. All development and tests ocorrem dentro dos containers.
-5. Contribuição: veja [CONTRIBUTING.md](CONTRIBUTING.md) e [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md).
+4. All development and tests occur inside the containers.
+5. Contributing: see [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md).
 
 ## Requirements
 
@@ -57,6 +57,8 @@ docker-compose up --build
 ```
 
 Redis is included in the compose setup.
+
+For advanced Docker usage and custom build/run commands, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Logger
 
