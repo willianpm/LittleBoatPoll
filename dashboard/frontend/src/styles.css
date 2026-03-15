@@ -4,25 +4,34 @@
   background: #dce6f5;
 
   /* ── Color tokens ─────────────────────────── */
-  --bg: #dce6f5; /* fundo da página — azul-cinza médio */
-  --surface: #e8f0fa; /* cards — azul claro suave */
-  --surface-alt: #dfe8f8; /* thead, metas — tom ligeiramente mais fundo */
-  --border: #b8ccec; /* bordas principais */
-  --border-light: #ccdaf0; /* bordas suaves */
+  --bg: #dce6f5;
+  /* fundo da página — azul-cinza médio */
+  --surface: #e8f0fa;
+  /* cards — azul claro suave */
+  --surface-alt: #dfe8f8;
+  /* thead, metas — tom ligeiramente mais fundo */
+  --border: #b8ccec;
+  /* bordas principais */
+  --border-light: #ccdaf0;
+  /* bordas suaves */
 
-  --text-primary: #1a2540; /* azul-marinho escuro */
+  --text-primary: #1a2540;
+  /* azul-marinho escuro */
   --text-secondary: #3d5278;
   --text-muted: #7390b8;
 
-  --accent: #1d4ed8; /* azul royal */
-  --accent-bg: #dbeafe; /* fundo de item selecionado */
+  --accent: #1d4ed8;
+  /* azul royal */
+  --accent-bg: #dbeafe;
+  /* fundo de item selecionado */
   --accent-text: #1e40af;
   --accent-ring: rgba(29, 78, 216, 0.25);
 
   --btn-secondary: #334e7a;
   --btn-danger: #b52828;
 
-  --code-bg: #111c35; /* dark azulado */
+  --code-bg: #111c35;
+  /* dark azulado */
   --code-text: #c7d8f5;
 
   --success-bg: #d2f0e4;
@@ -85,6 +94,14 @@ canvas {
 .form-grid {
   display: grid;
   gap: 12px;
+}
+
+.form-empty-state {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted, #888);
+  font-style: italic;
 }
 
 label {

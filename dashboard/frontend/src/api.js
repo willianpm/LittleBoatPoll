@@ -59,6 +59,15 @@ export async function getGuildChannels(guildId) {
   return parseApiResponse(response);
 }
 
+export async function getGroupMembers(guildId, group) {
+  const params = new URLSearchParams({ group });
+  const response = await fetch(
+    `${API_BASE}/auth/guilds/${encodeURIComponent(guildId)}/group-members?${params.toString()}`,
+    { method: 'GET', credentials: 'include' },
+  );
+  return parseApiResponse(response);
+}
+
 export async function getCommandCatalog() {
   const response = await fetch(`${API_BASE}/commands/catalog`, {
     method: 'GET',

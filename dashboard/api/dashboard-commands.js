@@ -140,7 +140,6 @@ function isCommandErrorPayload(payload) {
   if (!message) return false;
 
   return (
-    message.includes('❌') ||
     message.startsWith('erro') ||
     message.includes(' erro') ||
     message.includes('não tem permissão') ||
