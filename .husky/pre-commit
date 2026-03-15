@@ -1,3 +1,6 @@
-npm run format
-npm run lint
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
 npm test
+npm run format:check
+npm run lint

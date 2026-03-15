@@ -25,5 +25,5 @@ COPY . .
 RUN mkdir -p public
 COPY --from=frontend-builder /app/dashboard/frontend/dist/ ./public/
 
-EXPOSE 8001
+EXPOSE 8000
 CMD ["node", "src/core/index.js"]
