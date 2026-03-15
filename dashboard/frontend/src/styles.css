@@ -1,46 +1,38 @@
 :root {
   font-family: Inter, Arial, sans-serif;
-  color: #1a2540;
-  background: #dce6f5;
+  color: #e2e8f0;
+  background: #0d1117;
 
   /* ── Color tokens ─────────────────────────── */
-  --bg: #dce6f5;
-  /* fundo da página — azul-cinza médio */
-  --surface: #e8f0fa;
-  /* cards — azul claro suave */
-  --surface-alt: #dfe8f8;
-  /* thead, metas — tom ligeiramente mais fundo */
-  --border: #b8ccec;
-  /* bordas principais */
-  --border-light: #ccdaf0;
-  /* bordas suaves */
+  --bg: #0d1117;
+  --surface: #161b27;
+  --surface-alt: #1c2333;
+  --border: #2a3347;
+  --border-light: #222d42;
 
-  --text-primary: #1a2540;
-  /* azul-marinho escuro */
-  --text-secondary: #3d5278;
-  --text-muted: #7390b8;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 
-  --accent: #1d4ed8;
-  /* azul royal */
-  --accent-bg: #dbeafe;
-  /* fundo de item selecionado */
-  --accent-text: #1e40af;
-  --accent-ring: rgba(29, 78, 216, 0.25);
+  --accent: #00b4d8;
+  /* ciano brilhante */
+  --accent-bg: #0a2535;
+  --accent-text: #38bdf8;
+  --accent-ring: rgba(0, 180, 216, 0.25);
 
-  --btn-secondary: #334e7a;
-  --btn-danger: #b52828;
+  --btn-secondary: #1e2d45;
+  --btn-danger: #ef4444;
 
-  --code-bg: #111c35;
-  /* dark azulado */
-  --code-text: #c7d8f5;
+  --code-bg: #090e18;
+  --code-text: #7dd3fc;
 
-  --success-bg: #d2f0e4;
-  --success-text: #155a30;
-  --success-border: #6ecfa0;
+  --success-bg: #052e16;
+  --success-text: #4ade80;
+  --success-border: #166534;
 
-  --error-bg: #fde4e4;
-  --error-text: #8b1414;
-  --error-border: #f8a4a4;
+  --error-bg: #1f0707;
+  --error-text: #f87171;
+  --error-border: #7f1d1d;
 }
 
 * {
@@ -678,4 +670,94 @@ textarea {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ── Channel selector warning ─────────────────────────── */
+.channel-selector-row.channel-required {
+  border-color: #00b4d8;
+  background: #0a2535;
+}
+
+.channel-warning-icon {
+  margin-right: 6px;
+}
+
+.channel-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #38bdf8;
+  font-weight: 500;
+}
+
+.channel-required-banner {
+  background: #0a2535;
+  border: 1px solid #00b4d8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #38bdf8;
+  margin-bottom: 16px;
+}
+
+.channel-selector-row.channel-required label {
+  color: #38bdf8;
+}
+
+.commands-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Tema escuro refinado ─────────────────────────── */
+.card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.guild-card:hover,
+.command-item:hover {
+  background: var(--surface-alt);
+  transition: background 0.15s ease;
+}
+
+input,
+textarea,
+select {
+  background: var(--surface-alt);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.button {
+  background: var(--accent);
+  color: #0d1117;
+  font-weight: 600;
+}
+
+.button.secondary {
+  background: var(--btn-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+/* ── Correções de contraste ─────────────────────────── */
+.command-item strong {
+  color: var(--text-primary);
+}
+
+.command-item span {
+  color: var(--text-secondary);
+}
+
+.command-group-column h3 {
+  color: var(--text-primary);
+}
+
+.guild-card strong {
+  color: var(--text-primary);
+}
+
+.guild-card p {
+  color: var(--text-secondary);
 }

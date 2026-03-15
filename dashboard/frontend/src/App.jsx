@@ -995,8 +995,11 @@ export default function App() {
             </div>
 
             {selectedGuildId && (
-              <div className="channel-selector-row">
-                <label htmlFor="global-channel-select">Canal de publicação</label>
+              <div className={`channel-selector-row ${!selectedChannelId ? 'channel-required' : ''}`}>
+                <label htmlFor="global-channel-select">
+                  {!selectedChannelId && <span className="channel-warning-icon">⚠️</span>}
+                  Canal de publicação
+                </label>
                 <select
                   id="global-channel-select"
                   value={selectedChannelId}
@@ -1009,6 +1012,9 @@ export default function App() {
                     </option>
                   ))}
                 </select>
+                {!selectedChannelId && (
+                  <p className="channel-hint">Selecione um canal antes de executar comandos de slash.</p>
+                )}
               </div>
             )}
           </>
@@ -1016,11 +1022,15 @@ export default function App() {
       </section>
 
       <section className="card">
-        <h2>Comandos do bot</h2>
+        {!selectedChannelId && (
+          <div className="channel-required-banner">
+            ⚠️ Selecione um canal de publicação acima para usar os comandos de slash.
+          </div>
+        )}
         {catalogLoading ? (
           <p>Carregando catálogo de comandos...</p>
         ) : (
-          <div className="command-groups">
+          <div className={`command-groups ${!selectedChannelId ? 'commands-disabled' : ''}`}>
             <div className="command-group-column">
               <h3>Comandos de Enquete</h3>
               <div className="command-list">
