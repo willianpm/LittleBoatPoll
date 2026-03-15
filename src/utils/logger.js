@@ -1,7 +1,5 @@
 const packageJson = require('../../package.json');
 
-const LEVELS = { INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' };
-
 function timestamp() {
   return new Date().toLocaleString('pt-BR', {
     timeZone: 'America/Sao_Paulo',
@@ -17,12 +15,23 @@ function timestamp() {
 
 function log(level, message) {
   const line = `${timestamp()} [${level}] ${message}`;
-  console.log(line);
+
+  if (level === 'WARN') {
+    console.warn(line);
+  } else if (level === 'ERROR') {
+    console.error(line);
+  } else {
+    console.log(line);
+  }
 }
 
 module.exports = {
   version: packageJson.version,
-  info: (msg) => log(LEVELS.INFO, msg),
-  warn: (msg) => log(LEVELS.WARN, msg),
-  error: (msg) => log(LEVELS.ERROR, msg),
+  info: (msg) => log('INFO', msg),
+  warn: (msg) => log('WARN', msg),
+  error: (msg, err) => {
+    log('ERROR', msg);
+    if (err?.stack) log('ERROR', err.stack);
+  },
+  separator: () => console.log(`${timestamp()} [INFO] ----------------------------------------`),
 };

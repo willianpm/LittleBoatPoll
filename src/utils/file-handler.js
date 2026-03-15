@@ -46,7 +46,7 @@ function loadJsonFile(filePath, defaultValue = {}) {
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
   } catch (error) {
-    logger.error(`Erro ao carregar ${filePath}: ${error.message}`);
+    logger.error(`Erro ao carregar ${filePath}: ${error.message}`, error);
   }
   return defaultValue;
 }
@@ -64,7 +64,7 @@ function saveJsonFile(filePath, data) {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
-    logger.error(`Erro ao salvar ${filePath}: ${error.message}`);
+    logger.error(`Erro ao salvar ${filePath}: ${error.message}`, error);
     return false;
   }
 }
