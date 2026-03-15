@@ -69,7 +69,13 @@
     "eslint": "^8.56.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.1.0",
     "supertest": "^7.2.2"
+  },
+  "lint-staged": {
+    "{src,tests,dashboard/api,dashboard/tests}/**/*.js": ["prettier --write", "eslint --fix --max-warnings=0"],
+    "dashboard/frontend/**/*.{js,jsx}": ["prettier --write"],
+    "**/*.{json,css,md}": ["prettier --write"]
   }
 }
