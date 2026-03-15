@@ -96,14 +96,6 @@ canvas {
   gap: 12px;
 }
 
-.form-empty-state {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
 label {
   display: grid;
   gap: 6px;

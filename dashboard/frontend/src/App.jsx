@@ -708,10 +708,15 @@ export default function App() {
           ? members.filter((m) => !mensalistaIds.includes(m.id))
           : members.filter((m) => mensalistaIds.includes(m.id));
 
-      const emptyMessage =
-        mensalistaForm.subcommand === 'adicionar'
-          ? 'Todos os usuários já fazem parte deste grupo.'
-          : 'Não há usuários neste grupo para remover.';
+      const isLoadingMembers = members.length === 0;
+      const noAvailableMembers = !isLoadingMembers && availableMembers.length === 0;
+      const placeholderText = isLoadingMembers
+        ? 'Carregando membros...'
+        : noAvailableMembers
+          ? mensalistaForm.subcommand === 'adicionar'
+            ? 'Nenhum usuário disponível para adicionar.'
+            : 'Nenhum usuário disponível para remover.'
+          : 'Selecione um usuário';
 
       return (
         <div className="form-grid">
@@ -731,21 +736,20 @@ export default function App() {
           {mensalistaForm.subcommand !== 'listar' && (
             <label>
               Usuário
-              {availableMembers.length === 0 ? (
-                <p className="form-empty-state">{emptyMessage}</p>
-              ) : (
-                <select
-                  value={mensalistaForm.usuario}
-                  onChange={(event) => setMensalistaForm((prev) => ({ ...prev, usuario: event.target.value }))}
-                >
-                  <option value="">Selecione um usuário</option>
-                  {availableMembers.map((member) => (
+              <select
+                value={mensalistaForm.usuario}
+                onChange={(event) => setMensalistaForm((prev) => ({ ...prev, usuario: event.target.value }))}
+                disabled={isLoadingMembers || noAvailableMembers}
+              >
+                <option value="">{placeholderText}</option>
+                {!isLoadingMembers &&
+                  !noAvailableMembers &&
+                  availableMembers.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.displayName} ({member.username})
                     </option>
                   ))}
-                </select>
-              )}
+              </select>
             </label>
           )}
         </div>
@@ -758,10 +762,15 @@ export default function App() {
           ? members.filter((m) => !criadorIds.includes(m.id))
           : members.filter((m) => criadorIds.includes(m.id));
 
-      const emptyMessage =
-        criadorForm.subcommand === 'adicionar'
-          ? 'Todos os usuários já fazem parte deste grupo.'
-          : 'Não há usuários neste grupo para remover.';
+      const isLoadingMembers = members.length === 0;
+      const noAvailableMembers = !isLoadingMembers && availableMembers.length === 0;
+      const placeholderText = isLoadingMembers
+        ? 'Carregando membros...'
+        : noAvailableMembers
+          ? criadorForm.subcommand === 'adicionar'
+            ? 'Nenhum usuário disponível para adicionar.'
+            : 'Nenhum usuário disponível para remover.'
+          : 'Selecione um usuário';
 
       return (
         <div className="form-grid">
@@ -779,21 +788,20 @@ export default function App() {
           {criadorForm.subcommand !== 'listar' && (
             <label>
               Usuário
-              {availableMembers.length === 0 ? (
-                <p className="form-empty-state">{emptyMessage}</p>
-              ) : (
-                <select
-                  value={criadorForm.usuario}
-                  onChange={(event) => setCriadorForm((prev) => ({ ...prev, usuario: event.target.value }))}
-                >
-                  <option value="">Selecione um usuário</option>
-                  {availableMembers.map((member) => (
+              <select
+                value={criadorForm.usuario}
+                onChange={(event) => setCriadorForm((prev) => ({ ...prev, usuario: event.target.value }))}
+                disabled={isLoadingMembers || noAvailableMembers}
+              >
+                <option value="">{placeholderText}</option>
+                {!isLoadingMembers &&
+                  !noAvailableMembers &&
+                  availableMembers.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.displayName} ({member.username})
                     </option>
                   ))}
-                </select>
-              )}
+              </select>
             </label>
           )}
         </div>
