@@ -11,6 +11,11 @@ jest.mock('../../src/utils/permissions', () => ({
   isCriador: jest.fn(() => true),
 }));
 
+jest.mock('../../src/utils/file-handler', () => ({
+  loadMensalistas: jest.fn(() => ({ mensalistas: [] })),
+  loadCriadores: jest.fn(() => ({ criadores: [] })),
+}));
+
 const { client } = require('../../src/core/client');
 const { authRouter } = require('../api/auth');
 
