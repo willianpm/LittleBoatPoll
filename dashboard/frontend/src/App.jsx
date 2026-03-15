@@ -1022,7 +1022,6 @@ export default function App() {
       </section>
 
       <section className="card">
-        <h2>Comandos do bot</h2>
         {!selectedChannelId && (
           <div className="channel-required-banner">
             ⚠️ Selecione um canal de publicação acima para usar os comandos de slash.
