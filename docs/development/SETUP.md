@@ -1,12 +1,11 @@
 # Local Setup
 
-This guide covers the minimum local setup for developing LittleBoatPoll.
+This guide covers the required containerized setup for developing and running LittleBoatPoll. Local execution without Docker is not supported.
 
 ## Prerequisites
 
-- Node.js 22 or newer
-- npm
-- Git
+- Docker (required for all environments)
+- Redis (required for persistent dashboard sessions)
 - Access to the Discord Developer Portal
 
 ## 1. Clone the Repository
@@ -18,16 +17,13 @@ cd LittleBoatPoll
 
 ## 2. Install Dependencies
 
-```bash
-npm install
-```
-
-If the installation fails because of a corrupted cache:
+Build and start all services with:
 
 ```bash
-npm cache clean --force
-npm install
+docker-compose up --build
 ```
+
+This will start the bot, dashboard, and Redis service for session persistence. All development and testing must be performed inside the containers.
 
 ## 3. Configure Environment Variables
 
@@ -54,7 +50,7 @@ DEPLOY=false
 PORT=8000
 ```
 
-If you want to use the dashboard locally, also configure:
+Dashboard configuration:
 
 ```env
 DISCORD_CLIENT_ID=your_oauth_client_id
@@ -66,12 +62,27 @@ DASHBOARD_FRONTEND_URL=http://localhost:5173
 DASHBOARD_SINGLE_INSTANCE=true
 ```
 
+For persistent session management in production, Redis is required:
+
+```env
+REDIS_URL=redis://localhost:6379
+```
+
 When using `APP_ENV=prod` with the default dashboard session setup, `DASHBOARD_SINGLE_INSTANCE=true` is required.
-For production with restarts and/or multiple instances, configure a persistent session store (for example Redis).
+For production with restarts and/or multiple instances, configure a persistent session store (Redis).
 
 For staging, copy `.env.staging.example` to `.env.staging` and use different credentials.
 
 Do not commit real tokens or secrets.
+
+Pre-commit hooks are enforced via Husky and commitlint. Code style is managed by Prettier and ESLint.
+To enable hooks after cloning:
+
+```bash
+npx husky install
+```
+
+If you encounter issues with commit messages, ensure your commits follow the conventional format enforced by commitlint.
 
 ## 4. Verify the Setup
 
@@ -87,29 +98,18 @@ npm run test:dashboard
 
 ## 5. Start the Application
 
-Bot runtime:
+All commands must be executed inside the Docker containers. Use `docker-compose` for build, start, and test operations.
 
 ```bash
-npm start
+docker-compose up --build
+docker-compose exec bot npm test
+docker-compose exec dashboard npm run test:dashboard
 ```
 
-Register slash and context commands explicitly:
+For frontend development, use the dashboard container:
 
 ```bash
-npm run deploy
-```
-
-Staging runtime:
-
-```bash
-npm run start:staging
-```
-
-Dashboard frontend in development:
-
-```bash
-npm run dashboard:frontend:install
-npm run dashboard:frontend:dev
+docker-compose exec dashboard npm run dashboard:frontend:dev
 ```
 
 ## Common Commands

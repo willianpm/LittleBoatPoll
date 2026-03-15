@@ -1,25 +1,27 @@
 # Architecture
 
-This document explains the current runtime structure of LittleBoatPoll.
+This document explains the current runtime structure of LittleBoatPoll, including containerized deployment, centralized logging, and persistent session management with Redis.
 
 ## High-Level View
 
 ```text
 Discord interactions and reactions
-        |
-        v
+  |
+  v
 src/core/index.js
-        |
-        +-- command loading from src/commands
-        +-- in-memory poll and draft state on the Discord client
-        +-- JSON persistence through src/utils/file-handler.js
-        +-- Express HTTP server for dashboard and health routes
-        |
-        +-- dashboard/api/*
-                |
-                +-- dashboard/controllers/*
-                +-- dashboard/services/*
-                +-- dashboard/frontend/dist (production build)
+  |
+  +-- command loading from src/commands
+  +-- in-memory poll and draft state on the Discord client
+  +-- JSON persistence through src/utils/file-handler.js
+  +-- Centralized logger module for all log output
+  +-- Express HTTP server for dashboard and health routes
+  |
+  +-- dashboard/api/*
+    |
+    +-- dashboard/controllers/*
+    +-- dashboard/services/*
+    +-- dashboard/frontend/dist (production build)
+    +-- RedisStore for session persistence (production)
 ```
 
 ## Main Runtime Responsibilities
@@ -34,6 +36,10 @@ The main entry point is responsible for:
 - hydrating active polls and drafts from disk
 - handling interaction and reaction events
 - exposing the Express server, dashboard routes, and `/api/health`
+- initializing the centralized logger module (replaces all console.log calls)
+- configuring session management:
+  - In production, sessions are persisted using RedisStore (requires `REDIS_URL`)
+  - In development, sessions use in-memory store
 
 ### `src/commands`
 
@@ -59,6 +65,8 @@ Shared modules centralize application concerns:
 
 ## Repository Structure
 
+test-bot/
+
 ```text
 src/
   commands/
@@ -69,12 +77,14 @@ src/
     client.js
     index.js
   utils/
+    logger.js (centralized logger)
 dashboard/
   api/
   controllers/
   services/
   tests/
   frontend/
+  session/ (RedisStore integration)
 docs/
   development/
   technical/
@@ -84,7 +94,7 @@ tests/
 data/
   environments/
 scripts/
-test-bot/
+
 ```
 
 ## Data Model and Persistence
