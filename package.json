@@ -34,7 +34,7 @@
     "lint:fix": "eslint src/ tests/ --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "node --eval \"const {existsSync} = require('fs'); if (existsSync('.git')) require('child_process').execSync('husky', {stdio: 'inherit'})\""
   },
   "keywords": [
     "discord",
