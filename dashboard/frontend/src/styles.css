@@ -679,3 +679,37 @@ textarea {
     justify-content: center;
   }
 }
+
+/* ── Channel selector warning ─────────────────────────── */
+.channel-selector-row.channel-required {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.channel-warning-icon {
+  margin-right: 6px;
+}
+
+.channel-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #b45309;
+  font-weight: 500;
+}
+
+.channel-required-banner {
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #b45309;
+  margin-bottom: 16px;
+}
+
+.commands-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
