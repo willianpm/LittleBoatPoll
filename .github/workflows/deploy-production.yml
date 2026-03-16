@@ -1,12 +1,12 @@
-name: Deploy Develop
+name: Deploy Production
 
 on:
   push:
-    branches: [develop]
+    branches: [master, main]
 
 jobs:
   deploy:
-    runs-on: [self-hosted, develop]
+    runs-on: [self-hosted, production]
 
     steps:
       - name: Checkout code
@@ -14,7 +14,7 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "${{ secrets.ENV_DEVELOP }}" > .env
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env
 
       - name: Build and deploy
         run: |
