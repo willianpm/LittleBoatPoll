@@ -111,7 +111,3 @@ When opening an issue include:
 - Branching and PR expectations: [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
 - Project overview and environment variables: [README.md](README.md)
 - Release process and changelog: [CHANGELOG.md](CHANGELOG.md)
-
----
-
-If you want I can now run a quick pass to remove any remaining Portuguese fragments elsewhere (README, docs) and ensure consistency across docs.
