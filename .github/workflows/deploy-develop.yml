@@ -12,6 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_DEVELOP }}" > .env
+
       - name: Build and deploy
         run: |
           docker compose build --no-cache
