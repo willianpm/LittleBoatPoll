@@ -159,7 +159,7 @@ data/
 
 The bot exits during startup if either value is missing from `.env` or `.env.staging`.
 
-### Port `8000` already in use
+### Port `80` already in use
 
 Set a different `PORT` value in your environment file.
 
