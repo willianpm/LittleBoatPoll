@@ -47,7 +47,7 @@ CLIENT_ID=your_application_id
 APP_ENV=prod
 DEBUG=false
 DEPLOY=false
-PORT=8000
+PORT=80
 ```
 
 Dashboard configuration:
@@ -55,10 +55,10 @@ Dashboard configuration:
 ```env
 DISCORD_CLIENT_ID=your_oauth_client_id
 DISCORD_CLIENT_SECRET=your_oauth_client_secret
-DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DISCORD_OAUTH_REDIRECT_URI=http://localhost/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=replace_this_secret
 DASHBOARD_ALLOWED_GUILD_ID=your_guild_id
-DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_FRONTEND_URL=http://localhost
 DASHBOARD_SINGLE_INSTANCE=true
 ```
 

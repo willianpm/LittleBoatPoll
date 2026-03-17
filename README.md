@@ -38,10 +38,10 @@ TOKEN=your_bot_token
 CLIENT_ID=your_application_id
 DISCORD_CLIENT_ID=your_oauth_client_id
 DISCORD_CLIENT_SECRET=your_oauth_client_secret
-DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DISCORD_OAUTH_REDIRECT_URI=http://localhost/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=replace_this_secret
 DASHBOARD_ALLOWED_GUILD_ID=your_primary_guild_id
-DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_FRONTEND_URL=http://localhost
 DASHBOARD_SINGLE_INSTANCE=true
 REDIS_URL=redis://localhost:6379
 ```
