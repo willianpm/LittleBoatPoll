@@ -1,22 +1,32 @@
-name: Deploy Production
+name: Deploy Production (SSH)
 
 on:
   push:
     branches: [master, main]
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
-    runs-on: [self-hosted, production]
+    runs-on: ubuntu-latest
+    environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create .env file
-        run: |
-          echo "${{ secrets.ENV_PRODUCTION }}" > .env
-
-      - name: Build and deploy
-        run: |
-          docker compose -p littleboatpoll build --no-cache
-          docker compose -p littleboatpoll up -d
+      - name: Oracle Deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 137.131.167.235
+          username: ci-deploy
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd /opt/littleboatpoll
+            git fetch --all
+            git checkout master || git checkout main
+            git reset --hard origin/master || git reset --hard origin/main
+            printf '%s' "${{ secrets.ENV_PRODUCTION }}" > .env
+            docker compose -p littleboatpoll build --no-cache
+            docker compose -p littleboatpoll up -d
+            echo "Deployed!"
