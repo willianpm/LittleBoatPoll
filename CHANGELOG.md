@@ -1,6 +1,31 @@
-# Changelog
+## [2.6.1](https://github.com/willianpm/LittleBoatPoll/compare/v2.2.0...v2.6.1)
 
-All notable changes to this project will be documented in this file.
+### Features
+
+- Add Docker support, centralized logging, and CI improvements ([270b87f](https://github.com/willianpm/LittleBoatPoll/commit/270b87ff80eaa62e7561fc2533e99cb899232e90))
+- Add GitHub Actions workflows for develop and production deployments ([43a616f](https://github.com/willianpm/LittleBoatPoll/commit/43a616f97eec1f44f8214ea1e91ef9e6e9e21e26), [f4de78a](https://github.com/willianpm/LittleBoatPoll/commit/f4de78ad51485356b89b87373f00803dde994efb), [cca735b](https://github.com/willianpm/LittleBoatPoll/commit/cca735b46c9e68822f5b56f00b795e86c09a77f4))
+- Add Heroku postbuild script for frontend build ([49b789e](https://github.com/willianpm/LittleBoatPoll/commit/49b789e96bbbbe466b941c580a32e6f18c42638d))
+- Add MIT license ([ea9f45f](https://github.com/willianpm/LittleBoatPoll/commit/ea9f45f071840ae66c918ef8097f6d2230c4185a))
+- Add `.env` generation step in deploy workflow ([49e8c31](https://github.com/willianpm/LittleBoatPoll/commit/49e8c315d68adb6299c69886972b767fa0b10818))
+
+- **Dashboard**
+  - Add group members endpoint and UI support ([83eea4f](https://github.com/willianpm/LittleBoatPoll/commit/83eea4f7d270cf55d2a6f471b0522db95b6409b1)) (#31)
+  - Improve UI (dark theme, channel validation, layout simplification, CSS refactor, channel filtering) ([03649f9](https://github.com/willianpm/LittleBoatPoll/commit/03649f902bc6755eb2c028e1ba8f100f154ae60c), [3c7ff3b](https://github.com/willianpm/LittleBoatPoll/commit/3c7ff3b43df45d26822754b1f6a6b670109501bf))
+  - Improve draft form logic and channel selector ([125c33d](https://github.com/willianpm/LittleBoatPoll/commit/125c33dba495e64ee423b4e74804a7032a19bf1a), [85bd987](https://github.com/willianpm/LittleBoatPoll/commit/85bd987037de13ec10528846fdf0d66b40a40718))
+  - Add favicon ([a030c0c](https://github.com/willianpm/LittleBoatPoll/commit/a030c0c16ddcbbfe5550637256f32d9ece6f55b0))
+
+- **Backend**
+  - Add Redis-based session persistence ([62cf04e](https://github.com/willianpm/LittleBoatPoll/commit/62cf04edee14bfcc62ad23cf817f296cc28ec77f))
+
+- **UI**
+  - Improve channel warning clarity ([6c59f2a](https://github.com/willianpm/LittleBoatPoll/commit/6c59f2a6209a9bb36b481d1b217075d6ddd60c51))
+
+### Bug Fixes
+
+- Improve OAuth session persistence in Discord login flow ([ce6433e](https://github.com/willianpm/LittleBoatPoll/commit/ce6433e898a833b70880087e63f09fd1b69addb7))
+- Fix frontend install script to include dev dependencies ([e57ab0d](https://github.com/willianpm/LittleBoatPoll/commit/e57ab0d5ac49509aaeedcb72a3198fe685428b5f))
+- Resolve CHANGELOG merge conflict ([b2f74ae](https://github.com/willianpm/LittleBoatPoll/commit/b2f74ae3f592578ec61cb79c29820fdc04dbbde3))
+- Bump version to 2.6.0 ([1ac490d](https://github.com/willianpm/LittleBoatPoll/commit/1ac490dfb84d4ecc218e876f14141691c686836e))
 
 ## 2.6.0
 
