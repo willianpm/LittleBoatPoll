@@ -17,7 +17,7 @@ Main components:
 ## Quick Start
 
 1. Read [docs/development/SETUP.md](docs/development/SETUP.md) for setup and commands.
-2. Docker is required. Run:
+2. Docker is required and local (non-Docker) execution is not supported. Run all services inside containers:
    - `docker-compose up --build`
 3. Configure `.env` (see below).
 4. All development and tests occur inside the containers.
@@ -77,6 +77,19 @@ Use `.env.staging` for the staging bot if you want isolated credentials and data
 ## Main Commands
 
 All commands must be executed inside Docker containers. See [docs/development/SETUP.md](docs/development/SETUP.md) for details.
+
+## Main Scripts
+
+Common `npm` scripts (run from the repository root):
+
+- `start`: start the application (`node src/core/index.js`).
+- `dev`: start the application in development mode.
+- `deploy`: run deployment startup (`node src/core/index.js --deploy`).
+- `dashboard:frontend:dev`: run dashboard frontend in development (useful with Vite).
+- `test`: run the full Jest test suite.
+- `test:dashboard`: run the dashboard-specific tests.
+
+Run these inside the appropriate Docker container or use `docker-compose exec` to run them in-container.
 
 ## Dashboard
 

@@ -9,6 +9,8 @@ This repository follows a GitHub Flow style based on the `develop` branch.
 - Open pull requests back to `develop`
 - Merge after checks and review approval
 
+Note: GitHub is configured to automatically delete feature branches after they are merged into `develop`, so manual branch deletion is not required.
+
 ## Branch Naming
 
 Use descriptive branch names:
@@ -38,6 +40,8 @@ git config --global user.email "your.email@example.com"
 5. Push and open a pull request.
 6. Address CI or review feedback.
 7. Merge into `develop` and delete the branch.
+
+   Note: If your repository is configured to auto-delete branches on merge, the branch will be removed automatically by GitHub.
 
 ## Commands
 
