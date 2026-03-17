@@ -996,10 +996,7 @@ export default function App() {
 
             {selectedGuildId && (
               <div className={`channel-selector-row ${!selectedChannelId ? 'channel-required' : ''}`}>
-                <label htmlFor="global-channel-select">
-                  {!selectedChannelId && <span className="channel-warning-icon"></span>}
-                  Canal de publicação
-                </label>
+                <label htmlFor="global-channel-select">Canal de publicação</label>
                 <select
                   id="global-channel-select"
                   value={selectedChannelId}
