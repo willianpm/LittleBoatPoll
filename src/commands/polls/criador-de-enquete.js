@@ -1,13 +1,11 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { loadCriadores, saveCriadores } = require('../../utils/file-handler');
+const logger = require('../../utils/logger');
 
 /**
  * COMANDO: /criador-de-enquete
  * Gerencia os criadores de enquetes (acesso total ao bot) - SISTEMA INTERNO
- *
- * Este comando substitui o antigo sistema de cargos do Discord.
- * Agora as permissões são gerenciadas internamente pelo bot através de IDs de usuários.
  *
  * Subcomandos:
  * - adicionar: Adiciona um usuário à lista de criadores internos
@@ -86,7 +84,7 @@ module.exports = {
         })
         .setTimestamp();
 
-      console.log(`Criador adicionado: ${usuario.username} (${usuario.id})`);
+      logger.info(`Criador adicionado: ${usuario.username} (${usuario.id})`);
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
@@ -127,7 +125,7 @@ module.exports = {
         .setFooter({ text: 'Usuário continua podendo votar normalmente' })
         .setTimestamp();
 
-      console.log(`Criador removido: ${usuario.username} (${usuario.id})`);
+      logger.info(`Criador removido: ${usuario.username} (${usuario.id})`);
       return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 

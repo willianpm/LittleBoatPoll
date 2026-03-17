@@ -1,0 +1,14 @@
+node_modules
+dashboard/frontend/node_modules
+dashboard/frontend/dist
+npm-debug.log
+.git
+test-bot/
+tests/
+docs/
+data/
+scripts/
+.env
+.env.*
+*.log
+.DS_Store

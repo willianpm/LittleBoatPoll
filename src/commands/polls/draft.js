@@ -3,6 +3,7 @@ const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permission
 const crypto = require('crypto');
 const { validatePollOptions, parseOptions } = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS } = require('../../utils/constants');
+const logger = require('../../utils/logger');
 
 /**
  * COMANDO: /rascunho
@@ -146,7 +147,7 @@ module.exports = {
       else if (subcommand === 'publicar') await handlePublicar(interaction, client);
       else if (subcommand === 'deletar') await handleDeletar(interaction, client);
     } catch (error) {
-      console.error('Erro ao gerenciar rascunho:', error);
+      logger.error(`Erro ao gerenciar rascunho: ${error.message}`);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao processar o comando!',
@@ -220,9 +221,9 @@ async function handleCriar(interaction, client) {
       {
         name: 'Próximos Passos',
         value: `
-• Use \`/rascunho editar\` para fazer alterações
-• Use \`/rascunho exibir\` para visualizar os detalhes
-• Use \`/rascunho publicar\` para ativar a enquete para votação
+- Use \`/rascunho editar\` para fazer alterações
+- Use \`/rascunho exibir\` para visualizar os detalhes
+- Use \`/rascunho publicar\` para ativar a enquete para votação
         `,
       },
     )
@@ -234,7 +235,7 @@ async function handleCriar(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`Rascunho criado: ${titulo} | ID: ${draftId} | Criador: ${interaction.user.tag}`);
+  logger.info(`Rascunho criado: ${titulo} | ID: ${draftId} | Criador: ${interaction.user.tag}`);
 }
 
 async function handleEditar(interaction, client) {
@@ -339,7 +340,7 @@ async function handleEditar(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`Rascunho editado: ${draft.titulo} | ID: ${draftId}`);
+  logger.info(`Rascunho editado: ${draft.titulo} | ID: ${draftId}`);
 }
 
 async function handleListar(interaction, client) {
@@ -540,11 +541,9 @@ async function handlePublicar(interaction, client) {
       embeds: [publishEmbed],
     });
 
-    console.log(
-      `Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | ` + `Canal: ${targetChannel.name}`,
-    );
+    logger.info(`Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
   } catch (error) {
-    console.error('Erro ao publicar rascunho:', error);
+    logger.error(`Erro ao publicar rascunho: ${error.message}`);
     await interaction.editReply({
       content: '❌ Erro ao publicar o rascunho. Verifique minhas permissões no canal.',
     });
@@ -592,7 +591,7 @@ async function handleDeletar(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`Rascunho deletado: ${draft.titulo} | ID: ${draftId}`);
+  logger.info(`Rascunho deletado: ${draft.titulo} | ID: ${draftId}`);
 }
 
 async function handleAdicionarOpcao(interaction, client) {
@@ -686,9 +685,7 @@ async function handleAdicionarOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(
-    `Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | ` + `Novas: ${novasOpcoes.join(', ')}`,
-  );
+  logger.info(`Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
 }
 
 async function handleRemoverOpcao(interaction, client) {
@@ -782,5 +779,5 @@ async function handleRemoverOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  console.log(`Opção removida do rascunho: ${draft.titulo} | ID: ${draftId} | Removida: ${opcaoRemovida}`);
+  logger.info(`Opção removida do rascunho: ${draft.titulo} | ID: ${draftId} | Removida: ${opcaoRemovida}`);
 }

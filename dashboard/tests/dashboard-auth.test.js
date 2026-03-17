@@ -11,6 +11,11 @@ jest.mock('../../src/utils/permissions', () => ({
   isCriador: jest.fn(() => true),
 }));
 
+jest.mock('../../src/utils/file-handler', () => ({
+  loadMensalistas: jest.fn(() => ({ mensalistas: [] })),
+  loadCriadores: jest.fn(() => ({ criadores: [] })),
+}));
+
 const { client } = require('../../src/core/client');
 const { authRouter } = require('../api/auth');
 
@@ -142,6 +147,73 @@ describe('Dashboard Auth API - guild selectors', () => {
         name: 'geral',
       }),
     ]);
+  });
+});
+
+describe('Dashboard Auth API - group members', () => {
+  let app;
+
+  beforeAll(() => {
+    app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.session = {
+        dashboardAuth: {
+          userId: 'user-1',
+          username: 'tester',
+          guildId: 'guild-1',
+          avatar: null,
+        },
+      };
+      next();
+    });
+    app.use('/api/auth', authRouter);
+  });
+
+  beforeEach(() => {
+    const memberCache = new Map([
+      ['user-1', { user: { id: 'user-1', username: 'tester', bot: false }, displayName: 'Tester' }],
+    ]);
+    client.guilds.cache = new Map([
+      [
+        'guild-1',
+        {
+          id: 'guild-1',
+          name: 'Guild One',
+          icon: null,
+          members: { cache: memberCache, fetch: jest.fn(async () => memberCache) },
+          channels: { cache: new Map(), fetch: jest.fn(async () => new Map()) },
+        },
+      ],
+    ]);
+  });
+
+  it('should return mensalista ids for valid guild', async () => {
+    const { loadMensalistas } = require('../../src/utils/file-handler');
+    loadMensalistas.mockReturnValueOnce({ mensalistas: ['user-1', 'user-2'] });
+
+    const res = await request(app).get('/api/auth/guilds/guild-1/group-members?group=mensalistas');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.ids).toEqual(['user-1', 'user-2']);
+  });
+
+  it('should return criador ids for valid guild', async () => {
+    const { loadCriadores } = require('../../src/utils/file-handler');
+    loadCriadores.mockReturnValueOnce({ criadores: ['user-2'] });
+
+    const res = await request(app).get('/api/auth/guilds/guild-1/group-members?group=criadores');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.ids).toEqual(['user-2']);
+  });
+
+  it('should return 400 for invalid group parameter', async () => {
+    const res = await request(app).get('/api/auth/guilds/guild-1/group-members?group=moderadores');
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('should return 403 for inaccessible guild', async () => {
+    const res = await request(app).get('/api/auth/guilds/guild-99/group-members?group=mensalistas');
+    expect(res.statusCode).toBe(403);
   });
 });
 

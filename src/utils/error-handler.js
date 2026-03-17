@@ -1,4 +1,5 @@
 const { MessageFlags } = require('discord.js');
+const logger = require('./logger');
 
 /**
  * Responde com mensagem de erro, tratando os diferentes estados da interação
@@ -6,6 +7,7 @@ const { MessageFlags } = require('discord.js');
  * @param {string} message - Mensagem de erro a enviar
  * @returns {Promise}
  */
+
 async function replyError(interaction, message = '❌ Erro ao processar o comando!') {
   try {
     if (!interaction.replied && !interaction.deferred) {
@@ -17,7 +19,7 @@ async function replyError(interaction, message = '❌ Erro ao processar o comand
       return await interaction.editReply({ content: message });
     }
   } catch (error) {
-    console.error('Erro ao enviar resposta de erro:', error);
+    logger.error(`Erro ao enviar resposta de erro: ${error.message}`);
   }
 }
 
@@ -30,7 +32,7 @@ async function replyError(interaction, message = '❌ Erro ao processar o comand
 function logError(context, error, details = '') {
   const message = `[${context}] ${error.message}`;
   const log = details ? `${message} | ${details}` : message;
-  console.error(`${log}`);
+  logger.error(log);
 }
 
 module.exports = {

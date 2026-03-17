@@ -1,6 +1,7 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { loadMensalistas, saveMensalistas } = require('../../utils/file-handler');
+const logger = require('../../utils/logger');
 
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Add/Del Mensalistas').setType(ApplicationCommandType.User),
@@ -39,7 +40,7 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
+        logger.info(`Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
       } else {
         // Adiciona mensalista
         mensalistasData.mensalistas.push(usuario.id);
@@ -57,10 +58,10 @@ module.exports = {
           .setTimestamp();
 
         await interaction.reply({ embeds: [addEmbed], flags: MessageFlags.Ephemeral });
-        console.log(`Mensalista adicionado (contexto): ${usuario.username} (${usuario.id})`);
+        logger.info(`Mensalista adicionado (contexto): ${usuario.username} (${usuario.id})`);
       }
     } catch (error) {
-      console.error('Erro ao alternar mensalista (contexto):', error);
+      logger.error(`Erro ao alternar mensalista (contexto): ${error.message}`);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: 'Erro ao processar o comando.',

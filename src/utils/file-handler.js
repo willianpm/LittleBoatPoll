@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 const { DATA_FILES, DATA_DIR } = require('./config');
 
 const DEFAULT_ROLE_BINDINGS = {
@@ -11,6 +12,7 @@ const DEFAULT_ROLE_BINDINGS = {
  * @param {Object} data - Dados brutos carregados do JSON
  * @returns {Object} Estrutura normalizada
  */
+
 function normalizeRoleBindings(data = {}) {
   const mensalistaRoleByGuild =
     data?.mensalistaRoleByGuild && typeof data.mensalistaRoleByGuild === 'object' ? data.mensalistaRoleByGuild : {};
@@ -38,14 +40,13 @@ function ensureDirectoryExists(dirPath) {
  */
 function loadJsonFile(filePath, defaultValue = {}) {
   try {
-    // Garante que o diretório existe
     ensureDirectoryExists(path.dirname(filePath));
 
     if (fs.existsSync(filePath)) {
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
   } catch (error) {
-    console.error(`Erro ao carregar ${filePath}:`, error);
+    logger.error(`Erro ao carregar ${filePath}: ${error.message}`, error);
   }
   return defaultValue;
 }
@@ -58,13 +59,12 @@ function loadJsonFile(filePath, defaultValue = {}) {
  */
 function saveJsonFile(filePath, data) {
   try {
-    // Garante que o diretório existe
     ensureDirectoryExists(path.dirname(filePath));
 
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
-    console.error(`Erro ao salvar ${filePath}:`, error);
+    logger.error(`Erro ao salvar ${filePath}: ${error.message}`, error);
     return false;
   }
 }
@@ -149,7 +149,6 @@ function saveVotacoes(data) {
  * Garante que arquivos essenciais existam
  */
 function ensureDataFiles() {
-  // Garante que o diretório de dados existe
   ensureDirectoryExists(DATA_DIR);
 
   const files = [
@@ -164,7 +163,7 @@ function ensureDataFiles() {
   files.forEach(({ path: filePath, content }) => {
     if (!fs.existsSync(filePath)) {
       saveJsonFile(filePath, content);
-      console.log(` Arquivo criado: ${path.relative(DATA_DIR, filePath)}`);
+      logger.info(`Arquivo criado: ${path.relative(DATA_DIR, filePath)}`);
     }
   });
 }

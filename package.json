@@ -33,7 +33,9 @@
     "lint": "eslint src/ tests/ --max-warnings=0",
     "lint:fix": "eslint src/ tests/ --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
+    "prepare": "node --eval \"const {existsSync} = require('fs'); if (existsSync('.git')) require('child_process').execSync('husky', {stdio: 'inherit'})\""
   },
   "keywords": [
     "discord",
@@ -52,21 +54,38 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "connect-redis": "^8.0.1",
     "csv-parse": "^6.1.0",
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-session": "^1.18.2",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.3",
     "@commitlint/config-conventional": "^20.4.3",
+    "conventional-changelog-cli": "^5.0.0",
+    "conventional-changelog-conventionalcommits": "^9.3.0",
     "cross-env": "^10.1.0",
     "eslint": "^8.56.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.1.0",
     "supertest": "^7.2.2"
+  },
+  "lint-staged": {
+    "{src,tests,dashboard/api,dashboard/tests}/**/*.js": [
+      "prettier --write",
+      "eslint --fix --max-warnings=0"
+    ],
+    "dashboard/frontend/**/*.{js,jsx}": [
+      "prettier --write"
+    ],
+    "**/*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }

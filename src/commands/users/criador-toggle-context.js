@@ -1,6 +1,7 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { loadCriadores, saveCriadores } = require('../../utils/file-handler');
+const logger = require('../../utils/logger');
 
 /**
  * CONTEXT MENU: Add/Del Criador de Enquetes
@@ -77,7 +78,7 @@ module.exports = {
             '_O usuário continua podendo votar normalmente._',
           flags: MessageFlags.Ephemeral,
         });
-        console.log(`Criador removido (contexto): ${targetUser.username} (${targetUser.id})`);
+        logger.info(`Criador removido (contexto): ${targetUser.username} (${targetUser.id})`);
       } else {
         // ADICIONAR criador
 
@@ -91,10 +92,10 @@ module.exports = {
             '_O usuário agora tem acesso administrativo total ao bot._',
           flags: MessageFlags.Ephemeral,
         });
-        console.log(`Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
+        logger.info(`Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
       }
     } catch (error) {
-      console.error('❌ Erro ao alternar Criador de Enquetes (contexto):', error);
+      logger.error(`Erro ao alternar Criador de Enquetes (contexto): ${error.message}`);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao processar o comando.',

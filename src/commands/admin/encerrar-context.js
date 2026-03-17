@@ -1,6 +1,7 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const { loadVotacoes, saveVotacoes } = require('../../utils/file-handler');
+const logger = require('../../utils/logger');
 
 /**
  * COMANDO DE CONTEXTO: Encerrar Votação
@@ -116,7 +117,7 @@ module.exports = {
               await client.users.fetch(userId);
               mencoes.push(`<@${userId}>`);
             } catch (error) {
-              console.log(`Não foi possível buscar usuário ${userId}`);
+              logger.warn(`Não foi possível buscar usuário ${userId}`);
             }
           }
 
@@ -125,7 +126,7 @@ module.exports = {
           }
         }
       } catch (error) {
-        console.error('Erro ao buscar mensalistas:', error);
+        logger.error(`Erro ao buscar mensalistas: ${error.message}`);
       }
 
       // Adiciona a seção de mensalistas apenas se o peso de mensalista está ativado
@@ -164,7 +165,7 @@ module.exports = {
         embeds: [resultEmbed],
       });
 
-      // Salva regist ao do resultado
+      // Salva registro do resultado
       const historicoData = loadVotacoes();
 
       historicoData.push({
@@ -185,9 +186,9 @@ module.exports = {
       client.activePolls.delete(messageId);
       client.saveActivePolls();
 
-      console.log(`Votação finalizada via contexto: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
+      logger.info(`Votação finalizada via contexto: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
     } catch (error) {
-      console.error('Erro ao encerrar votação:', error);
+      logger.error(`Erro ao encerrar votação: ${error.message}`);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ Erro ao encerrar a votação!',

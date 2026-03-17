@@ -4,6 +4,7 @@ import {
   getCommandCatalog,
   getCurrentSession,
   getDraftContextTargets,
+  getGroupMembers,
   getGuildChannels,
   getGuildMembers,
   getGuilds,
@@ -157,6 +158,8 @@ export default function App() {
 
   const [members, setMembers] = useState([]);
   const [memberQuery, setMemberQuery] = useState('');
+  const [mensalistaIds, setMensalistaIds] = useState([]);
+  const [criadorIds, setCriadorIds] = useState([]);
 
   const [channels, setChannels] = useState([]);
   const [selectedChannelId, setSelectedChannelId] = useState('');
@@ -234,30 +237,48 @@ export default function App() {
 
     setSelectedChannelId('');
 
-    async function loadGuildAuxData() {
+    async function loadGuildStaticData() {
       try {
-        const [membersPayload, channelsPayload, pollsPayload] = await Promise.all([
-          getGuildMembers(selectedGuildId, memberQuery),
+        const [channelsPayload, pollsPayload, mensalistasPayload, criadoresPayload] = await Promise.all([
           getGuildChannels(selectedGuildId),
           getPollContextTargets(selectedGuildId),
+          getGroupMembers(selectedGuildId, 'mensalistas'),
+          getGroupMembers(selectedGuildId, 'criadores'),
         ]);
 
         const draftsPayload = await getDraftContextTargets();
 
-        setMembers(membersPayload.members || []);
         // Tipos de canal de voz/palco (discord.js ChannelType): 2 = GuildVoice, 13 = GuildStageVoice
         setChannels((channelsPayload.channels || []).filter((ch) => ch.type !== 2 && ch.type !== 13));
         setPollTargets(pollsPayload.polls || []);
         setDraftTargets(draftsPayload.drafts || []);
+        setMensalistaIds(mensalistasPayload.ids || []);
+        setCriadorIds(criadoresPayload.ids || []);
       } catch {
-        setMembers([]);
         setChannels([]);
         setPollTargets([]);
         setDraftTargets([]);
+        setMensalistaIds([]);
+        setCriadorIds([]);
       }
     }
 
-    loadGuildAuxData();
+    loadGuildStaticData();
+  }, [selectedGuildId, session]);
+
+  useEffect(() => {
+    if (!selectedGuildId || !session) return;
+
+    async function loadMembers() {
+      try {
+        const membersPayload = await getGuildMembers(selectedGuildId, memberQuery);
+        setMembers(membersPayload.members || []);
+      } catch {
+        setMembers([]);
+      }
+    }
+
+    loadMembers();
   }, [selectedGuildId, session, memberQuery]);
 
   useEffect(() => {
@@ -506,6 +527,26 @@ export default function App() {
         target,
       });
       setCommandFeedback(commandKey, 'success');
+
+      if (command.name === 'mensalista' && options?.subcommand !== 'listar') {
+        const userId = mensalistaForm.usuario;
+        if (options.subcommand === 'adicionar') {
+          setMensalistaIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+        } else if (options.subcommand === 'remover') {
+          setMensalistaIds((prev) => prev.filter((id) => id !== userId));
+        }
+        setMensalistaForm((prev) => ({ ...prev, usuario: '' }));
+      }
+
+      if (command.name === 'criador-de-enquete' && options?.subcommand !== 'listar') {
+        const userId = criadorForm.usuario;
+        if (options.subcommand === 'adicionar') {
+          setCriadorIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+        } else if (options.subcommand === 'remover') {
+          setCriadorIds((prev) => prev.filter((id) => id !== userId));
+        }
+        setCriadorForm((prev) => ({ ...prev, usuario: '' }));
+      }
     } catch {
       setCommandFeedback(commandKey, 'error');
     } finally {
@@ -662,13 +703,30 @@ export default function App() {
     }
 
     if (command.type === 1 && command.name === 'mensalista') {
+      const availableMembers =
+        mensalistaForm.subcommand === 'adicionar'
+          ? members.filter((m) => !mensalistaIds.includes(m.id))
+          : members.filter((m) => mensalistaIds.includes(m.id));
+
+      const isLoadingMembers = members.length === 0;
+      const noAvailableMembers = !isLoadingMembers && availableMembers.length === 0;
+      const placeholderText = isLoadingMembers
+        ? 'Carregando membros...'
+        : noAvailableMembers
+          ? mensalistaForm.subcommand === 'adicionar'
+            ? 'Nenhum usuário disponível para adicionar.'
+            : 'Nenhum usuário disponível para remover.'
+          : 'Selecione um usuário';
+
       return (
         <div className="form-grid">
           <label>
             Ação
             <select
               value={mensalistaForm.subcommand}
-              onChange={(event) => setMensalistaForm((prev) => ({ ...prev, subcommand: event.target.value }))}
+              onChange={(event) =>
+                setMensalistaForm((prev) => ({ ...prev, subcommand: event.target.value, usuario: '' }))
+              }
             >
               <option value="adicionar">Adicionar</option>
               <option value="remover">Remover</option>
@@ -681,13 +739,16 @@ export default function App() {
               <select
                 value={mensalistaForm.usuario}
                 onChange={(event) => setMensalistaForm((prev) => ({ ...prev, usuario: event.target.value }))}
+                disabled={isLoadingMembers || noAvailableMembers}
               >
-                <option value="">Selecione um usuário</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName} ({member.username})
-                  </option>
-                ))}
+                <option value="">{placeholderText}</option>
+                {!isLoadingMembers &&
+                  !noAvailableMembers &&
+                  availableMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.displayName} ({member.username})
+                    </option>
+                  ))}
               </select>
             </label>
           )}
@@ -696,13 +757,28 @@ export default function App() {
     }
 
     if (command.type === 1 && command.name === 'criador-de-enquete') {
+      const availableMembers =
+        criadorForm.subcommand === 'adicionar'
+          ? members.filter((m) => !criadorIds.includes(m.id))
+          : members.filter((m) => criadorIds.includes(m.id));
+
+      const isLoadingMembers = members.length === 0;
+      const noAvailableMembers = !isLoadingMembers && availableMembers.length === 0;
+      const placeholderText = isLoadingMembers
+        ? 'Carregando membros...'
+        : noAvailableMembers
+          ? criadorForm.subcommand === 'adicionar'
+            ? 'Nenhum usuário disponível para adicionar.'
+            : 'Nenhum usuário disponível para remover.'
+          : 'Selecione um usuário';
+
       return (
         <div className="form-grid">
           <label>
             Ação
             <select
               value={criadorForm.subcommand}
-              onChange={(event) => setCriadorForm((prev) => ({ ...prev, subcommand: event.target.value }))}
+              onChange={(event) => setCriadorForm((prev) => ({ ...prev, subcommand: event.target.value, usuario: '' }))}
             >
               <option value="adicionar">Adicionar</option>
               <option value="remover">Remover</option>
@@ -715,13 +791,16 @@ export default function App() {
               <select
                 value={criadorForm.usuario}
                 onChange={(event) => setCriadorForm((prev) => ({ ...prev, usuario: event.target.value }))}
+                disabled={isLoadingMembers || noAvailableMembers}
               >
-                <option value="">Selecione um usuário</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName} ({member.username})
-                  </option>
-                ))}
+                <option value="">{placeholderText}</option>
+                {!isLoadingMembers &&
+                  !noAvailableMembers &&
+                  availableMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.displayName} ({member.username})
+                    </option>
+                  ))}
               </select>
             </label>
           )}
@@ -916,7 +995,7 @@ export default function App() {
             </div>
 
             {selectedGuildId && (
-              <div className="channel-selector-row">
+              <div className={`channel-selector-row ${!selectedChannelId ? 'channel-required' : ''}`}>
                 <label htmlFor="global-channel-select">Canal de publicação</label>
                 <select
                   id="global-channel-select"
@@ -930,6 +1009,9 @@ export default function App() {
                     </option>
                   ))}
                 </select>
+                {!selectedChannelId && (
+                  <p className="channel-hint">⚠️ Selecione um canal antes de executar comandos de slash.</p>
+                )}
               </div>
             )}
           </>
@@ -937,11 +1019,10 @@ export default function App() {
       </section>
 
       <section className="card">
-        <h2>Comandos do bot</h2>
         {catalogLoading ? (
           <p>Carregando catálogo de comandos...</p>
         ) : (
-          <div className="command-groups">
+          <div className={`command-groups ${!selectedChannelId ? 'commands-disabled' : ''}`}>
             <div className="command-group-column">
               <h3>Comandos de Enquete</h3>
               <div className="command-list">

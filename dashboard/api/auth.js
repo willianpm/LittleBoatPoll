@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const express = require('express');
 const { client } = require('../../src/core/client');
 const { isCriador } = require('../../src/utils/permissions');
+const { loadMensalistas, loadCriadores } = require('../../src/utils/file-handler');
 
 const router = express.Router();
 
@@ -394,6 +395,31 @@ router.get('/guilds/:guildId/channels', validateDashboardToken, async (req, res)
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
     return res.json({ channels });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/guilds/:guildId/group-members', validateDashboardToken, (req, res) => {
+  try {
+    const { guildId } = req.params;
+    const { group } = req.query;
+
+    if (!req.dashboardAuth.accessibleGuildIds.includes(guildId)) {
+      return res.status(403).json({ error: 'Acesso negado para a guild informada' });
+    }
+
+    if (group === 'mensalistas') {
+      const data = loadMensalistas();
+      return res.json({ ids: data.mensalistas || [] });
+    }
+
+    if (group === 'criadores') {
+      const data = loadCriadores();
+      return res.json({ ids: data.criadores || [] });
+    }
+
+    return res.status(400).json({ error: 'Parâmetro "group" inválido. Use "mensalistas" ou "criadores".' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

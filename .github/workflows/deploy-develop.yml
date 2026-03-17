@@ -1,0 +1,22 @@
+name: Deploy Develop
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, develop]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_DEVELOP }}" > .env
+
+      - name: Build and deploy
+        run: |
+          docker compose -p littleboatpoll build --no-cache
+          docker compose -p littleboatpoll up -d

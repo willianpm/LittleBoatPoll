@@ -22,7 +22,7 @@ Use this guide to validate:
 titulo: "Book Selection Vote"
 opcoes: "Book A, Book B, Book C"
 max_votos: 2
-peso_mensalista: Nao
+peso_mensalista: No
 ```
 
 2. Confirm the starting options with `/rascunho exibir`.

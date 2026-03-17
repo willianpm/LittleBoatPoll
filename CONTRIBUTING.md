@@ -1,179 +1,113 @@
 # Contributing to LittleBoatPoll
 
-This document outlines the expected contribution workflow for LittleBoatPoll.
+This file describes the required, technical steps for contributing to LittleBoatPoll. All documentation references are authoritative; follow linked guides for full details.
 
-## Quick Start
+## Preconditions
 
-1. **Read** [docs/development/SETUP.md](docs/development/SETUP.md) for initial setup
-2. **Follow** [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md) for branching & PR process
-3. **Test locally** with `npm test` before pushing
-4. **Create a PR** to `develop` branch with a clear description
+- Docker and Redis are required (see [docs/development/SETUP.md](docs/development/SETUP.md)).
+- All development and tests run inside the project containers.
+- Pre-commit hooks: Husky + commitlint (Conventional Commits) are enforced.
 
-## Before You Start
+## Quick start
 
-- **Open an issue** to discuss bugs or features before starting work
-- **Keep changes focused:** Each PR should solve one problem
-- **No unrelated refactors:** Don't mix cleanup with feature work
-- **Read existing code:** Understand patterns before adding new code
+1. Read: [docs/development/SETUP.md](docs/development/SETUP.md) (environment and container commands).
+2. Sync develop and create a feature branch (see [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)).
+3. Implement changes, add tests, run local checks inside containers.
+4. Push branch and open a PR targeting `develop` with a concise description.
 
-## Development Setup
+## Branching & commits
 
-Full setup instructions: [docs/development/SETUP.md](docs/development/SETUP.md)
+- Branch from `develop`: `feature/*`, `bugfix/*`, `refactor/*`.
+- Use Conventional Commit prefixes: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `perf:`.
+- Keep PR scope focused: one logical change per PR.
 
-Quick version:
-
-```bash
-npm install
-cp .env.example .env
-npm test
-```
-
-PowerShell alternative:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-## Git Workflow
-
-We use **GitHub Flow** (`feature` branches -> `develop` -> `main`).
-
-**Step-by-step:** [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
-
-Quick version:
+Example local flow:
 
 ```bash
 git checkout develop
 git pull origin develop
-git checkout -b feature/your-feature-name
-
-# ... make changes ...
-
-npm test                       # Must pass!
+git checkout -b feature/short-descriptive-name
+# inside containers: run tests and linters
+npm test
+npm run lint
 git add .
-git commit -m "feat: brief description of change"
-git push origin feature/your-feature-name
-# Create PR on GitHub
+git commit -m "feat: short description"
+git push -u origin feature/short-descriptive-name
+# open PR -> develop
 ```
 
-## Code Style & Standards
+## Tests & CI
 
-**Validation** happens in two ways:
+- Jest coverage thresholds are enforced by CI; add tests for new logic.
+- Run tests inside containers: `docker-compose exec bot npm test` or `npm test` where applicable.
+- Use `npm run test:coverage` to view coverage locally.
 
-1. **Local (recommended):** Run the commands below before committing
-2. **CI/CD:** On PR - ESLint + Prettier + tests must pass
+## Code style & checks
 
-**Manual checks:**
+- ESLint and Prettier are enforced in CI.
+- Run locally before committing:
 
 ```bash
-npm run lint          # Run ESLint
-npm run format        # Auto-format with Prettier
-npm run format:check  # Check what would be formatted
+npm run lint
+npm run format
+npm run format:check
 ```
 
-**Guidelines:**
+- Fix lint/format issues prior to creating a PR.
 
-- Use single quotes (`'`) for strings
-- 2-space indentation
-- 120 character line limit
-- Descriptive variable/function names
-- Keep comments rare and focused on non-obvious logic
-- Use utility modules in `src/utils/` for shared code
+## Docker / Runtime notes
 
-## Project Structure
+- Use `docker-compose up --build` for the development environment (see [docs/development/SETUP.md](docs/development/SETUP.md)).
+- Execute runtime and test commands inside the project containers unless otherwise noted.
 
-```
-src/
-  core/              # Main bot entry point
-  commands/          # Slash commands & context menus
-    polls/           # Poll-related commands
-    users/           # User & mensalista commands
-    admin/           # Admin commands
-  utils/             # Shared utilities
-tests/
-  unit/              # Unit tests (mirror src/ structure)
-  integration/       # Integration tests
-dashboard/           # Dashboard backend, frontend, and tests
-data/environments/   # Data directories (prod/staging)
-docs/development/    # Developer documentation
-```
+### Common Docker workflows
 
-## Testing
-
-**Run all tests:**
+#### Build images
 
 ```bash
-npm test                    # All tests
-npm run test:watch          # Watch mode (re-run on file change)
-npm run test:coverage       # With coverage report
+docker build -t littleboatpoll .
+docker compose build --no-cache
 ```
 
-**Requirements:**
+#### Run services
 
-- Minimum coverage is enforced by Jest and CI
-- All tests must pass before PR merge
-- Add tests for new utilities or features
-
-**Adding tests:**
-
-- Create mirror path in `tests/unit/` matching `src/` structure
-- File follows pattern: `*.test.js`
-- Use Jest syntax with clear describe/test blocks
-
-Example:
-
-```javascript
-// tests/unit/utils/my-util.test.js
-const { myFunction } = require('../../../src/utils/my-util');
-
-describe('myFunction', () => {
-  test('should return expected value', () => {
-    expect(myFunction(input)).toBe(expected);
-  });
-});
+```bash
+docker compose up
 ```
 
-## Deployment & Releases
+#### Run the image directly (standalone container)
 
-**Environments:**
+```bash
+docker run --env-file .env.staging -p 8001:8001 littleboatpoll
+# development
+docker run --env-file .env -p 8000:8000 littleboatpoll
+```
 
-- `develop`: Development/staging (deployed to staging bot)
-- `main`: Production (deployed to production bot)
+### Running commands inside containers
 
-**Release process:**
+Use `docker compose exec <service>` to run commands in a running service container. For example:
 
-1. Features merge to `develop`
-2. When ready for release: Create PR from `develop` → `main`
-3. Update [CHANGELOG.md](CHANGELOG.md) with changes
-4. Merge PR to `main` (automatically triggers production deploy)
-5. Tag release: `git tag v1.2.3 && git push origin v1.2.3`
+```bash
+docker compose exec bot npm test
+```
 
-## Pull Request Checklist
+## Pull request checklist (minimal)
 
-Before submitting your PR:
+- [ ] Branch from `develop` (not `main`).
+- [ ] PR description explains the change (one short sentence).
 
-- [ ] Created from `develop` branch (not `main`)
-- [ ] Branch name follows format: `feature/name` or `bugfix/issue-number`
-- [ ] Commit messages are descriptive with prefix: `feat:`, `fix:`, `docs:`, etc.
-- [ ] `npm test` passes
-- [ ] `npm run lint` passes (or auto-fixed with `npm run format`)
-- [ ] Related issue is linked in PR description
-- [ ] Documentation is updated if behavior changed
-- [ ] No unrelated commits or refactors included
+## Reporting issues
 
-## Reporting Issues
+When opening an issue include:
 
-When opening an issue, include:
+- Title: short, descriptive.
+- Reproduction steps and expected vs actual behavior.
+- Environment: bot version, `APP_ENV` or `staging`/`prod` context.
+- Relevant logs or screenshots.
 
-- **Title:** Clear, concise description
-- **Reproduction steps:** How to trigger the problem
-- **Expected behavior:** What should happen
-- **Actual behavior:** What actually happens
-- **Environment:** bot version, Discord server type (`prod`/`staging`)
-- **Screenshots/logs:** If applicable
+## Where to find more details
 
-## Questions or Need Help?
-
-- Open an issue in the repository
-- Review existing [documentation](docs/)
-- Check [CHANGELOG.md](CHANGELOG.md) for recent changes
+- Setup and container rules: [docs/development/SETUP.md](docs/development/SETUP.md)
+- Branching and PR expectations: [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
+- Project overview and environment variables: [README.md](README.md)
+- Release process and changelog: [CHANGELOG.md](CHANGELOG.md)
