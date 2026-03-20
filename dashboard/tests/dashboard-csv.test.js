@@ -127,4 +127,27 @@ describe('Dashboard CSV Upload API', () => {
     // Sem arquivo, erro de arquivo não enviado
     expect([400, 413]).toContain(res.statusCode);
   });
+
+  it('should reject CSV with injection attempt (formula starting with =)', async () => {
+    const injectionCsvPath = path.join(__dirname, 'injection-test.csv');
+    const injectionContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\n=SUM(A1:A2);A,B;1;sim\n';
+    fs.writeFileSync(injectionCsvPath, injectionContent);
+
+    // Mock para retornar erro de CSV injection
+    csvService.parseAndValidate.mockResolvedValue({
+      valid: false,
+      error: 'Linha 2, coluna "nome-da-enquete": valor suspeito detectado. Células não podem começar com =, +, -, ou @',
+    });
+
+    const res = await request(app)
+      .post('/api/csv/upload')
+      .set('Authorization', 'Bearer valid-token')
+      .attach('file', injectionCsvPath);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/valor suspeito detectado/);
+    expect(botService.savePoll).not.toHaveBeenCalled();
+
+    fs.unlinkSync(injectionCsvPath);
+  });
 });

@@ -99,4 +99,53 @@ describe('csvService.parseAndValidate', () => {
     expect(result.error).toContain('Linha 2:');
     expect(result.error).toContain('número inteiro positivo');
   });
+
+  it('deve rejeitar CSV com tentativa de injeção (fórmula começando com =)', async () => {
+    const injectionPath = await writeCsvFile(
+      'injection-test.csv',
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '=SUM(A1:A2);A,B;1;sim'].join('\n'),
+    );
+
+    const result = await parseAndValidate(injectionPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('valor suspeito detectado');
+    expect(result.error).toContain('nome-da-enquete');
+  });
+
+  it('deve rejeitar valores começando com + (CSV injection)', async () => {
+    const injectionPath = await writeCsvFile(
+      'injection-plus.csv',
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', 'Normal;+cmd|/c calc;1;sim'].join('\n'),
+    );
+
+    const result = await parseAndValidate(injectionPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('valor suspeito detectado');
+  });
+
+  it('deve rejeitar valores começando com - (CSV injection)', async () => {
+    const injectionPath = await writeCsvFile(
+      'injection-minus.csv',
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '-cmd;A,B;1;sim'].join('\n'),
+    );
+
+    const result = await parseAndValidate(injectionPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('valor suspeito detectado');
+  });
+
+  it('deve rejeitar valores começando com @ (CSV injection)', async () => {
+    const injectionPath = await writeCsvFile(
+      'injection-at.csv',
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '@SUM(1+1);A,B;1;sim'].join('\n'),
+    );
+
+    const result = await parseAndValidate(injectionPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('valor suspeito detectado');
+  });
 });
