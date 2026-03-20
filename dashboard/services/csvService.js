@@ -6,6 +6,37 @@ const csv = require('csv-parse/sync');
 const { validatePollOptions } = require('../../src/utils/validators');
 
 /**
+ * Verifica se um valor começa com caracteres perigosos (CSV Injection)
+ * @param {string} value Valor a verificar
+ * @returns {boolean} true se o valor contém injeção
+ */
+function containsCSVInjection(value) {
+  if (!value || typeof value !== 'string') return false;
+  const firstChar = value.trim().charAt(0);
+  return ['=', '+', '-', '@'].includes(firstChar);
+}
+
+/**
+ * Valida todos os valores do CSV contra CSV Injection
+ * @param {Array} records Array de registros parseados
+ * @returns {{valid: boolean, error?: string}} Resultado da validação
+ */
+function validateAgainstCSVInjection(records) {
+  for (let i = 0; i < records.length; i++) {
+    const row = records[i];
+    for (const [key, value] of Object.entries(row)) {
+      if (containsCSVInjection(value)) {
+        return {
+          valid: false,
+          error: `Linha ${i + 2}, coluna "${key}": valor suspeito detectado. Células não podem começar com =, +, -, ou @`,
+        };
+      }
+    }
+  }
+  return { valid: true };
+}
+
+/**
  * Lê, valida e converte CSV para JSON compatível com o bot
  * @param {string} filePath Caminho do arquivo CSV
  * @returns {Promise<{valid: boolean, data?: any, error?: string}>}
@@ -25,6 +56,12 @@ async function parseAndValidate(filePath) {
     if (!records.length) {
       console.error('[csvService] Erro: Arquivo CSV vazio.');
       return { valid: false, error: 'Arquivo CSV vazio.' };
+    }
+    // Validar contra CSV Injection
+    const injectionCheck = validateAgainstCSVInjection(records);
+    if (!injectionCheck.valid) {
+      console.error(`[csvService] Erro: CSV Injection detectado - ${injectionCheck.error}`);
+      return { valid: false, error: injectionCheck.error };
     }
     // Colunas obrigatórias
     const requiredColumns = ['nome-da-enquete', 'opcoes (ou opções)', 'max_votos (ou maxVotos)', 'peso_mensalistas'];
