@@ -61,15 +61,19 @@ describe('Dashboard CSV Upload API', () => {
     const txtFile = path.join(__dirname, 'test.txt');
     fs.writeFileSync(txtFile, 'not a csv');
 
-    const res = await request(app)
-      .post('/api/csv/upload')
-      .set('Authorization', 'Bearer valid-token')
-      .attach('file', txtFile);
+    try {
+      const res = await request(app)
+        .post('/api/csv/upload')
+        .set('Authorization', 'Bearer valid-token')
+        .attach('file', txtFile);
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toMatch(/Apenas arquivos CSV/);
-
-    fs.unlinkSync(txtFile);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toMatch(/Apenas arquivos CSV/);
+    } finally {
+      if (fs.existsSync(txtFile)) {
+        fs.unlinkSync(txtFile);
+      }
+    }
   });
 
   it('should reject missing file', async () => {
