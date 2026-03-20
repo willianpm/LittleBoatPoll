@@ -22,18 +22,18 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    // Preservar extensão original (idealmente .csv)
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, `poll-${uniqueSuffix}${path.extname(file.originalname)}`);
   },
 });
 
 const fileFilter = (req, file, cb) => {
-  // Aceitar apenas CSV
   if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
     cb(null, true);
   } else {
-    cb(new Error('Apenas arquivos CSV são aceitos'), false);
+    const validationError = new Error('Apenas arquivos CSV são aceitos');
+    validationError.statusCode = 400;
+    cb(validationError, false);
   }
 };
 
@@ -47,47 +47,36 @@ const upload = multer({
 
 /**
  * POST /api/csv/upload
- * Recebe arquivo CSV e processa para criar/atualizar enquetes
- *
- * @param {File} file Campo multipart com arquivo CSV
- * @param {string} token Token de autenticação (query param ou header)
- * @returns {JSON} { success: true } ou { error: "mensagem" }
+ * Recebe arquivo CSV e processa para criar/atualizar enquetes.
+ * O tratamento de erro e limpeza de arquivo é delegado para o middleware de erro.
  */
-router.post('/upload', validateDashboardToken, upload.single('file'), async (req, res) => {
-  // Após o middleware multer processar, chamar o controller
-  try {
-    await uploadCsv(req, res);
-  } catch (err) {
-    console.error(`[dashboard-csv] Erro ao processar CSV: ${err.message}`);
-    // Limpar arquivo se algo deu errado
-    if (req.file && req.file.path) {
-      fs.unlink(req.file.path, (unlinkErr) => {
-        if (unlinkErr) console.error(`Erro ao deletar arquivo: ${unlinkErr.message}`);
-      });
-    }
-    res.status(500).json({ error: 'Erro interno no servidor ao processar CSV' });
-  }
-});
+router.post('/upload', validateDashboardToken, upload.single('file'), uploadCsv);
 
-// Middleware de error handling específico para multer
+// Middleware de tratamento de erros centralizado para a rota de upload
 router.use((err, req, res, next) => {
+  // Garante que o arquivo temporário seja removido em caso de qualquer erro
+  const filePath = req.file?.path || err.filePath;
+  if (filePath && !req.tempFileCleaned) {
+    fs.promises
+      .unlink(filePath)
+      .then(() => console.log(`[ErrorHandler] Arquivo temporário deletado: ${filePath}`))
+      .catch((unlinkErr) => console.error(`[ErrorHandler] Falha ao deletar arquivo temporário: ${unlinkErr.message}`));
+  }
+
+  // Tratamento de erros específicos do Multer
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({ error: 'Arquivo muito grande. Máximo 5MB.' });
     }
-    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-      return res.status(400).json({ error: 'Campo de arquivo inesperado.' });
-    }
     return res.status(400).json({ error: `Erro no upload: ${err.message}` });
   }
 
-  if (err && err.message === 'Apenas arquivos CSV são aceitos') {
-    return res.status(400).json({ error: 'Apenas arquivos CSV são aceitos' });
-  }
-
-  // Outros erros
+  // Tratamento de erros customizados ou do controller
   if (err) {
-    return res.status(400).json({ error: err.message });
+    const statusCode = err.statusCode || 500;
+    const message = statusCode >= 500 ? 'Erro interno no servidor.' : err.message;
+    console.error(`[ErrorHandler] Erro ${statusCode}: ${message}`);
+    return res.status(statusCode).json({ error: message });
   }
 
   next();
