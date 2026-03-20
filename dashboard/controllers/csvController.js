@@ -13,6 +13,7 @@ const botService = require('../services/botService');
  */
 async function uploadCsv(req, res, next) {
   const filePath = req.file?.path;
+  let cleanupHandledByErrorMiddleware = false;
 
   try {
     if (!req.file || !filePath) {
@@ -40,6 +41,7 @@ async function uploadCsv(req, res, next) {
     }
 
     if (typeof next === 'function') {
+      cleanupHandledByErrorMiddleware = true;
       return next(err);
     }
 
@@ -51,7 +53,7 @@ async function uploadCsv(req, res, next) {
 
     return res.status(statusCode).json({ error: err.message });
   } finally {
-    if (filePath) {
+    if (filePath && !cleanupHandledByErrorMiddleware) {
       try {
         await fs.unlink(filePath);
         req.tempFileCleaned = true;
@@ -60,9 +62,9 @@ async function uploadCsv(req, res, next) {
         if (unlinkErr.code === 'ENOENT') {
           req.tempFileCleaned = true;
           console.log(`[csvController:cleanup] Arquivo temporário já removido: ${filePath}`);
-          return;
+        } else {
+          console.warn(`[csvController:cleanup] Falha ao deletar arquivo temporário: ${unlinkErr.message}`);
         }
-        console.warn(`[csvController:cleanup] Falha ao deletar arquivo temporário: ${unlinkErr.message}`);
       }
     }
   }
