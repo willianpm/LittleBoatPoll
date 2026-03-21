@@ -565,6 +565,28 @@ export default function App() {
         setCriadorForm((prev) => ({ ...prev, usuario: '' }));
       }
 
+      if (command.name === 'enquete') {
+        setEnqueteForm({
+          titulo: '',
+          opcoes: '',
+          maxVotos: 1,
+          pesoMensalista: 'sim',
+        });
+      }
+
+      if (command.name === 'rascunho' && (options?.subcommand === 'criar' || options?.subcommand === 'publicar')) {
+        setRascunhoForm({
+          subcommand: options.subcommand,
+          id: '',
+          titulo: '',
+          opcoes: '',
+          maxVotos: 1,
+          pesoMensalista: 'nao',
+          canal: '',
+          opcao: '',
+        });
+      }
+
       if (command.name === 'enquete' || (command.name === 'Encerrar Votação' && command.type === 3)) {
         try {
           const pollsPayload = await getPollContextTargets(commandGuildId);
