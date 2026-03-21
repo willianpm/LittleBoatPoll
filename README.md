@@ -2,8 +2,6 @@
 
 LittleBoatPoll is a Discord bot for book club polls, draft management, internal permissions, and an administrative dashboard. All environments require Docker and Redis.
 
-LittleBoatPoll is a Discord bot for running book club polls with weighted voting, draft management, internal creator permissions, and an administrative dashboard backed by Express and a React frontend.
-
 ## Overview
 
 Main components:
