@@ -151,6 +151,7 @@ export default function App() {
   const [guilds, setGuilds] = useState([]);
   const [guildsLoading, setGuildsLoading] = useState(true);
   const [selectedGuildId, setSelectedGuildId] = useState('');
+  const selectedGuildIdRef = useRef('');
 
   const [catalog, setCatalog] = useState([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -282,6 +283,10 @@ export default function App() {
   }, [selectedGuildId, session, memberQuery]);
 
   useEffect(() => {
+    selectedGuildIdRef.current = selectedGuildId;
+  }, [selectedGuildId]);
+
+  useEffect(() => {
     return () => {
       Object.values(commandFeedbackTimersRef.current).forEach((timerId) => {
         clearTimeout(timerId);
@@ -373,6 +378,7 @@ export default function App() {
     event.preventDefault();
 
     const commandKey = toCommandKey(command);
+    const commandGuildId = selectedGuildId;
     const setFailure = () => {
       setCommandFeedback(commandKey, 'error');
     };
@@ -534,7 +540,7 @@ export default function App() {
         commandName: command.name,
         commandType: command.type,
         options,
-        guildId: selectedGuildId,
+        guildId: commandGuildId,
         target,
       });
       setCommandFeedback(commandKey, 'success');
@@ -561,8 +567,10 @@ export default function App() {
 
       if (command.name === 'enquete' || (command.name === 'Encerrar Votação' && command.type === 3)) {
         try {
-          const pollsPayload = await getPollContextTargets(selectedGuildId);
-          setPollTargets(pollsPayload.polls || []);
+          const pollsPayload = await getPollContextTargets(commandGuildId);
+          if (selectedGuildIdRef.current === commandGuildId) {
+            setPollTargets(pollsPayload.polls || []);
+          }
         } catch (err) {
           console.debug('[App] Falha ao atualizar lista de enquetes após comando', err);
         }
@@ -572,6 +580,13 @@ export default function App() {
         try {
           const draftsPayload = await getDraftContextTargets();
           setDraftTargets(draftsPayload.drafts || []);
+
+          if (options?.subcommand === 'publicar') {
+            const pollsPayload = await getPollContextTargets(commandGuildId);
+            if (selectedGuildIdRef.current === commandGuildId) {
+              setPollTargets(pollsPayload.polls || []);
+            }
+          }
         } catch (err) {
           console.debug('[App] Falha ao atualizar lista de rascunhos após comando', err);
         }
