@@ -558,6 +558,24 @@ export default function App() {
         }
         setCriadorForm((prev) => ({ ...prev, usuario: '' }));
       }
+
+      if (command.name === 'enquete' || (command.name === 'Encerrar Votação' && command.type === 3)) {
+        try {
+          const pollsPayload = await getPollContextTargets(selectedGuildId);
+          setPollTargets(pollsPayload.polls || []);
+        } catch (err) {
+          console.debug('[App] Falha ao atualizar lista de enquetes após comando', err);
+        }
+      }
+
+      if (command.name === 'rascunho' && options?.subcommand !== 'listar' && options?.subcommand !== 'exibir') {
+        try {
+          const draftsPayload = await getDraftContextTargets();
+          setDraftTargets(draftsPayload.drafts || []);
+        } catch (err) {
+          console.debug('[App] Falha ao atualizar lista de rascunhos após comando', err);
+        }
+      }
     } catch {
       setCommandFeedback(commandKey, 'error');
     } finally {
