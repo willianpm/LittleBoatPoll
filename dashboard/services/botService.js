@@ -5,6 +5,30 @@ const fs = require('fs/promises');
 const crypto = require('crypto');
 const { client } = require('../../src/core/client');
 
+function normalizeUsarPesoMensalista(value) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value === 1;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+
+    if (['sim', 'true', '1', 'yes', 'y'].includes(normalized)) {
+      return true;
+    }
+
+    if (['nao', 'não', 'false', '0', 'no', 'n', ''].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 function normalizeDraft(draft) {
   const now = new Date().toISOString();
   return {
@@ -12,7 +36,7 @@ function normalizeDraft(draft) {
     titulo: draft.titulo || 'Sem título',
     opcoes: Array.isArray(draft.opcoes) ? draft.opcoes : [],
     maxVotos: Number.isFinite(Number(draft.maxVotos)) ? Number(draft.maxVotos) : 1,
-    usarPesoMensalista: Boolean(draft.usarPesoMensalista),
+    usarPesoMensalista: normalizeUsarPesoMensalista(draft.usarPesoMensalista),
     criadorId: draft.criadorId || null,
     criadorNome: draft.criadorNome || 'dashboard-csv',
     status: 'rascunho',

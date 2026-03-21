@@ -83,12 +83,25 @@ describe('botService.savePoll', () => {
     writeSpy.mockRestore();
   });
 
-  it('deve usar path correto baseado em APP_ENV', async () => {
+  it('deve usar o path mockado em DATA_FILES.draftPolls', async () => {
     const { DATA_FILES } = require('../../src/utils/config');
     // Converter \ para / para comparação cross-platform
     const normalizedPath = DATA_FILES.draftPolls.replace(/\\/g, '/');
     expect(normalizedPath).toContain('littleboatpoll-draft-polls-');
     expect(normalizedPath).toContain('draft-polls');
     expect(normalizedPath).toContain('.json');
+  });
+
+  it('deve normalizar usarPesoMensalista com segurança', async () => {
+    await savePoll([
+      { id: 't1', titulo: 'Bool false string', opcoes: ['A', 'B'], maxVotos: 1, usarPesoMensalista: 'false' },
+      { id: 't2', titulo: 'Bool sim', opcoes: ['A', 'B'], maxVotos: 1, usarPesoMensalista: 'sim' },
+    ]);
+
+    const content = await fs.readFile(mockTestJsonPath, 'utf-8');
+    const json = JSON.parse(content);
+
+    expect(json[0]).toEqual(expect.objectContaining({ id: 't1', usarPesoMensalista: false }));
+    expect(json[1]).toEqual(expect.objectContaining({ id: 't2', usarPesoMensalista: true }));
   });
 });

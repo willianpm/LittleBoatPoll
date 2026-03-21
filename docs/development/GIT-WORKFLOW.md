@@ -41,8 +41,6 @@ git config --global user.email "your.email@example.com"
 6. Address CI or review feedback.
 7. Merge into `develop` and delete the branch.
 
-   Note: If your repository is configured to auto-delete branches on merge, the branch will be removed automatically by GitHub.
-
 ## Commands
 
 ```bash

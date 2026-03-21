@@ -6,10 +6,11 @@
  * Execução:
  *   APP_ENV=prod node scripts/validate-csv-upload-fix.js
  *   APP_ENV=staging node scripts/validate-csv-upload-fix.js
+ *   DATA_DIR=/tmp/lbp-data APP_ENV=prod node scripts/validate-csv-upload-fix.js
  *
  * Espera:
- *   - Quando APP_ENV=prod: salva em /data/environments/prod/draft-polls.json
- *   - Quando APP_ENV=staging: salva em /data/environments/staging/draft-polls.json
+ *   - Com DATA_DIR definido: salva em <DATA_DIR>/draft-polls.json
+ *   - Sem DATA_DIR: salva em <repo>/data/environments/<APP_ENV>/draft-polls.json
  */
 
 const fs = require('fs');
@@ -21,13 +22,27 @@ console.log('VALIDAÇÃO: CSV Upload Path Correction');
 console.log('='.repeat(70) + '\n');
 
 const appEnv = process.env.APP_ENV || 'prod';
+const allowedEnvs = new Set(['prod', 'staging']);
+if (!allowedEnvs.has(appEnv)) {
+  console.error(`✗ APP_ENV inválido: ${appEnv}. Use "prod" ou "staging".`);
+  process.exit(1);
+}
+
 console.log(`✓ APP_ENV: ${appEnv}`);
 
 // Construir o path como botService.js agora faz
-// (usa config.js que determina path baseado em APP_ENV)
-const dataDir = path.join(__dirname, '../data/environments', appEnv);
-const draftPollsPath = path.join(dataDir, 'draft-polls.json');
+// (config.js usa DATA_DIR quando definido, senão fallback por APP_ENV)
+const environmentsBaseDir = path.resolve(__dirname, '../data/environments');
+const defaultDataDir = path.resolve(environmentsBaseDir, appEnv);
+const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : defaultDataDir;
+const draftPollsPath = path.resolve(dataDir, 'draft-polls.json');
 
+if (!process.env.DATA_DIR && !defaultDataDir.startsWith(`${environmentsBaseDir}${path.sep}`)) {
+  console.error(`✗ Caminho inválido detectado para APP_ENV: ${defaultDataDir}`);
+  process.exit(1);
+}
+
+console.log(`✓ DATA_DIR: ${dataDir}${process.env.DATA_DIR ? ' (via env)' : ' (fallback por APP_ENV)'}`);
 console.log(`✓ Caminho esperado: ${draftPollsPath}\n`);
 
 // Validar estrutura de diretórios
@@ -91,6 +106,7 @@ try {
   console.log('='.repeat(70));
   console.log(`\nResumo:`);
   console.log(`  • APP_ENV: ${appEnv}`);
+  console.log(`  • DATA_DIR override: ${process.env.DATA_DIR ? 'SIM' : 'NÃO'}`);
   console.log(`  • Path de salvamento: ${draftPollsPath}`);
   console.log(`  • Escrita funcionando: SIM`);
   console.log(`  • Ambiente correto: SIM\n`);
