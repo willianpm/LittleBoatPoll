@@ -346,6 +346,8 @@ export default function App() {
 
     try {
       await uploadCsv(csvFile);
+      const draftsPayload = await getDraftContextTargets();
+      setDraftTargets(draftsPayload.drafts || []);
       setCsvFeedbackWithTimeout('success');
     } catch {
       setCsvFeedbackWithTimeout('error');

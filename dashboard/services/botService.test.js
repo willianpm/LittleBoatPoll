@@ -38,8 +38,8 @@ describe('botService.savePoll', () => {
 
   it('deve salvar JSON corretamente no ambiente configurado', async () => {
     const testData = [
-      { id: '1', name: 'Ana' },
-      { id: '2', name: 'João' },
+      { id: '1', titulo: 'Ana', opcoes: ['A', 'B'], maxVotos: 1, usarPesoMensalista: true },
+      { id: '2', titulo: 'João', opcoes: ['X', 'Y'], maxVotos: 1, usarPesoMensalista: false },
     ];
 
     await savePoll(testData);
@@ -49,17 +49,32 @@ describe('botService.savePoll', () => {
 
     expect(Array.isArray(json)).toBe(true);
     expect(json.length).toBe(2);
-    expect(json[0]).toEqual({ id: '1', name: 'Ana' });
+    expect(json[0]).toEqual(
+      expect.objectContaining({
+        id: '1',
+        titulo: 'Ana',
+        opcoes: ['A', 'B'],
+        maxVotos: 1,
+        status: 'rascunho',
+      }),
+    );
   });
 
   it('deve sobrescrever conteúdo anterior ao salvar novos dados', async () => {
-    await savePoll([{ id: 'old', name: 'Old Poll' }]);
-    await savePoll([{ id: 'new', name: 'New Poll' }]);
+    await savePoll([{ id: 'old', titulo: 'Old Poll', opcoes: ['A', 'B'], maxVotos: 1 }]);
+    await savePoll([{ id: 'new', titulo: 'New Poll', opcoes: ['A', 'B'], maxVotos: 1 }]);
 
     const content = await fs.readFile(testJsonPath, 'utf-8');
     const json = JSON.parse(content);
 
-    expect(json).toEqual([{ id: 'new', name: 'New Poll' }]);
+    expect(json).toHaveLength(1);
+    expect(json[0]).toEqual(
+      expect.objectContaining({
+        id: 'new',
+        titulo: 'New Poll',
+        status: 'rascunho',
+      }),
+    );
   });
 
   it('deve propagar erro quando a escrita falhar', async () => {

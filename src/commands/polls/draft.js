@@ -447,7 +447,8 @@ async function handlePublicar(interaction, client) {
   }
 
   // Defer reply porque a operação vai demorar (adicionar reações)
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  // Usar `ephemeral: true` para compatibilidade com execução via dashboard.
+  await interaction.deferReply({ ephemeral: true });
 
   try {
     // Define o canal (usado o escolhido ou o canal atual)

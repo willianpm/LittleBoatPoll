@@ -3,6 +3,7 @@
 
 const fs = require('fs/promises');
 const csv = require('csv-parse/sync');
+const crypto = require('crypto');
 const { validatePollOptions } = require('../../src/utils/validators');
 
 /**
@@ -41,7 +42,7 @@ function validateAgainstCSVInjection(records) {
  * @param {string} filePath Caminho do arquivo CSV
  * @returns {Promise<{valid: boolean, data?: any, error?: string}>}
  */
-async function parseAndValidate(filePath) {
+async function parseAndValidate(filePath, context = {}) {
   try {
     console.log(`[csvService] Lendo arquivo CSV: ${filePath}`);
     const content = await fs.readFile(filePath, 'utf-8');
@@ -108,10 +109,13 @@ async function parseAndValidate(filePath) {
       const usarPesoMensalista = String(row['peso_mensalistas']).toLowerCase() === 'sim';
       // Monta estrutura interna
       mappedPolls.push({
+        id: crypto.randomBytes(4).toString('hex').toUpperCase(),
         titulo: row['nome-da-enquete'],
         opcoes,
         maxVotos,
         usarPesoMensalista,
+        criadorId: context.userId || null,
+        criadorNome: context.username || 'dashboard-csv',
         status: 'rascunho',
         criadoEm: new Date().toISOString(),
         editadoEm: new Date().toISOString(),
