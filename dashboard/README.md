@@ -2,6 +2,8 @@
 
 This directory contains the administrative dashboard for LittleBoatPoll.
 
+For the complete API surface, see [docs/development/API.md](../docs/development/API.md).
+
 It includes:
 
 - backend HTTP routes in `api/`
