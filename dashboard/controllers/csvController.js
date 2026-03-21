@@ -34,7 +34,7 @@ async function uploadCsv(req, res, next) {
       res.status(200).json({
         success: true,
         draftsCreated: Array.isArray(result.data) ? result.data.length : 0,
-        note: 'CSV importado como rascunho. Use o comando rascunho/publicar para criar a enquete ativa no Discord.',
+        note: 'CSV importado como rascunho. Use o comando `/rascunho publicar` para criar a enquete ativa no Discord.',
       });
     } else {
       console.error(`[csvController] Erro de validação: ${result.error}`);
