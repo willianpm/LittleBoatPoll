@@ -59,15 +59,19 @@ const testData = [
   },
 ];
 
-try {
-  const backup = {};
+let backup = {};
+let createdFile = false;
+let exitCode = 0;
 
+try {
   // Salvar backup se arquivo existe
   if (fs.existsSync(draftPollsPath)) {
     const content = fs.readFileSync(draftPollsPath, 'utf-8');
     backup.content = content;
     backup.mtime = fs.statSync(draftPollsPath).mtime;
     console.log(`  → Backup do arquivo original criado`);
+  } else {
+    createdFile = true;
   }
 
   // Escrever dados de teste
@@ -82,12 +86,6 @@ try {
     throw new Error('Dados escritos não correspondem');
   }
 
-  // Restaurar backup
-  if (backup.content !== undefined) {
-    fs.writeFileSync(draftPollsPath, backup.content, 'utf-8');
-    console.log(`  → Arquivo original restaurado\n`);
-  }
-
   console.log('\n' + '='.repeat(70));
   console.log('✅ SUCESSO: CSV Upload Fix Validado');
   console.log('='.repeat(70));
@@ -96,12 +94,24 @@ try {
   console.log(`  • Path de salvamento: ${draftPollsPath}`);
   console.log(`  • Escrita funcionando: SIM`);
   console.log(`  • Ambiente correto: SIM\n`);
-
-  process.exit(0);
 } catch (err) {
+  exitCode = 1;
   console.error(`\n✗ ERRO: ${err.message}`);
   console.log('\n' + '='.repeat(70));
   console.log('❌ FALHA: CSV Upload Fix Não Funciona');
   console.log('='.repeat(70) + '\n');
-  process.exit(1);
+} finally {
+  try {
+    if (backup.content !== undefined) {
+      fs.writeFileSync(draftPollsPath, backup.content, 'utf-8');
+      console.log('  → Arquivo original restaurado');
+    } else if (createdFile && fs.existsSync(draftPollsPath)) {
+      fs.unlinkSync(draftPollsPath);
+      console.log('  → Arquivo de validação removido');
+    }
+  } catch (cleanupErr) {
+    console.error(`  ✗ Falha no cleanup: ${cleanupErr.message}`);
+  }
+
+  process.exit(exitCode);
 }
