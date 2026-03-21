@@ -352,8 +352,9 @@ export default function App() {
       try {
         const draftsPayload = await getDraftContextTargets();
         setDraftTargets(draftsPayload.drafts || []);
-      } catch {
+      } catch (error) {
         // Não reverte feedback de sucesso do upload por falha secundária de refresh.
+        console.debug('[App] Falha ao atualizar lista de rascunhos após upload CSV', error);
       }
 
       setCsvFeedbackWithTimeout('success');

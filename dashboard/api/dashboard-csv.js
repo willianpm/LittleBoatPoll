@@ -53,14 +53,21 @@ const upload = multer({
 router.post('/upload', validateDashboardToken, upload.single('file'), uploadCsv);
 
 // Middleware de tratamento de erros centralizado para a rota de upload
-router.use((err, req, res, next) => {
+router.use(async (err, req, res, next) => {
   // Garante que o arquivo temporário seja removido em caso de qualquer erro
   const filePath = req.file?.path || err.filePath;
   if (filePath && !req.tempFileCleaned) {
-    fs.promises
-      .unlink(filePath)
-      .then(() => console.log(`[ErrorHandler] Arquivo temporário deletado: ${filePath}`))
-      .catch((unlinkErr) => console.error(`[ErrorHandler] Falha ao deletar arquivo temporário: ${unlinkErr.message}`));
+    try {
+      await fs.promises.unlink(filePath);
+      req.tempFileCleaned = true;
+      console.log(`[ErrorHandler] Arquivo temporário deletado: ${filePath}`);
+    } catch (unlinkErr) {
+      if (unlinkErr.code === 'ENOENT') {
+        req.tempFileCleaned = true;
+      } else {
+        console.error(`[ErrorHandler] Falha ao deletar arquivo temporário: ${unlinkErr.message}`);
+      }
+    }
   }
 
   // Tratamento de erros específicos do Multer
@@ -75,7 +82,7 @@ router.use((err, req, res, next) => {
   if (err) {
     const statusCode = err.statusCode || 500;
     const message = statusCode >= 500 ? 'Erro interno no servidor.' : err.message;
-    console.error(`[ErrorHandler] Erro ${statusCode}: ${message}`);
+    console.error(`[ErrorHandler] Erro ${statusCode}: ${message}`, err);
     return res.status(statusCode).json({ error: message });
   }
 
