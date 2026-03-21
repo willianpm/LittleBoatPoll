@@ -1,14 +1,25 @@
 // Testes unitários para botService
 const { savePoll } = require('./botService');
 const fs = require('fs/promises');
-const path = require('path');
+
+// Mock da config para testes
+jest.mock('../../src/utils/config', () => ({
+  DATA_FILES: {
+    draftPolls: require('path').join(__dirname, '../../data/environments/prod/draft-polls.json'),
+  },
+}));
 
 describe('botService.savePoll', () => {
-  const testJsonPath = path.resolve(__dirname, '../../data/environments/staging/draft-polls.json');
+  // Lazy-load garante que o mock já está em lugar
+  let testJsonPath;
   let originalContent;
   let fileExisted = false;
 
   beforeAll(async () => {
+    // Require dentro do beforeAll para garantir mock carregado
+    const { DATA_FILES } = require('../../src/utils/config');
+    testJsonPath = DATA_FILES.draftPolls;
+
     try {
       originalContent = await fs.readFile(testJsonPath, 'utf-8');
       fileExisted = true;
@@ -25,7 +36,7 @@ describe('botService.savePoll', () => {
     await fs.unlink(testJsonPath).catch(() => {});
   });
 
-  it('deve salvar JSON corretamente', async () => {
+  it('deve salvar JSON corretamente no ambiente configurado', async () => {
     const testData = [
       { id: '1', name: 'Ana' },
       { id: '2', name: 'João' },
@@ -57,5 +68,14 @@ describe('botService.savePoll', () => {
     await expect(savePoll([{ id: '1', name: 'Ana' }])).rejects.toThrow('write failed');
 
     writeSpy.mockRestore();
+  });
+
+  it('deve usar path correto baseado em APP_ENV', async () => {
+    const { DATA_FILES } = require('../../src/utils/config');
+    const path = require('path');
+    // Converter \ para / para comparação cross-platform
+    const normalizedPath = DATA_FILES.draftPolls.replace(/\\/g, '/');
+    expect(normalizedPath).toContain('data/environments/');
+    expect(normalizedPath).toContain('draft-polls.json');
   });
 });

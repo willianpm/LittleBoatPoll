@@ -2,17 +2,21 @@
 // Contrato: savePoll(jsonData) => Promise<void>
 
 const fs = require('fs/promises');
-const path = require('path');
 
 /**
  * Salva dados no formato JSON esperado pelo bot
+ * Usa configuração de ambiente via config.js
+ * Import da config é lazy-loaded para facilitar testes
  * @param {any} jsonData Dados já validados e convertidos
  * @returns {Promise<void>}
  */
 async function savePoll(jsonData) {
-  const targetPath = path.resolve(__dirname, '../../data/environments/staging/draft-polls.json');
+  // Lazy-load da config para evitar erro em testes
+  const { DATA_FILES } = require('../../src/utils/config');
+  const targetPath = DATA_FILES.draftPolls;
   try {
     console.log(`[botService] Salvando JSON em: ${targetPath}`);
+    console.log(`[botService] Ambiente: ${process.env.APP_ENV || 'prod'}`);
     await fs.writeFile(targetPath, JSON.stringify(jsonData, null, 2), 'utf-8');
     console.log('[botService] JSON salvo com sucesso.');
   } catch (err) {
