@@ -1,7 +1,7 @@
 // Controller para upload e processamento de CSV
 // Contrato: uploadCsv(req, res)
 
-const fs = require('fs');
+const fs = require('fs').promises;
 const csvService = require('../services/csvService');
 const botService = require('../services/botService');
 
@@ -9,39 +9,70 @@ const botService = require('../services/botService');
  * Recebe upload de CSV, processa e salva para o bot
  * @param {object} req Requisição (espera req.file.path)
  * @param {object} res Resposta
+ * @param {function} next Próximo middleware
  */
-async function uploadCsv(req, res) {
+async function uploadCsv(req, res, next) {
   const filePath = req.file?.path;
+  let cleanupHandledByErrorMiddleware = false;
 
   try {
     if (!req.file || !filePath) {
       console.error('[csvController] Nenhum arquivo enviado.');
-      return res.status(400).json({ error: 'Arquivo não enviado.' });
+      const err = new Error('Arquivo não enviado.');
+      err.statusCode = 400;
+      throw err;
     }
 
-    const result = await csvService.parseAndValidate(filePath);
+    const result = await csvService.parseAndValidate(filePath, {
+      userId: req.dashboardAuth?.userId || null,
+      username: req.dashboardAuth?.username || 'dashboard-csv',
+    });
 
     if (result.valid) {
       await botService.savePoll(result.data);
       console.log('[csvController] Upload e processamento concluídos com sucesso.');
-      res.status(200).json({ success: true });
+      res.status(200).json({
+        success: true,
+        draftsCreated: Array.isArray(result.data) ? result.data.length : 0,
+        note: 'CSV importado como rascunho. Use o comando `/rascunho publicar` para criar a enquete ativa no Discord.',
+      });
     } else {
       console.error(`[csvController] Erro de validação: ${result.error}`);
-      res.status(400).json({ error: result.error });
+      const err = new Error(result.error);
+      err.statusCode = 400;
+      throw err;
     }
   } catch (err) {
-    console.error(`[csvController] Erro inesperado: ${err.message}`);
-    res.status(500).json({ error: 'Erro interno no servidor.' });
-  } finally {
-    // Limpar arquivo temporário após processamento (sucesso ou erro)
     if (filePath) {
-      fs.unlink(filePath, (unlinkErr) => {
-        if (unlinkErr) {
-          console.warn(`[csvController] Aviso ao deletar arquivo temporário: ${unlinkErr.message}`);
+      err.filePath = filePath;
+    }
+
+    if (typeof next === 'function') {
+      cleanupHandledByErrorMiddleware = true;
+      return next(err);
+    }
+
+    const statusCode = err.statusCode || 500;
+    if (statusCode >= 500) {
+      console.error(`[csvController] Erro inesperado: ${err.message}`);
+      return res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+
+    return res.status(statusCode).json({ error: err.message });
+  } finally {
+    if (filePath && !cleanupHandledByErrorMiddleware) {
+      try {
+        await fs.unlink(filePath);
+        req.tempFileCleaned = true;
+        console.log(`[csvController:cleanup] Arquivo temporário deletado com sucesso: ${filePath}`);
+      } catch (unlinkErr) {
+        if (unlinkErr.code === 'ENOENT') {
+          req.tempFileCleaned = true;
+          console.log(`[csvController:cleanup] Arquivo temporário já removido: ${filePath}`);
         } else {
-          console.log(`[csvController] Arquivo temporário deletado: ${filePath}`);
+          console.warn(`[csvController:cleanup] Falha ao deletar arquivo temporário: ${unlinkErr.message}`);
         }
-      });
+      }
     }
   }
 }

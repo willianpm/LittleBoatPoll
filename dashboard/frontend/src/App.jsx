@@ -345,7 +345,18 @@ export default function App() {
     setCsvFeedback('');
 
     try {
+      // Upload é a operação principal: se deu certo, não deve virar erro por falha no refresh.
       await uploadCsv(csvFile);
+
+      // Refresh best-effort da lista de rascunhos.
+      try {
+        const draftsPayload = await getDraftContextTargets();
+        setDraftTargets(draftsPayload.drafts || []);
+      } catch (error) {
+        // Não reverte feedback de sucesso do upload por falha secundária de refresh.
+        console.debug('[App] Falha ao atualizar lista de rascunhos após upload CSV', error);
+      }
+
       setCsvFeedbackWithTimeout('success');
     } catch {
       setCsvFeedbackWithTimeout('error');

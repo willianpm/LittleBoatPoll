@@ -55,12 +55,21 @@ Dashboard configuration:
 ```env
 DISCORD_CLIENT_ID=your_oauth_client_id
 DISCORD_CLIENT_SECRET=your_oauth_client_secret
-DISCORD_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/discord/callback
+DISCORD_OAUTH_REDIRECT_URI=http://localhost/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=replace_this_secret
 DASHBOARD_ALLOWED_GUILD_ID=your_guild_id
-DASHBOARD_FRONTEND_URL=http://localhost:5173
+DASHBOARD_FRONTEND_URL=http://localhost
 DASHBOARD_SINGLE_INSTANCE=true
 ```
+
+Dashboard URL scenarios:
+
+- Docker default (frontend served by the backend):
+  - `DASHBOARD_FRONTEND_URL=http://localhost`
+  - `DISCORD_OAUTH_REDIRECT_URI=http://localhost/api/auth/discord/callback`
+- Vite dev frontend (when the UI runs on `:5173`):
+  - `DASHBOARD_FRONTEND_URL=http://localhost:5173`
+  - `DISCORD_OAUTH_REDIRECT_URI` still points to the backend callback URL
 
 For persistent session management in production, Redis is required:
 
@@ -159,9 +168,12 @@ data/
 
 The bot exits during startup if either value is missing from `.env` or `.env.staging`.
 
-### Port `8000` already in use
+### Port `80` already in use
 
-Set a different `PORT` value in your environment file.
+In Docker, this usually means the host port mapping in `docker-compose.yml` (`80:8000`) is already occupied.
+
+Prefer changing the host mapping (for example, `8080:8000`) and accessing `http://localhost:8080`.
+Keep `PORT=8000` as the internal container port unless you also update the container-side mapping.
 
 ### OAuth callback issues
 

@@ -2,6 +2,7 @@
 // Não altera lógica dos comandos nem duplicação
 
 const express = require('express');
+const fs = require('fs');
 const router = express.Router();
 const { client } = require('../../src/core/client'); // Garante acesso ao client e comandos
 const { validateDashboardToken } = require('./auth');
@@ -50,6 +51,36 @@ function normalizeOptionsPayload(rawOptions) {
   }
 
   return [];
+}
+
+async function hydrateDraftsFromDiskIfNeeded() {
+  if (client.draftPolls.size > 0) {
+    return;
+  }
+
+  try {
+    const { DATA_FILES } = require('../../src/utils/config');
+    const draftPath = DATA_FILES.draftPolls;
+
+    if (!draftPath || !fs.existsSync(draftPath)) {
+      return;
+    }
+
+    const raw = await fs.promises.readFile(draftPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return;
+    }
+
+    client.draftPolls = new Map(parsed.filter((draft) => draft && draft.id).map((draft) => [draft.id, draft]));
+
+    logDashboardCommand('info', 'drafts_hydrated_from_disk', {
+      count: client.draftPolls.size,
+      path: draftPath,
+    });
+  } catch (err) {
+    logDashboardCommand('error', 'drafts_hydration_failed', { error: err.message });
+  }
 }
 
 function resolveMockUser(userId) {
@@ -170,7 +201,9 @@ function toDiscordMessagePayload(payload) {
     return { content: '' };
   }
 
-  const { flags, ephemeral, ...safePayload } = payload;
+  const safePayload = { ...payload };
+  delete safePayload.flags;
+  delete safePayload.ephemeral;
   return safePayload;
 }
 
@@ -252,12 +285,13 @@ function buildFakeInteraction({ commandName, commandType, options, user, guild, 
     };
   }
 
-  const targetMessage = target?.messageId
-    ? {
-        id: String(target.messageId),
-        content: String(target.messageContent || ''),
-      }
-    : null;
+  let targetMessage = null;
+  if (target?.messageId) {
+    targetMessage = {
+      id: String(target.messageId),
+      content: String(target.messageContent || ''),
+    };
+  }
 
   const targetUser = target?.userId ? resolveMockUser(String(target.userId)) : null;
   const targetMember = targetUser ? guild?.members?.cache?.get(targetUser.id) || null : null;
@@ -289,6 +323,8 @@ function buildFakeInteraction({ commandName, commandType, options, user, guild, 
       this.replied = false;
       if (opts && typeof opts.ephemeral === 'boolean') {
         this._ephemeral = opts.ephemeral;
+      } else if (opts && typeof opts.flags === 'number') {
+        this._ephemeral = (opts.flags & EPHEMERAL_FLAG) === EPHEMERAL_FLAG;
       }
       return;
     },
@@ -432,6 +468,8 @@ router.get('/context-targets/polls', validateDashboardToken, async (req, res) =>
 
 router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) => {
   try {
+    await hydrateDraftsFromDiskIfNeeded();
+
     const drafts = Array.from(client.draftPolls.values())
       .map((draft) => ({
         id: draft.id,
@@ -453,6 +491,10 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
   try {
     const { commandName } = req.params;
     const { options, guild, commandType, target } = req.body;
+
+    if (commandName === 'rascunho') {
+      await hydrateDraftsFromDiskIfNeeded();
+    }
 
     if (!isBotConnected()) {
       return errorResponse(res, 503, 'Bot está offline no momento. Tente novamente em instantes.');

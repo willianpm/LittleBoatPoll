@@ -26,7 +26,12 @@ describe('csvController.uploadCsv', () => {
     botService.savePoll.mockResolvedValue();
     await uploadCsv(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ success: true });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        draftsCreated: 1,
+      }),
+    );
   });
 
   it('deve retornar erro se CSV inválido', async () => {
