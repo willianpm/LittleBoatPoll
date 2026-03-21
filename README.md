@@ -46,6 +46,13 @@ DASHBOARD_SINGLE_INSTANCE=true
 REDIS_URL=redis://localhost:6379
 ```
 
+**Note on `DASHBOARD_FRONTEND_URL`:** The dashboard frontend is served statically by the backend at the root (`/`). When running in Docker via `docker-compose up`, the backend is exposed on port `80` (host) → `8000` (container). Set `DASHBOARD_FRONTEND_URL=http://localhost` so OAuth callbacks redirect correctly. The Vite dev server runs internally on port `5173` during build, but this is not exposed externally.
+
+When developing the dashboard UI with Vite in a dedicated frontend session, use:
+
+- `DASHBOARD_FRONTEND_URL=http://localhost:5173`
+- `DISCORD_OAUTH_REDIRECT_URI` pointing to the backend callback URL (for example, `http://localhost:8000/api/auth/discord/callback` when the backend runs on port `8000`).
+
 See [docs/development/SETUP.md](docs/development/SETUP.md) for full variable list.
 
 ## Docker Support
