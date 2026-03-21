@@ -75,7 +75,7 @@ router.use(async (err, req, res, next) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({ error: 'Arquivo muito grande. Máximo 5MB.' });
     }
-    return res.status(400).json({ error: `Erro no upload: ${err.message}` });
+    return res.status(400).json({ error: `Erro no upload: ${err.code} - ${err.message}` });
   }
 
   // Tratamento de erros customizados ou do controller
