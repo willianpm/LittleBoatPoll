@@ -217,6 +217,91 @@ describe('Dashboard Auth API - group members', () => {
   });
 });
 
+describe('Dashboard Auth API - /me and /logout', () => {
+  it('GET /api/auth/me returns authenticated true for valid session', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.session = {
+        dashboardAuth: {
+          userId: 'user-1',
+          username: 'tester',
+          avatar: 'https://example.com/avatar.png',
+          guildId: 'guild-1',
+        },
+      };
+      next();
+    });
+    app.use('/api/auth', authRouter);
+
+    client.guilds.cache = new Map([
+      [
+        'guild-1',
+        {
+          id: 'guild-1',
+          name: 'Guild One',
+          members: {
+            cache: new Map([
+              [
+                'user-1',
+                {
+                  user: { id: 'user-1', username: 'tester', bot: false },
+                  displayName: 'Tester',
+                },
+              ],
+            ]),
+            fetch: jest.fn(async () => new Map()),
+          },
+          channels: { cache: new Map(), fetch: jest.fn(async () => new Map()) },
+        },
+      ],
+    ]);
+
+    const res = await request(app).get('/api/auth/me');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.authenticated).toBe(true);
+    expect(res.body.user).toEqual(
+      expect.objectContaining({
+        id: 'user-1',
+        username: 'tester',
+        avatar: 'https://example.com/avatar.png',
+        guildId: 'guild-1',
+      }),
+    );
+  });
+
+  it('GET /api/auth/me returns authenticated false when no session', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.session = {}; // sem dashboardAuth
+      next();
+    });
+    app.use('/api/auth', authRouter);
+
+    const res = await request(app).get('/api/auth/me');
+    expect(res.statusCode).toBe(401);
+    expect(res.body.authenticated).toBe(false);
+    expect(res.body.error).toBeTruthy();
+  });
+
+  it('POST /api/auth/logout clears session and returns success', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.session = { destroy: (cb) => cb() };
+      next();
+    });
+    app.use('/api/auth', authRouter);
+
+    const res = await request(app).post('/api/auth/logout');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ success: true });
+    expect(res.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('dashboard.sid=')]));
+  });
+});
+
 describe('Dashboard Auth API - OAuth session persistence', () => {
   const originalEnv = {
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
