@@ -323,6 +323,8 @@ function buildFakeInteraction({ commandName, commandType, options, user, guild, 
       this.replied = false;
       if (opts && typeof opts.ephemeral === 'boolean') {
         this._ephemeral = opts.ephemeral;
+      } else if (opts && typeof opts.flags === 'number') {
+        this._ephemeral = (opts.flags & EPHEMERAL_FLAG) === EPHEMERAL_FLAG;
       }
       return;
     },
