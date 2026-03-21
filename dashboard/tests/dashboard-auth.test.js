@@ -288,8 +288,9 @@ describe('Dashboard Auth API - /me and /logout', () => {
   it('POST /api/auth/logout clears session and returns success', async () => {
     const app = express();
     app.use(express.json());
+    const destroy = jest.fn((cb) => cb());
     app.use((req, _res, next) => {
-      req.session = { destroy: (cb) => cb() };
+      req.session = { destroy };
       next();
     });
     app.use('/api/auth', authRouter);
@@ -298,6 +299,7 @@ describe('Dashboard Auth API - /me and /logout', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ success: true });
+    expect(destroy).toHaveBeenCalledTimes(1);
     expect(res.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('dashboard.sid=')]));
   });
 });
