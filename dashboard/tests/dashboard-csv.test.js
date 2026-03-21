@@ -123,13 +123,69 @@ describe('Dashboard CSV Upload API', () => {
     expect(res.body.error).toMatch(/Erro interno/);
   });
 
-  it('should reject files larger than 5MB', async () => {
-    // Este teste é simbólico - multer rejeitará o arquivo
-    // Na prática, testar uploads grandes exige um setup diferente
-    const res = await request(app).post('/api/csv/upload').set('Authorization', 'Bearer valid-token');
+  it('should reject files larger than 5MB with status 413', async () => {
+    const largeBuffer = Buffer.alloc(6 * 1024 * 1024, 'a');
 
-    // Sem arquivo, erro de arquivo não enviado
-    expect([400, 413]).toContain(res.statusCode);
+    const res = await request(app)
+      .post('/api/csv/upload')
+      .set('Authorization', 'Bearer valid-token')
+      .attach('file', largeBuffer, { filename: 'large.csv', contentType: 'text/csv' });
+
+    expect(res.statusCode).toBe(413);
+    expect(res.body.error).toMatch(/Arquivo muito grande/);
+  });
+
+  it('should reject upload with wrong field name with status 400', async () => {
+    const csvBuffer = Buffer.from('nome-da-enquete;opções\nTestPoll;A,B\n');
+
+    const res = await request(app)
+      .post('/api/csv/upload')
+      .set('Authorization', 'Bearer valid-token')
+      .attach('wrongField', csvBuffer, { filename: 'test.csv', contentType: 'text/csv' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/LIMIT_UNEXPECTED_FILE/);
+  });
+
+  it('should reject files with invalid mimetype with status 400', async () => {
+    const jsonBuffer = Buffer.from('{"key": "value"}');
+
+    const res = await request(app)
+      .post('/api/csv/upload')
+      .set('Authorization', 'Bearer valid-token')
+      .attach('file', jsonBuffer, { filename: 'data.json', contentType: 'application/json' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/Apenas arquivos CSV/);
+  });
+
+  it('should reject CSV with injection attempt (formula starting with =)', async () => {
+    const injectionCsvPath = path.join(__dirname, 'injection-test.csv');
+    const injectionContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\n=SUM(A1:A2);A,B;1;sim\n';
+
+    try {
+      fs.writeFileSync(injectionCsvPath, injectionContent);
+
+      // Mock para retornar erro de CSV injection
+      csvService.parseAndValidate.mockResolvedValue({
+        valid: false,
+        error:
+          'Linha 2, coluna "nome-da-enquete": valor suspeito detectado. Células não podem começar com =, +, -, ou @',
+      });
+
+      const res = await request(app)
+        .post('/api/csv/upload')
+        .set('Authorization', 'Bearer valid-token')
+        .attach('file', injectionCsvPath);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toMatch(/valor suspeito detectado/);
+      expect(botService.savePoll).not.toHaveBeenCalled();
+    } finally {
+      if (fs.existsSync(injectionCsvPath)) {
+        fs.unlinkSync(injectionCsvPath);
+      }
+    }
   });
 
   it('should reject CSV with injection attempt (formula starting with =)', async () => {

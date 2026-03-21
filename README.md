@@ -2,8 +2,6 @@
 
 LittleBoatPoll is a Discord bot for book club polls, draft management, internal permissions, and an administrative dashboard. All environments require Docker and Redis.
 
-LittleBoatPoll is a Discord bot for running book club polls with weighted voting, draft management, internal creator permissions, and an administrative dashboard backed by Express and a React frontend.
-
 ## Overview
 
 Main components:
@@ -29,31 +27,42 @@ Main components:
 - Redis
 - Discord bot token and application ID
 
-## Environment Variables
+## Environment variables
 
-Minimal bot configuration:
+The environment variables below reflect the current runtime configuration and are the single source of truth. Always use `.env.example` as the canonical template.
 
-```env
-TOKEN=your_bot_token
-CLIENT_ID=your_application_id
-DISCORD_CLIENT_ID=your_oauth_client_id
-DISCORD_CLIENT_SECRET=your_oauth_client_secret
-DISCORD_OAUTH_REDIRECT_URI=http://localhost/api/auth/discord/callback
-DASHBOARD_SESSION_SECRET=replace_this_secret
-DASHBOARD_ALLOWED_GUILD_ID=your_primary_guild_id
-DASHBOARD_FRONTEND_URL=http://localhost
-DASHBOARD_SINGLE_INSTANCE=true
-REDIS_URL=redis://localhost:6379
-```
+| Variable                     | Required         | Default | Description                                                              |
+| ---------------------------- | ---------------- | ------- | ------------------------------------------------------------------------ |
+| `APP_ENV`                    | yes              | `prod`  | `prod` or `staging` (switch between `.env` and `.env.staging`).          |
+| `TOKEN`                      | yes              |         | Discord bot token.                                                       |
+| `CLIENT_ID`                  | yes              |         | Discord bot application ID.                                              |
+| `CLIENT_SECRET`              | no               |         | Bot application secret (legacy/compatibility).                           |
+| `GUILD_ID`                   | no               |         | Default guild ID used in command execution contexts.                     |
+| `REDIS_URL`                  | required in prod |         | Redis URL (session persistence).                                         |
+| `REDIS_PASSWORD`             | no               |         | Redis password, if applicable.                                           |
+| `DISCORD_CLIENT_ID`          | yes              |         | OAuth2 client ID for dashboard login.                                    |
+| `DISCORD_CLIENT_SECRET`      | yes              |         | OAuth2 client secret for dashboard login.                                |
+| `DISCORD_OAUTH_REDIRECT_URI` | yes              |         | OAuth2 callback URL, e.g. `http://localhost/api/auth/discord/callback`.  |
+| `DASHBOARD_SESSION_SECRET`   | yes              |         | Secret for session cookies.                                              |
+| `DASHBOARD_ALLOWED_GUILD_ID` | no               |         | Optional fixed guild ID for dashboard operations.                        |
+| `DASHBOARD_FRONTEND_URL`     | yes              |         | Expected dashboard frontend origin.                                      |
+| `DASHBOARD_SINGLE_INSTANCE`  | recommended      | `true`  | When using in-memory session store; set `false` only with Redis cluster. |
+| `DEPLOY`                     | no               | `false` | Enable deploy startup mode (`node src/core/index.js --deploy`).          |
+| `DEBUG`                      | no               | `false` | Enable debug-level logging.                                              |
+| `PORT`                       | no               | `8000`  | Express server port inside container.                                    |
 
-**Note on `DASHBOARD_FRONTEND_URL`:** The dashboard frontend is served statically by the backend at the root (`/`). When running in Docker via `docker-compose up`, the backend is exposed on port `80` (host) → `8000` (container). Set `DASHBOARD_FRONTEND_URL=http://localhost` so OAuth callbacks redirect correctly. The Vite dev server runs internally on port `5173` during build, but this is not exposed externally.
+### Dashboard frontend URL
 
-When developing the dashboard UI with Vite in a dedicated frontend session, use:
+- Container mode: `DASHBOARD_FRONTEND_URL=http://localhost` (Docker mapping 80:8000 to local host).
+- Vite local dev mode: `DASHBOARD_FRONTEND_URL=http://localhost:5173`.
 
-- `DASHBOARD_FRONTEND_URL=http://localhost:5173`
-- `DISCORD_OAUTH_REDIRECT_URI` pointing to the backend callback URL (for example, `http://localhost:8000/api/auth/discord/callback` when the backend runs on port `8000`).
+### Notes
 
-See [docs/development/SETUP.md](docs/development/SETUP.md) for full variable list.
+- Production (`APP_ENV=prod`) requires `REDIS_URL` or app exits.
+- Non-prod with missing `REDIS_URL` uses in-memory session store (not suitable for multi-instance).
+- `DASHBOARD_SINGLE_INSTANCE=true` (recommended for in-memory).
+
+For full setup and additional context, retain [docs/development/SETUP.md](docs/development/SETUP.md).
 
 ## Docker Support
 

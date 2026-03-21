@@ -122,6 +122,30 @@ function parseOptionsCount(input) {
     .filter(Boolean).length;
 }
 
+function isSameEnqueteForm(left, right) {
+  if (!left || !right) return false;
+  return (
+    left.titulo === right.titulo &&
+    left.opcoes === right.opcoes &&
+    String(left.maxVotos) === String(right.maxVotos) &&
+    left.pesoMensalista === right.pesoMensalista
+  );
+}
+
+function isSameRascunhoForm(left, right) {
+  if (!left || !right) return false;
+  return (
+    left.subcommand === right.subcommand &&
+    left.id === right.id &&
+    left.titulo === right.titulo &&
+    left.opcoes === right.opcoes &&
+    String(left.maxVotos) === String(right.maxVotos) &&
+    left.pesoMensalista === right.pesoMensalista &&
+    left.canal === right.canal &&
+    left.opcao === right.opcao
+  );
+}
+
 const CSV_COMMAND_KEY = 'csv:upload';
 const FEEDBACK_TIMEOUT_MS = 4000;
 const MODERATION_COMMAND_ORDER = ['criador-de-enquete', 'mensalista'];
@@ -151,6 +175,7 @@ export default function App() {
   const [guilds, setGuilds] = useState([]);
   const [guildsLoading, setGuildsLoading] = useState(true);
   const [selectedGuildId, setSelectedGuildId] = useState('');
+  const selectedGuildIdRef = useRef('');
 
   const [catalog, setCatalog] = useState([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -282,6 +307,10 @@ export default function App() {
   }, [selectedGuildId, session, memberQuery]);
 
   useEffect(() => {
+    selectedGuildIdRef.current = selectedGuildId;
+  }, [selectedGuildId]);
+
+  useEffect(() => {
     return () => {
       Object.values(commandFeedbackTimersRef.current).forEach((timerId) => {
         clearTimeout(timerId);
@@ -323,6 +352,26 @@ export default function App() {
     }, FEEDBACK_TIMEOUT_MS);
   }
 
+  async function refreshDraftTargets(errorMessage) {
+    try {
+      const draftsPayload = await getDraftContextTargets();
+      setDraftTargets(draftsPayload.drafts || []);
+    } catch (error) {
+      console.debug(errorMessage, error);
+    }
+  }
+
+  async function refreshPollTargets(guildId, errorMessage) {
+    try {
+      const pollsPayload = await getPollContextTargets(guildId);
+      if (selectedGuildIdRef.current === guildId) {
+        setPollTargets(pollsPayload.polls || []);
+      }
+    } catch (error) {
+      console.debug(errorMessage, error);
+    }
+  }
+
   async function handleLogout() {
     try {
       await logoutSession();
@@ -349,13 +398,8 @@ export default function App() {
       await uploadCsv(csvFile);
 
       // Refresh best-effort da lista de rascunhos.
-      try {
-        const draftsPayload = await getDraftContextTargets();
-        setDraftTargets(draftsPayload.drafts || []);
-      } catch (error) {
-        // Não reverte feedback de sucesso do upload por falha secundária de refresh.
-        console.debug('[App] Falha ao atualizar lista de rascunhos após upload CSV', error);
-      }
+      // Não reverte feedback de sucesso do upload por falha secundária de refresh.
+      await refreshDraftTargets('[App] Falha ao atualizar lista de rascunhos após upload CSV');
 
       setCsvFeedbackWithTimeout('success');
     } catch {
@@ -373,6 +417,7 @@ export default function App() {
     event.preventDefault();
 
     const commandKey = toCommandKey(command);
+    const commandGuildId = selectedGuildId;
     const setFailure = () => {
       setCommandFeedback(commandKey, 'error');
     };
@@ -522,6 +567,9 @@ export default function App() {
       target = { channelId: selectedChannelId };
     }
 
+    const submittedEnqueteForm = command.name === 'enquete' ? { ...enqueteForm } : null;
+    const submittedRascunhoForm = command.name === 'rascunho' ? { ...rascunhoForm } : null;
+
     setCommandLoadingKey(commandKey);
     setCommandFeedbackByKey((prev) => {
       const next = { ...prev };
@@ -534,7 +582,7 @@ export default function App() {
         commandName: command.name,
         commandType: command.type,
         options,
-        guildId: selectedGuildId,
+        guildId: commandGuildId,
         target,
       });
       setCommandFeedback(commandKey, 'success');
@@ -557,6 +605,56 @@ export default function App() {
           setCriadorIds((prev) => prev.filter((id) => id !== userId));
         }
         setCriadorForm((prev) => ({ ...prev, usuario: '' }));
+      }
+
+      if (command.name === 'enquete') {
+        setEnqueteForm((prev) => {
+          const sameSubmittedState = isSameEnqueteForm(prev, submittedEnqueteForm);
+          const stillSameGuild = selectedGuildIdRef.current === commandGuildId;
+          if (!sameSubmittedState || !stillSameGuild) {
+            return prev;
+          }
+
+          return {
+            titulo: '',
+            opcoes: '',
+            maxVotos: 1,
+            pesoMensalista: 'sim',
+          };
+        });
+      }
+
+      if (command.name === 'rascunho' && (options?.subcommand === 'criar' || options?.subcommand === 'publicar')) {
+        setRascunhoForm((prev) => {
+          const sameSubmittedState = isSameRascunhoForm(prev, submittedRascunhoForm);
+          const stillSameGuild = selectedGuildIdRef.current === commandGuildId;
+          if (!sameSubmittedState || !stillSameGuild) {
+            return prev;
+          }
+
+          return {
+            subcommand: options.subcommand,
+            id: '',
+            titulo: '',
+            opcoes: '',
+            maxVotos: 1,
+            pesoMensalista: 'nao',
+            canal: '',
+            opcao: '',
+          };
+        });
+      }
+
+      if (command.name === 'enquete' || (command.name === 'Encerrar Votação' && command.type === 3)) {
+        await refreshPollTargets(commandGuildId, '[App] Falha ao atualizar lista de enquetes após comando');
+      }
+
+      if (command.name === 'rascunho' && options?.subcommand !== 'listar' && options?.subcommand !== 'exibir') {
+        await refreshDraftTargets('[App] Falha ao atualizar lista de rascunhos após comando');
+
+        if (options?.subcommand === 'publicar') {
+          await refreshPollTargets(commandGuildId, '[App] Falha ao atualizar lista de enquetes após publicar rascunho');
+        }
       }
     } catch {
       setCommandFeedback(commandKey, 'error');
