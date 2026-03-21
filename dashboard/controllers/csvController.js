@@ -23,12 +23,19 @@ async function uploadCsv(req, res, next) {
       throw err;
     }
 
-    const result = await csvService.parseAndValidate(filePath);
+    const result = await csvService.parseAndValidate(filePath, {
+      userId: req.dashboardAuth?.userId || null,
+      username: req.dashboardAuth?.username || 'dashboard-csv',
+    });
 
     if (result.valid) {
       await botService.savePoll(result.data);
       console.log('[csvController] Upload e processamento concluídos com sucesso.');
-      res.status(200).json({ success: true });
+      res.status(200).json({
+        success: true,
+        draftsCreated: Array.isArray(result.data) ? result.data.length : 0,
+        note: 'CSV importado como rascunho. Use o comando `/rascunho publicar` para criar a enquete ativa no Discord.',
+      });
     } else {
       console.error(`[csvController] Erro de validação: ${result.error}`);
       const err = new Error(result.error);
