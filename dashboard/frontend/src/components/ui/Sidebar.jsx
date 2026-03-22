@@ -43,7 +43,6 @@ export default function Sidebar({
             <p>Carregando...</p>
           ) : (
             <>
-              <label htmlFor="sidebar-guild-select">Servidor</label>
               <select
                 id="sidebar-guild-select"
                 value={selectedGuildId || ''}

@@ -3,7 +3,6 @@
   color: #dcddde;
   background: #161b22;
 
-  /* ── Discord-like color tokens ─────────────────────────── */
   --bg: #161b22;
   --surface: #2f3136;
   --surface-alt: #202225;
@@ -1134,8 +1133,6 @@ select {
 }
 
 .button {
-  background: var(--accent);
-  color: var(--text-inverted);
   font-weight: 600;
 }
 
