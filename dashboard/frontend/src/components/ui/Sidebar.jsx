@@ -57,9 +57,9 @@ export default function Sidebar({
                 ))}
               </select>
 
-              <label htmlFor="sidebar-channel-select">Canal</label>
               <select
                 id="sidebar-channel-select"
+                aria-label="Canal"
                 value={selectedChannelId || ''}
                 onChange={(event) => setSelectedChannelId(event.target.value)}
                 disabled={!selectedGuildId || channelsLoading}
