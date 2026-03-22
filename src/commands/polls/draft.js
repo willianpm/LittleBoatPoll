@@ -508,6 +508,7 @@ async function handlePublicar(interaction, client) {
       maxVotos: draft.maxVotos,
       usarPesoMensalista: draft.usarPesoMensalista,
       criadoEm: new Date(),
+      criadoPor: draft.criadorId || interaction.user?.id || null,
       votos: {},
       status: 'ativa',
     });
