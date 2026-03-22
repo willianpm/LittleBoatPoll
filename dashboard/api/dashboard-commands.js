@@ -456,6 +456,7 @@ router.get('/context-targets/polls', validateDashboardToken, async (req, res) =>
         title: poll.titulo,
         options: poll.opcoes || [],
         status: poll.status,
+        creatorId: poll.criadoPor || poll.criadorId || null,
       }))
       .filter((poll) => poll.status === 'ativa');
 

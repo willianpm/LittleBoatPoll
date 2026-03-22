@@ -13,6 +13,11 @@ import {
   uploadCsv,
 } from './api';
 
+import Layout from './components/ui/Layout';
+import Panel from './components/ui/Panel';
+import GuildChannelSelector from './components/ui/GuildChannelSelector';
+import CommandPanel from './components/ui/CommandPanel';
+
 const CSV_COLUMNS = [
   {
     order: 1,
@@ -146,6 +151,14 @@ function isSameRascunhoForm(left, right) {
   );
 }
 
+function getUserNameById(userId, members) {
+  if (!userId) return null;
+  if (!members?.length) return null;
+  const user = members.find((member) => member.id === userId || member.userId === userId);
+  if (!user) return null;
+  return user.displayName || user.username || user.name || null;
+}
+
 const CSV_COMMAND_KEY = 'csv:upload';
 const FEEDBACK_TIMEOUT_MS = 4000;
 const MODERATION_COMMAND_ORDER = ['criador-de-enquete', 'mensalista'];
@@ -171,6 +184,7 @@ export default function App() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [session, setSession] = useState(null);
   const [sessionError, setSessionError] = useState('');
+  const [currentSection, setCurrentSection] = useState('painel');
 
   const [guilds, setGuilds] = useState([]);
   const [guildsLoading, setGuildsLoading] = useState(true);
@@ -187,6 +201,7 @@ export default function App() {
   const [criadorIds, setCriadorIds] = useState([]);
 
   const [channels, setChannels] = useState([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
   const [selectedChannelId, setSelectedChannelId] = useState('');
   const [pollTargets, setPollTargets] = useState([]);
   const [draftTargets, setDraftTargets] = useState([]);
@@ -199,6 +214,32 @@ export default function App() {
   const [commandFeedbackByKey, setCommandFeedbackByKey] = useState({});
   const commandFeedbackTimersRef = useRef({});
   const csvFeedbackTimerRef = useRef(null);
+
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia('(max-width: 600px)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mediaQuery = window.matchMedia('(max-width: 600px)');
+    const handler = (event) => setIsMobile(event.matches);
+    handler(mediaQuery);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handler);
+    } else {
+      mediaQuery.addListener(handler);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handler);
+      } else {
+        mediaQuery.removeListener(handler);
+      }
+    };
+  }, []);
 
   const [enqueteForm, setEnqueteForm] = useState({
     titulo: '',
@@ -230,6 +271,24 @@ export default function App() {
     };
   }, [catalog]);
 
+  const commandsDisabled = !selectedGuildId || !selectedChannelId;
+
+  const selectedGuildChannelIds = useMemo(() => {
+    if (!selectedGuildId) return [];
+    return channels.map((channel) => channel.id);
+  }, [channels, selectedGuildId]);
+
+  const currentPollTargets = useMemo(() => {
+    if (!selectedGuildId) return [];
+    return pollTargets.filter((poll) => selectedGuildChannelIds.includes(poll.channelId));
+  }, [pollTargets, selectedGuildChannelIds, selectedGuildId]);
+
+  const currentDraftTargets = useMemo(() => {
+    if (!selectedGuildId) return [];
+    // fallback for drafts without guild info
+    return draftTargets.filter((draft) => !draft.guildId || draft.guildId === selectedGuildId);
+  }, [draftTargets, selectedGuildId]);
+
   useEffect(() => {
     async function bootstrapSession() {
       try {
@@ -240,7 +299,7 @@ export default function App() {
 
         const loadedGuilds = guildsPayload.guilds || [];
         setGuilds(loadedGuilds);
-        setSelectedGuildId(loadedGuilds[0]?.id || payload.user.guildId || '');
+        setSelectedGuildId(''); // não selecionar automaticamente, força o usuário escolher
 
         const loadedCatalog = (catalogPayload.commands || []).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         setCatalog(loadedCatalog);
@@ -261,6 +320,7 @@ export default function App() {
     if (!selectedGuildId || !session) return;
 
     setSelectedChannelId('');
+    setChannelsLoading(true);
 
     async function loadGuildStaticData() {
       try {
@@ -285,6 +345,8 @@ export default function App() {
         setDraftTargets([]);
         setMensalistaIds([]);
         setCriadorIds([]);
+      } finally {
+        setChannelsLoading(false);
       }
     }
 
@@ -1067,143 +1129,218 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="card header-card">
-        <div>
-          <h1>Dashboard Little Boat Poll</h1>
-          <p>
+    <Layout
+      currentSection={currentSection}
+      onNavigate={setCurrentSection}
+      user={session}
+      onLogout={handleLogout}
+      isMobile={isMobile}
+      sidebarConfig={{
+        guilds,
+        guildsLoading,
+        selectedGuildId,
+        setSelectedGuildId,
+        channels,
+        channelsLoading,
+        selectedChannelId,
+        setSelectedChannelId,
+      }}
+    >
+      <Panel title="Acesso do Usuário">
+        <div className="user-access-row">
+          <span>
             Logado como <strong>{session.username}</strong>
-          </p>
+          </span>
+          <button className="button secondary" onClick={handleLogout} type="button">
+            Sair
+          </button>
         </div>
-        <button className="button secondary" onClick={handleLogout} type="button">
-          Sair
-        </button>
-      </header>
+      </Panel>
 
-      <section className="card">
-        <h2>Servidor</h2>
-        {guildsLoading ? (
-          <p>Carregando servidores...</p>
-        ) : (
-          <>
-            <div className="guild-cards">
-              {guilds.map((guild) => (
-                <button
-                  key={guild.id}
-                  type="button"
-                  className={`guild-card ${selectedGuildId === guild.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedGuildId(guild.id)}
-                >
-                  {guild.icon ? <img src={guild.icon} alt={guild.name} className="guild-avatar" /> : <span>🛳️</span>}
-                  <div>
-                    <strong>{guild.name}</strong>
-                    <p>{guild.isActive ? 'Servidor ativo' : 'Servidor disponível'}</p>
+      {currentSection === 'painel' && (
+        <>
+          <Panel title="Bem-vindo ao ⛵">
+            <p style={{ marginBottom: 12 }}>Sua central administrativa para gerenciar enquetes com agilidade.</p>
+
+            <p style={{ marginBottom: 16 }}>Após escolher o seu servidor e canal, você pode:</p>
+
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingLeft: 16 }}>
+              <li>
+                <strong>Comandos Rápidos</strong>
+                <br />
+                No menu <strong>Comandos</strong>, selecione o servidor e o canal para interagir em tempo real.
+              </li>
+
+              <li>
+                <strong>Gestão em Massa</strong>
+                <br />
+                Utilize a <strong>Importação CSV</strong> para criar várias enquetes de uma só vez.
+              </li>
+
+              <li>
+                <strong>Foco no que importa</strong>
+                <br />
+                Suas seleções de servidor e canal são mantidas automaticamente enquanto você navega, evitando
+                configurações repetitivas.
+              </li>
+            </ul>
+          </Panel>
+
+          {selectedGuildId ? (
+            <Panel title="Resumo de Enquetes">
+              <div className="dashboard-stats-grid">
+                <div className="stat-card">
+                  <strong>{currentPollTargets.length}</strong>
+                  <span>Enquetes ativas</span>
+                </div>
+
+                <div className="stat-card">
+                  <strong>{currentDraftTargets.length}</strong>
+                  <span>Rascunhos disponíveis</span>
+                </div>
+              </div>
+            </Panel>
+          ) : (
+            <Panel title="Resumo de Enquetes">
+              <p>Selecione um servidor para visualizar as estatísticas.</p>
+            </Panel>
+          )}
+        </>
+      )}
+
+      {currentSection === 'comandos' && (
+        <>
+          {isMobile && (
+            <Panel title="Servidor e Canal">
+              <GuildChannelSelector
+                guilds={guilds}
+                guildsLoading={guildsLoading}
+                selectedGuildId={selectedGuildId}
+                setSelectedGuildId={setSelectedGuildId}
+                channels={channels}
+                channelsLoading={channelsLoading}
+                selectedChannelId={selectedChannelId}
+                setSelectedChannelId={setSelectedChannelId}
+              />
+            </Panel>
+          )}
+
+          <Panel>
+            {catalogLoading ? (
+              <p>Carregando catálogo de comandos...</p>
+            ) : (
+              <div className={`command-groups ${commandsDisabled ? 'commands-disabled' : ''}`}>
+                <div className="command-group-column">
+                  <div className="command-list">
+                    {dashboardCommandGroups.polls.map((command) => (
+                      <CommandPanel
+                        key={`${command.type}:${command.name}`}
+                        command={command}
+                        expanded={expandedCommandKey === `${command.type}:${command.name}`}
+                        onToggle={toggleCommandPanel}
+                        onSubmit={handleCommandSubmit}
+                        renderCommandForm={renderCommandForm}
+                        loading={commandLoadingKey === `${command.type}:${command.name}`}
+                        feedback={commandFeedbackByKey[`${command.type}:${command.name}`] || ''}
+                        fallbackDescription="Comando de enquete"
+                        commandTypeLabel={commandTypeLabel}
+                        getDisplayCommandLabel={getDisplayCommandLabel}
+                        disabled={commandsDisabled}
+                      />
+                    ))}
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
 
-            {selectedGuildId && (
-              <div className={`channel-selector-row ${!selectedChannelId ? 'channel-required' : ''}`}>
-                <label htmlFor="global-channel-select">Canal de publicação</label>
-                <select
-                  id="global-channel-select"
-                  value={selectedChannelId}
-                  onChange={(event) => setSelectedChannelId(event.target.value)}
-                >
-                  <option value="">Selecione um canal...</option>
-                  {channels.map((channel) => (
-                    <option key={channel.id} value={channel.id}>
-                      #{channel.name}
-                    </option>
-                  ))}
-                </select>
-                {!selectedChannelId && (
-                  <p className="channel-hint">⚠️ Selecione um canal antes de executar comandos de slash.</p>
-                )}
+                <div className="command-group-column">
+                  <div className="command-list">
+                    {dashboardCommandGroups.moderation.map((command) => (
+                      <CommandPanel
+                        key={`${command.type}:${command.name}`}
+                        command={command}
+                        expanded={expandedCommandKey === `${command.type}:${command.name}`}
+                        onToggle={toggleCommandPanel}
+                        onSubmit={handleCommandSubmit}
+                        renderCommandForm={renderCommandForm}
+                        loading={commandLoadingKey === `${command.type}:${command.name}`}
+                        feedback={commandFeedbackByKey[`${command.type}:${command.name}`] || ''}
+                        fallbackDescription="Comando de moderação"
+                        commandTypeLabel={commandTypeLabel}
+                        getDisplayCommandLabel={getDisplayCommandLabel}
+                        disabled={commandsDisabled}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
-          </>
-        )}
-      </section>
+          </Panel>
+        </>
+      )}
 
-      <section className="card">
-        {catalogLoading ? (
-          <p>Carregando catálogo de comandos...</p>
-        ) : (
-          <div className={`command-groups ${!selectedChannelId ? 'commands-disabled' : ''}`}>
+      {currentSection === 'importacao' && (
+        <Panel title="Importação CSV">
+          <p>Use essa seção para importar enquetes a partir de planilhas CSV.</p>
+          <ul>
+            <li>Baixe o modelo de CSV na seção de instruções abaixo.</li>
+            <li>Preencha 4 colunas: nome-da-enquete, opcoes, max_votos, peso_mensalistas.</li>
+            <li>Envie o arquivo e aguarde a confirmação de sucesso.</li>
+            <li>Após o upload, sua enquete ficará como rascunho para publicação na área de Comandos.</li>
+          </ul>
+
+          <div className="command-groups">
             <div className="command-group-column">
-              <h3>Comandos de Enquete</h3>
               <div className="command-list">
-                {dashboardCommandGroups.polls.map((command) => renderCommandOption(command, 'Comando de enquete'))}
-              </div>
-            </div>
-
-            <div className="command-group-column">
-              <h3>Moderação</h3>
-              <div className="command-list">
-                {dashboardCommandGroups.moderation.map((command) =>
-                  renderCommandOption(command, 'Comando de moderação'),
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="card">
-        <h2>Importação</h2>
-        <div className="command-groups">
-          <div className="command-group-column">
-            <div className="command-list">
-              <div className={`command-option csv-option ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}>
-                <button
-                  type="button"
-                  className={`command-item ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}
-                  onClick={() => toggleCommandPanel(CSV_COMMAND_KEY)}
-                  aria-expanded={expandedCommandKey === CSV_COMMAND_KEY}
-                >
-                  <div className="command-item-header">
-                    <strong>Upload CSV</strong>
-                  </div>
-                  <span>Importa e cria enquetes a partir de arquivo CSV</span>
-                </button>
-
                 <div
-                  className={`command-panel ${expandedCommandKey === CSV_COMMAND_KEY ? 'expanded' : ''}`}
-                  aria-hidden={expandedCommandKey !== CSV_COMMAND_KEY}
+                  className={`command-option csv-option ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}
                 >
-                  <div className="command-panel-inner">
-                    <div className="command-panel-content form-grid">
-                      <form onSubmit={handleCsvSubmit} className="form-grid csv-upload-form">
-                        <label>
-                          Arquivo CSV
-                          <input
-                            type="file"
-                            accept=".csv,text/csv"
-                            onChange={(event) => setCsvFile(event.target.files?.[0] || null)}
-                          />
-                        </label>
-                        <button className="button csv-submit-button" type="submit" disabled={csvLoading}>
-                          {csvLoading ? 'Enviando...' : 'Enviar CSV'}
-                        </button>
-                      </form>
-                      <div className={`status-alert-slot ${csvFeedback ? 'visible' : ''}`}>
-                        {csvFeedback && (
-                          <div className={`status-alert ${csvFeedback === 'success' ? 'success' : 'error'}`}>
-                            {csvFeedback === 'success' ? 'Sucesso' : 'Falhou'}
-                          </div>
-                        )}
+                  <button
+                    type="button"
+                    className={`command-item ${expandedCommandKey === CSV_COMMAND_KEY ? 'selected' : ''}`}
+                    onClick={() => toggleCommandPanel(CSV_COMMAND_KEY)}
+                    aria-expanded={expandedCommandKey === CSV_COMMAND_KEY}
+                  >
+                    <div className="command-item-header">
+                      <strong>Upload CSV</strong>
+                    </div>
+                    <span>Importa e cria enquetes a partir de arquivo CSV</span>
+                  </button>
+
+                  <div
+                    className={`command-panel ${expandedCommandKey === CSV_COMMAND_KEY ? 'expanded' : ''}`}
+                    aria-hidden={expandedCommandKey !== CSV_COMMAND_KEY}
+                  >
+                    <div className="command-panel-inner">
+                      <div className="command-panel-content form-grid">
+                        <form onSubmit={handleCsvSubmit} className="form-grid csv-upload-form">
+                          <label>
+                            Arquivo CSV
+                            <input
+                              type="file"
+                              accept=".csv,text/csv"
+                              onChange={(event) => setCsvFile(event.target.files?.[0] || null)}
+                            />
+                          </label>
+                          <button className="button csv-submit-button" type="submit" disabled={csvLoading}>
+                            {csvLoading ? 'Enviando...' : 'Enviar CSV'}
+                          </button>
+                        </form>
+                        <div className={`status-alert-slot ${csvFeedback ? 'visible' : ''}`}>
+                          {csvFeedback && (
+                            <div className={`status-alert ${csvFeedback === 'success' ? 'success' : 'error'}`}>
+                              {csvFeedback === 'success' ? 'Sucesso' : 'Falhou'}
+                            </div>
+                          )}
+                        </div>
+                        <CsvFormatGuide />
                       </div>
-                      <CsvFormatGuide />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </Panel>
+      )}
+    </Layout>
   );
 }

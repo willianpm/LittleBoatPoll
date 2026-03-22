@@ -135,6 +135,7 @@ module.exports = {
         maxVotos: maxVotos,
         usarPesoMensalista: usarPesoMensalista,
         criadoEm: new Date(),
+        criadoPor: interaction.user?.id || null,
         votos: {}, // userId -> { reacoes: [emoji1, emoji2], peso: 2 ou 1 }
         status: 'ativa',
       });
