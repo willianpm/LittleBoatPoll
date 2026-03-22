@@ -796,7 +796,7 @@ export default function App() {
                 onChange={(event) => setRascunhoForm((prev) => ({ ...prev, id: event.target.value }))}
               >
                 <option value="">Selecione um rascunho</option>
-                {draftTargets.map((draft) => (
+                {currentDraftTargets.map((draft) => (
                   <option key={draft.id} value={draft.id}>
                     {draft.id} - {draft.title}
                   </option>
