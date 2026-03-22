@@ -5,7 +5,7 @@ export default function GuildChannelSelector({
   setSelectedGuildId,
   selectedChannelId,
   setSelectedChannelId,
-  channels,
+  channels = [],
 }) {
   return (
     <div>

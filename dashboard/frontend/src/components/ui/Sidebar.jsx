@@ -43,37 +43,41 @@ export default function Sidebar({
             <p>Carregando...</p>
           ) : (
             <>
-              <label>
-                <select value={selectedGuildId || ''} onChange={(event) => setSelectedGuildId(event.target.value)}>
-                  <option value="">Escolha um servidor</option>
-                  {guilds.map((guild) => (
-                    <option key={guild.id} value={guild.id}>
-                      {guild.name}
+              <label htmlFor="sidebar-guild-select">Servidor</label>
+              <select
+                id="sidebar-guild-select"
+                value={selectedGuildId || ''}
+                onChange={(event) => setSelectedGuildId(event.target.value)}
+              >
+                <option value="">Escolha um servidor</option>
+                {guilds.map((guild) => (
+                  <option key={guild.id} value={guild.id}>
+                    {guild.name}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="sidebar-channel-select">Canal</label>
+              <select
+                id="sidebar-channel-select"
+                value={selectedChannelId || ''}
+                onChange={(event) => setSelectedChannelId(event.target.value)}
+                disabled={!selectedGuildId || channelsLoading}
+              >
+                <option value="" disabled>
+                  {selectedGuildId
+                    ? channelsLoading
+                      ? 'Carregando canais...'
+                      : 'Escolha um canal'
+                    : 'Escolha um servidor'}
+                </option>
+                {!channelsLoading &&
+                  channels.map((channel) => (
+                    <option key={channel.id} value={channel.id}>
+                      #{channel.name}
                     </option>
                   ))}
-                </select>
-              </label>
-              <label>
-                <select
-                  value={selectedChannelId || ''}
-                  onChange={(event) => setSelectedChannelId(event.target.value)}
-                  disabled={!selectedGuildId || channelsLoading}
-                >
-                  <option value="" disabled>
-                    {selectedGuildId
-                      ? channelsLoading
-                        ? 'Carregando canais...'
-                        : 'Escolha um canal'
-                      : 'Escolha um servidor'}
-                  </option>
-                  {!channelsLoading &&
-                    channels.map((channel) => (
-                      <option key={channel.id} value={channel.id}>
-                        #{channel.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
+              </select>
             </>
           )}
 
