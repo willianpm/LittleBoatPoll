@@ -1,7 +1,14 @@
 export default function Panel({ title, children }) {
+  const sanitizedHeadingId = title
+    ? `${title
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')}-heading`
+    : undefined;
+
   return (
-    <section className="panel card" aria-labelledby={title ? `${title}-heading` : undefined}>
-      {title && <h2 id={`${title}-heading`}>{title}</h2>}
+    <section className="panel card" aria-labelledby={sanitizedHeadingId}>
+      {title && <h2 id={sanitizedHeadingId}>{title}</h2>}
       {children}
     </section>
   );

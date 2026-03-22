@@ -273,6 +273,8 @@ export default function App() {
 
   const commandsDisabled = !selectedGuildId || !selectedChannelId;
 
+  const isCommandDisabled = (command) => !selectedGuildId || (command.type === 1 && !selectedChannelId);
+
   const selectedGuildChannelIds = useMemo(() => {
     if (!selectedGuildId) return [];
     return channels.map((channel) => channel.id);
@@ -1245,7 +1247,7 @@ export default function App() {
                         fallbackDescription="Comando de enquete"
                         commandTypeLabel={commandTypeLabel}
                         getDisplayCommandLabel={getDisplayCommandLabel}
-                        disabled={commandsDisabled}
+                        disabled={isCommandDisabled(command)}
                       />
                     ))}
                   </div>
@@ -1266,7 +1268,7 @@ export default function App() {
                         fallbackDescription="Comando de moderação"
                         commandTypeLabel={commandTypeLabel}
                         getDisplayCommandLabel={getDisplayCommandLabel}
-                        disabled={commandsDisabled}
+                        disabled={isCommandDisabled(command)}
                       />
                     ))}
                   </div>
