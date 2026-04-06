@@ -169,15 +169,27 @@ module.exports = {
       const historicoData = loadVotacoes();
 
       historicoData.push({
+        id: messageId,
         titulo: poll.titulo,
+        description:
+          `Selecione até ${poll.maxVotos} opç${poll.maxVotos > 1 ? 'ões' : 'ão'}:\n\n` +
+          poll.opcoes.map((opcao, index) => `**${poll.emojiNumeros[index]} ${opcao}**`).join('\n\n'),
+        guildId: interaction.guildId,
+        guildName: interaction.guild?.name || null,
+        channelId: interaction.channelId,
+        channelName: interaction.channel?.name || null,
         opcoes: poll.opcoes,
         maxVotos: poll.maxVotos,
         usarPesoMensalista: poll.usarPesoMensalista,
+        allowMultipleChoices: poll.maxVotos > 1,
+        anonymous: Boolean(poll.anonymous),
         resultados: resultados,
         vencedor: empate ? 'Empate' : vencedor.opcao,
         participantes: Object.keys(poll.votos).length,
+        totalVotes: resultados.reduce((sum, resultado) => sum + (resultado.pontos || 0), 0),
         dataCriacao: poll.criadoEm,
         dataFinalizacao: poll.finalizadaEm,
+        status: 'ended',
       });
 
       saveVotacoes(historicoData);
