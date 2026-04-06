@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Activity, TrendingUp, Server } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Card } from "../components/ui/card";
-import { getGuilds, getPollHistory, type DashboardGuild, type DashboardPoll } from "../lib/dashboard-api";
+import { useEffect, useMemo, useState } from 'react';
+import { Activity, TrendingUp, Server } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Card } from '../components/ui/card';
+import { getGuilds, getPollHistory, type DashboardGuild, type DashboardPoll } from '../lib/dashboard-api';
 
 export function Overview() {
   const [polls, setPolls] = useState<DashboardPoll[]>([]);
@@ -29,7 +29,7 @@ export function Overview() {
 
         setPolls([]);
         setGuilds([]);
-        setError(loadError instanceof Error ? loadError.message : "Falha ao carregar a visão geral");
+        setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar a visão geral');
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -52,19 +52,19 @@ export function Overview() {
     });
   }, [polls]);
 
-  const activePolls = useMemo(() => sortedPolls.filter((poll) => poll.status === "active"), [sortedPolls]);
-  const endedPolls = useMemo(() => sortedPolls.filter((poll) => poll.status === "ended"), [sortedPolls]);
+  const activePolls = useMemo(() => sortedPolls.filter((poll) => poll.status === 'active'), [sortedPolls]);
+  const endedPolls = useMemo(() => sortedPolls.filter((poll) => poll.status === 'ended'), [sortedPolls]);
   const totalVotes = useMemo(
     () => sortedPolls.reduce((sum, poll) => sum + (Number(poll.totalVotes) || 0), 0),
     [sortedPolls],
   );
 
   const statusData = [
-    { name: "Ativas", value: activePolls.length },
-    { name: "Encerradas", value: endedPolls.length },
+    { name: 'Ativas', value: activePolls.length },
+    { name: 'Encerradas', value: endedPolls.length },
   ];
 
-  const COLORS = ["#5865F2", "#EB459E"];
+  const COLORS = ['#5865F2', '#EB459E'];
   const recentPolls = sortedPolls.slice(0, 4);
 
   return (
@@ -81,11 +81,11 @@ export function Overview() {
               <Activity className="size-5 md:size-6 text-blue-600 dark:text-blue-400" />
             </div>
             <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
-              {polls.length > 0 ? `${activePolls.length}/${polls.length}` : "0/0"}
+              {polls.length > 0 ? `${activePolls.length}/${polls.length}` : '0/0'}
             </span>
           </div>
           <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Enquetes Ativas</h3>
-          <p className="text-2xl md:text-3xl dark:text-white">{isLoading ? "..." : activePolls.length}</p>
+          <p className="text-2xl md:text-3xl dark:text-white">{isLoading ? '...' : activePolls.length}</p>
         </Card>
 
         <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
@@ -94,11 +94,11 @@ export function Overview() {
               <Server className="size-5 md:size-6 text-green-600 dark:text-green-400" />
             </div>
             <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
-              {isLoading ? "Carregando" : `${guilds.length} servidores`}
+              {isLoading ? 'Carregando' : `${guilds.length} servidores`}
             </span>
           </div>
           <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Servidores Conectados</h3>
-          <p className="text-2xl md:text-3xl dark:text-white">{isLoading ? "..." : guilds.length}</p>
+          <p className="text-2xl md:text-3xl dark:text-white">{isLoading ? '...' : guilds.length}</p>
         </Card>
 
         <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
@@ -107,11 +107,11 @@ export function Overview() {
               <TrendingUp className="size-5 md:size-6 text-orange-600 dark:text-orange-400" />
             </div>
             <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
-              {polls.length > 0 ? `${endedPolls.length} encerradas` : "0 encerradas"}
+              {polls.length > 0 ? `${endedPolls.length} encerradas` : '0 encerradas'}
             </span>
           </div>
           <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total de Votos</h3>
-          <p className="text-2xl md:text-3xl dark:text-white">{isLoading ? "..." : totalVotes}</p>
+          <p className="text-2xl md:text-3xl dark:text-white">{isLoading ? '...' : totalVotes}</p>
         </Card>
       </div>
 
@@ -154,27 +154,33 @@ export function Overview() {
               </div>
             )}
 
-            {!isLoading && !error && recentPolls.map((poll) => (
-              <div
-                key={poll.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-2"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="mb-1 dark:text-white text-sm md:text-base truncate">{poll.title}</p>
-                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-600 dark:text-gray-400">
-                    <span className="truncate">{poll.serverName}</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span>{poll.totalVotes} votos</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span
-                      className={poll.status === "active" ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}
-                    >
-                      {poll.status === "active" ? "Ativa" : "Encerrada"}
-                    </span>
+            {!isLoading &&
+              !error &&
+              recentPolls.map((poll) => (
+                <div
+                  key={poll.id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="mb-1 dark:text-white text-sm md:text-base truncate">{poll.title}</p>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-600 dark:text-gray-400">
+                      <span className="truncate">{poll.serverName}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span>{poll.totalVotes} votos</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span
+                        className={
+                          poll.status === 'active'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }
+                      >
+                        {poll.status === 'active' ? 'Ativa' : 'Encerrada'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
             {!isLoading && !error && recentPolls.length === 0 && (
               <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600 dark:bg-gray-700/50 dark:text-gray-400">
