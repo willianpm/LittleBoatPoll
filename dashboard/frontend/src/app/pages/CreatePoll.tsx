@@ -1,0 +1,408 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Button } from '../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Plus, X, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  createDraft,
+  getGuildChannels,
+  getGuilds,
+  type DashboardChannel,
+  type DashboardGuild,
+} from '../lib/dashboard-api';
+
+export function CreatePoll() {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedGuildId, setSelectedGuildId] = useState('');
+  const [selectedChannelId, setSelectedChannelId] = useState('');
+  const [maxVotes, setMaxVotes] = useState(1);
+  const [subscriberWeight, setSubscriberWeight] = useState<'yes' | 'no'>('no');
+  const [guilds, setGuilds] = useState<DashboardGuild[]>([]);
+  const [channels, setChannels] = useState<DashboardChannel[]>([]);
+  const [loadingGuilds, setLoadingGuilds] = useState(true);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [options, setOptions] = useState([
+    { id: '1', text: '', emoji: '' },
+    { id: '2', text: '', emoji: '' },
+  ]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadGuilds() {
+      setLoadingGuilds(true);
+      try {
+        const data = await getGuilds();
+        if (!isMounted) return;
+
+        setGuilds(data);
+        const activeGuild = data.find((guild) => guild.isActive);
+        if (activeGuild) {
+          setSelectedGuildId(activeGuild.id);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        toast.error(error instanceof Error ? error.message : 'Falha ao carregar servidores');
+      } finally {
+        if (isMounted) {
+          setLoadingGuilds(false);
+        }
+      }
+    }
+
+    loadGuilds();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadChannels() {
+      if (!selectedGuildId) {
+        setChannels([]);
+        setSelectedChannelId('');
+        return;
+      }
+
+      setLoadingChannels(true);
+      setSelectedChannelId('');
+
+      try {
+        const data = await getGuildChannels(selectedGuildId);
+        if (!isMounted) return;
+        setChannels(data);
+      } catch (error) {
+        if (!isMounted) return;
+        setChannels([]);
+        toast.error(error instanceof Error ? error.message : 'Falha ao carregar canais');
+      } finally {
+        if (isMounted) {
+          setLoadingChannels(false);
+        }
+      }
+    }
+
+    loadChannels();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedGuildId]);
+
+  const validOptions = useMemo(() => options.map((option) => option.text.trim()).filter(Boolean), [options]);
+
+  const addOption = () => {
+    if (options.length < 10) {
+      setOptions([...options, { id: Date.now().toString(), text: '', emoji: '' }]);
+    }
+  };
+
+  const removeOption = (id: string) => {
+    if (options.length > 2) {
+      setOptions(options.filter((opt) => opt.id !== id));
+    }
+  };
+
+  const updateOption = (id: string, field: 'text' | 'emoji', value: string) => {
+    setOptions(options.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedGuildId) {
+      toast.error('Selecione um servidor');
+      return;
+    }
+
+    if (!selectedChannelId) {
+      toast.error('Selecione um canal');
+      return;
+    }
+
+    if (validOptions.length < 2) {
+      toast.error('A enquete precisa de pelo menos 2 opções');
+      return;
+    }
+
+    if (!title.trim()) {
+      toast.error('Informe um título para a enquete');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await createDraft({
+        guildId: selectedGuildId,
+        channelId: selectedChannelId,
+        title: title.trim(),
+        optionsCsv: validOptions.join(', '),
+        maxVotes,
+        pesoMensalista: subscriberWeight === 'yes' ? 'sim' : 'nao',
+      });
+
+      toast.success('Rascunho criado com sucesso!', {
+        description: typeof result.message === 'string' ? result.message : 'Use a tela de Rascunhos para publicar.',
+      });
+
+      setTitle('');
+      setDescription('');
+      setMaxVotes(1);
+      setSubscriberWeight('no');
+      setOptions([
+        { id: '1', text: '', emoji: '' },
+        { id: '2', text: '', emoji: '' },
+      ]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Falha ao criar enquete');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Criar Nova Enquete</h1>
+        <p className="text-gray-600 dark:text-gray-400">Configure e publique uma nova enquete no Discord</p>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <Card className="p-4 md:p-6 mb-4 md:mb-6 dark:bg-gray-800 dark:border-gray-700">
+          <h2 className="text-lg md:text-xl mb-4 dark:text-white">Informações Básicas</h2>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title" className="dark:text-gray-200">
+                Título da Enquete *
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Qual jogo jogaremos hoje?"
+                required
+                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="description" className="dark:text-gray-200">
+                Descrição
+              </Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Adicione mais detalhes sobre a enquete..."
+                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="server" className="dark:text-gray-200">
+                  Servidor *
+                </Label>
+                <Select
+                  required
+                  value={selectedGuildId}
+                  onValueChange={setSelectedGuildId}
+                  disabled={loadingGuilds || guilds.length === 0}
+                >
+                  <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <SelectValue placeholder={loadingGuilds ? 'Carregando servidores...' : 'Selecione um servidor'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {guilds.map((server) => (
+                      <SelectItem key={server.id} value={server.id}>
+                        {server.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="channel" className="dark:text-gray-200">
+                  Canal *
+                </Label>
+                <Select
+                  required
+                  value={selectedChannelId}
+                  onValueChange={setSelectedChannelId}
+                  disabled={!selectedGuildId || loadingChannels || channels.length === 0}
+                >
+                  <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <SelectValue
+                      placeholder={
+                        !selectedGuildId
+                          ? 'Selecione um servidor'
+                          : loadingChannels
+                            ? 'Carregando canais...'
+                            : 'Selecione um canal'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {channels.map((channel) => (
+                      <SelectItem key={channel.id} value={channel.id}>
+                        # {channel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="duration" className="dark:text-gray-200">
+                Duração
+              </Label>
+              <Select defaultValue="24h">
+                <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">1 hora</SelectItem>
+                  <SelectItem value="6h">6 horas</SelectItem>
+                  <SelectItem value="12h">12 horas</SelectItem>
+                  <SelectItem value="24h">24 horas</SelectItem>
+                  <SelectItem value="3d">3 dias</SelectItem>
+                  <SelectItem value="7d">7 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 md:p-6 mb-4 md:mb-6 dark:bg-gray-800 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-lg md:text-xl dark:text-white">Opções de Resposta</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addOption}
+              disabled={options.length >= 10}
+              className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              <Plus className="size-4 mr-2" />
+              <span className="hidden sm:inline">Adicionar</span>
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {options.map((option, index) => (
+              <div key={option.id} className="flex items-center gap-2 md:gap-3">
+                <div className="w-12 md:w-16">
+                  <Input
+                    placeholder="😊"
+                    value={option.emoji}
+                    onChange={(e) => updateOption(option.id, 'emoji', e.target.value)}
+                    maxLength={2}
+                    className="text-center dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    placeholder={`Opção ${index + 1}`}
+                    value={option.text}
+                    onChange={(e) => updateOption(option.id, 'text', e.target.value)}
+                    required
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                {options.length > 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeOption(option.id)}
+                    className="dark:hover:bg-gray-700 shrink-0"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-4 md:p-6 mb-4 md:mb-6 dark:bg-gray-800 dark:border-gray-700">
+          <h2 className="text-lg md:text-xl mb-4 dark:text-white">Configurações Avançadas</h2>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="maxVotes" className="dark:text-gray-200">
+                  Número Máximo de Votos por Pessoa
+                </Label>
+                <Input
+                  id="maxVotes"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={maxVotes}
+                  onChange={(e) => {
+                    const nextValue = Number.parseInt(e.target.value, 10);
+                    setMaxVotes(Number.isNaN(nextValue) ? 1 : nextValue);
+                  }}
+                  placeholder="1"
+                  className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Limite de opções que cada pessoa pode escolher
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="subscriberWeight" className="dark:text-gray-200">
+                  Mensalistas peso 2
+                </Label>
+                <Select value={subscriberWeight} onValueChange={(value: 'yes' | 'no') => setSubscriberWeight(value)}>
+                  <SelectTrigger
+                    id="subscriberWeight"
+                    className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">Não</SelectItem>
+                    <SelectItem value="yes">Sim</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Votos de mensalistas contam em dobro</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+          <Button type="submit" disabled={submitting} className="flex-1 bg-[#5865F2] hover:bg-[#4752C4]">
+            <Sparkles className="size-4 mr-2" />
+            {submitting ? 'Criando...' : 'Criar Enquete'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
