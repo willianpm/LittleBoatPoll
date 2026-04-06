@@ -820,6 +820,10 @@ app.use('/api/auth', dashboardAuthRouter);
 const dashboardCommandsRouter = require('../../dashboard/api/dashboard-commands');
 app.use('/api/commands', dashboardCommandsRouter);
 
+// Rota read-only para histórico e detalhe de enquetes do dashboard
+const dashboardPollsRouter = require('../../dashboard/api/dashboard-polls');
+app.use('/api/polls', dashboardPollsRouter);
+
 // Rota para upload de CSV via dashboard
 const dashboardCsvRouter = require('../../dashboard/api/dashboard-csv');
 app.use('/api/csv', dashboardCsvRouter);

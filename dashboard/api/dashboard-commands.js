@@ -528,7 +528,7 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       (await guildObj.members?.fetch?.(req.dashboardAuth.userId).catch(() => null)) ||
       req.dashboardAuth.member;
 
-    if (effectiveType === 1 && !target?.channelId) {
+    if (effectiveType === 1 && commandName !== 'rascunho' && !target?.channelId) {
       return errorResponse(res, 400, 'channelId é obrigatório para comandos de chat (tipo 1)');
     }
 
