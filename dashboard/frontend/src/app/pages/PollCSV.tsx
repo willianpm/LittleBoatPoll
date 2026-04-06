@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { Card } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Switch } from "../components/ui/switch";
-import { Badge } from "../components/ui/badge";
-import { mockServers } from "../data/mockData";
-import { Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle, Send } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Switch } from '../components/ui/switch';
+import { Badge } from '../components/ui/badge';
+import { mockServers } from '../data/mockData';
+import { Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function PollCSV() {
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -23,26 +23,26 @@ export function PollCSV() {
         // Simular parse do CSV
         setTimeout(() => {
           setParsedData({
-            title: "Enquete importada do CSV",
-            description: "Esta é uma enquete criada através de importação CSV",
+            title: 'Enquete importada do CSV',
+            description: 'Esta é uma enquete criada através de importação CSV',
             options: [
-              { text: "Opção 1", emoji: "1️⃣" },
-              { text: "Opção 2", emoji: "2️⃣" },
-              { text: "Opção 3", emoji: "3️⃣" },
-              { text: "Opção 4", emoji: "4️⃣" },
+              { text: 'Opção 1', emoji: '1️⃣' },
+              { text: 'Opção 2', emoji: '2️⃣' },
+              { text: 'Opção 3', emoji: '3️⃣' },
+              { text: 'Opção 4', emoji: '4️⃣' },
             ],
           });
-          toast.success("Arquivo CSV processado com sucesso!");
+          toast.success('Arquivo CSV processado com sucesso!');
         }, 1000);
       } else {
-        toast.error("Por favor, selecione um arquivo .csv válido");
+        toast.error('Por favor, selecione um arquivo .csv válido');
       }
     }
   };
 
   const handlePublish = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Enquete criada e publicada com sucesso!");
+    toast.success('Enquete criada e publicada com sucesso!');
     setCsvFile(null);
     setParsedData(null);
   };
@@ -50,14 +50,14 @@ export function PollCSV() {
   const downloadTemplate = () => {
     const csvContent = `titulo,descricao,opcao1,emoji1,opcao2,emoji2,opcao3,emoji3
 "Qual sua linguagem favorita?","Escolha sua linguagem de programação preferida","JavaScript","💛","Python","🐍","Rust","🦀"`;
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'template_enquete.csv';
     a.click();
-    toast.success("Template baixado com sucesso!");
+    toast.success('Template baixado com sucesso!');
   };
 
   return (
@@ -72,29 +72,33 @@ export function PollCSV() {
           <div className="mb-4 md:mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
               <h2 className="text-lg md:text-xl dark:text-white">Importar Arquivo CSV</h2>
-              <Button variant="outline" size="sm" onClick={downloadTemplate} className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadTemplate}
+                className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 w-full sm:w-auto"
+              >
                 <Download className="size-4 mr-2" />
                 Baixar Template
               </Button>
             </div>
 
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 md:p-8 text-center hover:border-[#5865F2] dark:hover:border-[#5865F2] transition-colors">
-              <input
-                type="file"
-                id="csv-upload"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="hidden"
-              />
+              <input type="file" id="csv-upload" accept=".csv" onChange={handleFileChange} className="hidden" />
               <label htmlFor="csv-upload" className="cursor-pointer">
                 {csvFile ? (
                   <div className="space-y-3">
                     <CheckCircle className="size-10 md:size-12 text-green-600 dark:text-green-400 mx-auto" />
-                    <p className="font-medium text-green-700 dark:text-green-400 text-sm md:text-base truncate px-4">{csvFile.name}</p>
-                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-                      Arquivo carregado com sucesso
+                    <p className="font-medium text-green-700 dark:text-green-400 text-sm md:text-base truncate px-4">
+                      {csvFile.name}
                     </p>
-                    <Button type="button" variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Arquivo carregado com sucesso</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                    >
                       Trocar Arquivo
                     </Button>
                   </div>
@@ -118,7 +122,9 @@ export function PollCSV() {
               <div className="p-3 md:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-lg flex items-start gap-3">
                 <CheckCircle className="size-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-medium text-green-800 dark:text-green-300 text-sm md:text-base">Arquivo processado</p>
+                  <p className="font-medium text-green-800 dark:text-green-300 text-sm md:text-base">
+                    Arquivo processado
+                  </p>
                   <p className="text-xs md:text-sm text-green-700 dark:text-green-400">
                     {parsedData.options.length} opções encontradas
                   </p>
@@ -127,7 +133,9 @@ export function PollCSV() {
 
               <form onSubmit={handlePublish} className="space-y-4 md:space-y-6">
                 <div>
-                  <Label htmlFor="csv-title" className="dark:text-gray-200">Título *</Label>
+                  <Label htmlFor="csv-title" className="dark:text-gray-200">
+                    Título *
+                  </Label>
                   <Input
                     id="csv-title"
                     defaultValue={parsedData.title}
@@ -137,7 +145,9 @@ export function PollCSV() {
                 </div>
 
                 <div>
-                  <Label htmlFor="csv-description" className="dark:text-gray-200">Descrição</Label>
+                  <Label htmlFor="csv-description" className="dark:text-gray-200">
+                    Descrição
+                  </Label>
                   <Textarea
                     id="csv-description"
                     defaultValue={parsedData.description}
@@ -148,7 +158,9 @@ export function PollCSV() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="csv-server" className="dark:text-gray-200">Servidor *</Label>
+                    <Label htmlFor="csv-server" className="dark:text-gray-200">
+                      Servidor *
+                    </Label>
                     <Select required>
                       <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <SelectValue placeholder="Selecione um servidor" />
@@ -164,7 +176,9 @@ export function PollCSV() {
                   </div>
 
                   <div>
-                    <Label htmlFor="csv-channel" className="dark:text-gray-200">Canal *</Label>
+                    <Label htmlFor="csv-channel" className="dark:text-gray-200">
+                      Canal *
+                    </Label>
                     <Select required>
                       <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <SelectValue placeholder="Selecione um canal" />
@@ -194,7 +208,9 @@ export function PollCSV() {
                 </div>
 
                 <div>
-                  <Label htmlFor="csv-duration" className="dark:text-gray-200">Duração</Label>
+                  <Label htmlFor="csv-duration" className="dark:text-gray-200">
+                    Duração
+                  </Label>
                   <Select defaultValue="24h">
                     <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                       <SelectValue />
@@ -213,7 +229,9 @@ export function PollCSV() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-4">
                     <div className="flex-1">
-                      <Label htmlFor="csv-multiple" className="dark:text-gray-200">Múltipla Escolha</Label>
+                      <Label htmlFor="csv-multiple" className="dark:text-gray-200">
+                        Múltipla Escolha
+                      </Label>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
                         Permitir que usuários selecionem várias opções
                       </p>
@@ -223,19 +241,16 @@ export function PollCSV() {
 
                   <div className="flex items-center justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-4">
                     <div className="flex-1">
-                      <Label htmlFor="csv-anonymous" className="dark:text-gray-200">Votação Anônima</Label>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Ocultar quem votou em cada opção
-                      </p>
+                      <Label htmlFor="csv-anonymous" className="dark:text-gray-200">
+                        Votação Anônima
+                      </Label>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Ocultar quem votou em cada opção</p>
                     </div>
                     <Switch id="csv-anonymous" />
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-[#5865F2] hover:bg-[#4752C4]"
-                >
+                <Button type="submit" className="w-full bg-[#5865F2] hover:bg-[#4752C4]">
                   <Send className="size-4 mr-2" />
                   Publicar Enquete
                 </Button>
@@ -251,25 +266,31 @@ export function PollCSV() {
               Formato do CSV
             </h3>
             <div className="space-y-3 text-sm">
-              <p className="text-gray-600 dark:text-gray-400">
-                O arquivo CSV deve conter as seguintes colunas:
-              </p>
+              <p className="text-gray-600 dark:text-gray-400">O arquivo CSV deve conter as seguintes colunas:</p>
               <ul className="space-y-2 text-gray-700 dark:text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
-                  <span><strong>titulo</strong>: Título da enquete</span>
+                  <span>
+                    <strong>titulo</strong>: Título da enquete
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
-                  <span><strong>descricao</strong>: Descrição opcional</span>
+                  <span>
+                    <strong>descricao</strong>: Descrição opcional
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
-                  <span><strong>opcao1, opcao2, ...</strong>: Texto das opções</span>
+                  <span>
+                    <strong>opcao1, opcao2, ...</strong>: Texto das opções
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
-                  <span><strong>emoji1, emoji2, ...</strong>: Emojis das opções</span>
+                  <span>
+                    <strong>emoji1, emoji2, ...</strong>: Emojis das opções
+                  </span>
                 </li>
               </ul>
             </div>
@@ -293,7 +314,7 @@ export function PollCSV() {
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <h3 className="mb-4 dark:text-white">Exemplo de CSV</h3>
             <pre className="text-xs bg-gray-900 text-green-400 p-3 md:p-4 rounded overflow-x-auto">
-{`titulo,descricao,opcao1,emoji1
+              {`titulo,descricao,opcao1,emoji1
 "Melhor jogo",
 "Vote no melhor",
 "Valorant","🎯",

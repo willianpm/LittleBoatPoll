@@ -1,9 +1,9 @@
-import { Outlet, Link, useLocation } from "react-router";
-import { BarChart3, Plus, History, Activity, Bot, Shield, FileText, Upload, Menu, X, Sun, Moon } from "lucide-react";
-import { cn } from "./ui/utils";
-import { useState } from "react";
-import { useTheme } from "next-themes";
-import { Button } from "./ui/button";
+import { Outlet, Link, useLocation } from 'react-router';
+import { BarChart3, Plus, History, Activity, Bot, Shield, FileText, Upload, Menu, X, Sun, Moon } from 'lucide-react';
+import { cn } from './ui/utils';
+import { useState } from 'react';
+import { useTheme } from 'next-themes';
+import { Button } from './ui/button';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -11,17 +11,17 @@ export function DashboardLayout() {
   const { theme, setTheme } = useTheme();
 
   const navItems = [
-    { path: "/", label: "Visão Geral", icon: BarChart3 },
-    { path: "/active", label: "Enquetes Ativas", icon: Activity },
-    { path: "/create", label: "Criar Enquete", icon: Plus },
-    { path: "/drafts", label: "Rascunhos de Enquete", icon: FileText },
-    { path: "/csv", label: "Enquete CSV", icon: Upload },
-    { path: "/moderation", label: "Moderação", icon: Shield },
-    { path: "/history", label: "Histórico", icon: History },
+    { path: '/', label: 'Visão Geral', icon: BarChart3 },
+    { path: '/active', label: 'Enquetes Ativas', icon: Activity },
+    { path: '/create', label: 'Criar Enquete', icon: Plus },
+    { path: '/drafts', label: 'Rascunhos de Enquete', icon: FileText },
+    { path: '/csv', label: 'Enquete CSV', icon: Upload },
+    { path: '/moderation', label: 'Moderação', icon: Shield },
+    { path: '/history', label: 'Histórico', icon: History },
   ];
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -33,13 +33,8 @@ export function DashboardLayout() {
           <h1 className="font-bold text-lg">PollBot</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="text-white hover:bg-white/10"
-          >
-            {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:bg-white/10">
+            {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
           </Button>
           <Button
             variant="ghost"
@@ -55,8 +50,8 @@ export function DashboardLayout() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "w-64 bg-[#5865F2] dark:bg-[#4752C4] text-white flex flex-col fixed lg:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          'w-64 bg-[#5865F2] dark:bg-[#4752C4] text-white flex flex-col fixed lg:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out',
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
         <div className="p-6 flex items-center justify-between border-b border-white/10">
@@ -73,17 +68,14 @@ export function DashboardLayout() {
             onClick={toggleTheme}
             className="hidden lg:flex text-white hover:bg-white/10"
           >
-            {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+            {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
           </Button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              item.path === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(item.path);
+            const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
 
             return (
               <Link
@@ -91,10 +83,8 @@ export function DashboardLayout() {
                 to={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                  isActive
-                    ? "bg-white/10 text-white"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                  isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white',
                 )}
               >
                 <Icon className="size-5" />
@@ -117,10 +107,7 @@ export function DashboardLayout() {
 
       {/* Overlay for mobile */}
       {isMobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setIsMobileMenuOpen(false)} />
       )}
 
       {/* Main Content */}
