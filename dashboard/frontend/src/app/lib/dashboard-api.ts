@@ -1,0 +1,307 @@
+export interface DashboardPollOption {
+  id: string;
+  text: string;
+  votes: number;
+  emoji?: string | null;
+}
+
+export interface DashboardPoll {
+  id: string;
+  title: string;
+  description: string;
+  serverId?: string | null;
+  serverName: string;
+  channelId?: string | null;
+  channelName: string;
+  createdAt?: string | null;
+  endsAt?: string | null;
+  status: 'active' | 'ended';
+  totalVotes: number;
+  options: DashboardPollOption[];
+  allowMultipleChoices: boolean;
+  anonymous: boolean;
+}
+
+export interface DashboardGuild {
+  id: string;
+  name: string;
+  icon?: string | null;
+  isActive?: boolean;
+}
+
+export interface DashboardChannel {
+  id: string;
+  name: string;
+  type?: number;
+}
+
+export interface DashboardMember {
+  id: string;
+  username: string;
+  displayName: string;
+}
+
+export interface DashboardDraftContext {
+  id: string;
+  title: string;
+  optionsCount: number;
+  creatorId?: string | null;
+  updatedAt?: string | null;
+}
+
+type CommandPayload = {
+  commandType?: number;
+  options?: Record<string, unknown>;
+  guild?: {
+    id?: string;
+  };
+  target?: {
+    channelId?: string;
+    [key: string]: unknown;
+  };
+};
+
+type ApiResponse<T> = {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  [key: string]: unknown;
+} & T;
+
+type RequestJsonOptions = {
+  method?: 'GET' | 'POST';
+  body?: Record<string, unknown>;
+};
+
+async function requestJson<T>(path: string, options: RequestJsonOptions = {}): Promise<ApiResponse<T>> {
+  const { method = 'GET', body } = options;
+
+  const response = await fetch(`/api${path}`, {
+    method,
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
+  let payload: ApiResponse<T> | null = null;
+
+  try {
+    payload = (await response.json()) as ApiResponse<T>;
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.message || 'Não foi possível carregar os dados do dashboard');
+  }
+
+  if (payload?.success === false) {
+    throw new Error(payload.error || payload.message || 'Não foi possível carregar os dados do dashboard');
+  }
+
+  return payload || ({} as ApiResponse<T>);
+}
+
+export async function getPollHistory() {
+  const payload = await requestJson<{ polls: DashboardPoll[] }>('/polls/history');
+  return Array.isArray(payload.polls) ? payload.polls : [];
+}
+
+export async function getPollDetail(pollId: string) {
+  const payload = await requestJson<{ poll: DashboardPoll }>(`/polls/${encodeURIComponent(pollId)}`);
+  return payload.poll;
+}
+
+export async function getGuilds() {
+  const payload = await requestJson<{ guilds: DashboardGuild[] }>('/auth/guilds');
+  return Array.isArray(payload.guilds) ? payload.guilds : [];
+}
+
+export async function getGuildChannels(guildId: string) {
+  const payload = await requestJson<{ channels: DashboardChannel[] }>(
+    `/auth/guilds/${encodeURIComponent(guildId)}/channels`,
+  );
+  return Array.isArray(payload.channels) ? payload.channels : [];
+}
+
+export async function getGuildMembers(guildId: string, query = '') {
+  const params = new URLSearchParams();
+  if (query.trim()) {
+    params.set('query', query.trim());
+  }
+
+  const payload = await requestJson<{ members: DashboardMember[] }>(
+    `/auth/guilds/${encodeURIComponent(guildId)}/members?${params.toString()}`,
+  );
+
+  return Array.isArray(payload.members) ? payload.members : [];
+}
+
+export async function getGroupMemberIds(guildId: string, group: 'mensalistas' | 'criadores') {
+  const params = new URLSearchParams({ group });
+  const payload = await requestJson<{ ids: string[] }>(
+    `/auth/guilds/${encodeURIComponent(guildId)}/group-members?${params.toString()}`,
+  );
+
+  return Array.isArray(payload.ids) ? payload.ids : [];
+}
+
+export async function getDraftContextTargets() {
+  const payload = await requestJson<{ drafts: DashboardDraftContext[] }>('/commands/context-targets/drafts');
+  return Array.isArray(payload.drafts) ? payload.drafts : [];
+}
+
+export async function executeDashboardCommand(commandName: string, payload: CommandPayload) {
+  return requestJson<{}>(`/commands/${encodeURIComponent(commandName)}`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export async function createDraft(payload: {
+  guildId: string;
+  channelId: string;
+  title: string;
+  optionsCsv: string;
+  maxVotes: number;
+  pesoMensalista: 'sim' | 'nao';
+}) {
+  return executeDashboardCommand('rascunho', {
+    commandType: 1,
+    guild: { id: payload.guildId },
+    target: { channelId: payload.channelId },
+    options: {
+      subcommand: 'criar',
+      values: {
+        titulo: payload.title,
+        opcoes: payload.optionsCsv,
+        max_votos: payload.maxVotes,
+        peso_mensalista: payload.pesoMensalista,
+      },
+    },
+  });
+}
+
+export async function editDraft(payload: {
+  id: string;
+  title?: string;
+  optionsCsv?: string;
+  maxVotes?: number;
+  pesoMensalista?: 'sim' | 'nao';
+}) {
+  const values: Record<string, unknown> = { id: payload.id };
+  if (payload.title) values.titulo = payload.title;
+  if (payload.optionsCsv) values.opcoes = payload.optionsCsv;
+  if (typeof payload.maxVotes === 'number') values.max_votos = payload.maxVotes;
+  if (payload.pesoMensalista) values.peso_mensalista = payload.pesoMensalista;
+
+  return executeDashboardCommand('rascunho', {
+    commandType: 1,
+    options: {
+      subcommand: 'editar',
+      values,
+    },
+  });
+}
+
+export async function publishDraft(id: string) {
+  return executeDashboardCommand('rascunho', {
+    commandType: 1,
+    options: {
+      subcommand: 'publicar',
+      values: {
+        id,
+      },
+    },
+  });
+}
+
+export async function deleteDraft(id: string) {
+  return executeDashboardCommand('rascunho', {
+    commandType: 1,
+    options: {
+      subcommand: 'deletar',
+      values: {
+        id,
+      },
+    },
+  });
+}
+
+async function resolveCommandChannelId(guildId: string) {
+  const channels = await getGuildChannels(guildId);
+  const textChannel = channels.find((channel) => channel.type !== 2 && channel.type !== 13);
+
+  if (!textChannel) {
+    throw new Error('Nenhum canal de texto disponível para executar o comando no servidor selecionado');
+  }
+
+  return textChannel.id;
+}
+
+export async function addModerator(guildId: string, userId: string) {
+  const channelId = await resolveCommandChannelId(guildId);
+
+  return executeDashboardCommand('criador-de-enquete', {
+    commandType: 1,
+    guild: { id: guildId },
+    target: { channelId },
+    options: {
+      subcommand: 'adicionar',
+      values: {
+        usuario: userId,
+      },
+    },
+  });
+}
+
+export async function removeModerator(guildId: string, userId: string) {
+  const channelId = await resolveCommandChannelId(guildId);
+
+  return executeDashboardCommand('criador-de-enquete', {
+    commandType: 1,
+    guild: { id: guildId },
+    target: { channelId },
+    options: {
+      subcommand: 'remover',
+      values: {
+        usuario: userId,
+      },
+    },
+  });
+}
+
+export async function addSubscriber(guildId: string, userId: string) {
+  const channelId = await resolveCommandChannelId(guildId);
+
+  return executeDashboardCommand('mensalista', {
+    commandType: 1,
+    guild: { id: guildId },
+    target: { channelId },
+    options: {
+      subcommand: 'adicionar',
+      values: {
+        usuario: userId,
+      },
+    },
+  });
+}
+
+export async function removeSubscriber(guildId: string, userId: string) {
+  const channelId = await resolveCommandChannelId(guildId);
+
+  return executeDashboardCommand('mensalista', {
+    commandType: 1,
+    guild: { id: guildId },
+    target: { channelId },
+    options: {
+      subcommand: 'remover',
+      values: {
+        usuario: userId,
+      },
+    },
+  });
+}

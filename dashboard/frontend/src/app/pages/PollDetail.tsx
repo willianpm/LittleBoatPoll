@@ -1,0 +1,288 @@
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router';
+import { Card } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Progress } from '../components/ui/progress';
+import { getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
+import { ArrowLeft, Calendar, Clock, Users, Hash, Download, Share2, Trophy } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts';
+
+export function PollDetail() {
+  const { id } = useParams();
+  const [poll, setPoll] = useState<DashboardPoll | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPoll() {
+      if (!id) {
+        setError('Enquete não encontrada');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await getPollDetail(id);
+        if (!isMounted) return;
+        setPoll(data);
+      } catch (loadError) {
+        if (!isMounted) return;
+        setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar os detalhes da enquete');
+        setPoll(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadPoll();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const formatDate = (date: string | null | undefined) => {
+    if (!date) return 'Sem data';
+
+    return new Date(date).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8">
+        <p className="dark:text-white">Carregando detalhes da enquete...</p>
+      </div>
+    );
+  }
+
+  if (error || !poll) {
+    return (
+      <div className="p-4 md:p-8">
+        <p className="dark:text-white">{error || 'Enquete não encontrada'}</p>
+      </div>
+    );
+  }
+
+  const COLORS = ['#5865F2', '#EB459E', '#57F287', '#FEE75C', '#ED4245'];
+
+  const chartData = poll.options.map((opt) => ({
+    name: opt.text,
+    value: opt.votes,
+  }));
+
+  const barChartData = poll.options.map((opt) => ({
+    name: opt.emoji ? `${opt.emoji} ${opt.text}` : opt.text,
+    votes: opt.votes,
+  }));
+
+  const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
+
+  return (
+    <div className="p-4 md:p-8">
+      <Link to="/history">
+        <Button variant="ghost" className="mb-4 md:mb-6 dark:hover:bg-gray-800">
+          <ArrowLeft className="size-4 mr-2" />
+          Voltar ao Histórico
+        </Button>
+      </Link>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+        <div className="lg:col-span-2">
+          <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-3">
+              <div className="flex-1">
+                <h1 className="text-xl md:text-2xl mb-2 dark:text-white">{poll.title}</h1>
+                <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-4">{poll.description}</p>
+
+                <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-1">
+                    <Hash className="size-3 md:size-4" />
+                    <span className="truncate">
+                      {poll.serverName} • #{poll.channelName}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="size-3 md:size-4" />
+                    <span className="truncate">{formatDate(poll.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="size-3 md:size-4" />
+                    <span className="truncate">
+                      Termina em {poll.endsAt ? formatDate(poll.endsAt) : 'Sem previsão'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Badge
+                className={
+                  poll.status === 'active'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 shrink-0'
+                }
+              >
+                {poll.status === 'active' ? 'Ativa' : 'Encerrada'}
+              </Badge>
+            </div>
+
+            <div className="flex gap-2 mb-6">
+              {poll.allowMultipleChoices && (
+                <Badge variant="outline" className="dark:border-gray-600">
+                  Múltipla escolha
+                </Badge>
+              )}
+              {poll.anonymous && (
+                <Badge variant="outline" className="dark:border-gray-600">
+                  Anônima
+                </Badge>
+              )}
+            </div>
+
+            <div className="space-y-3 md:space-y-4">
+              {poll.options.map((option, index) => {
+                const percentage = poll.totalVotes > 0 ? Math.round((option.votes / poll.totalVotes) * 100) : 0;
+                const isTop = topOption ? option.id === topOption.id : false;
+
+                return (
+                  <div
+                    key={option.id}
+                    className={`p-3 md:p-4 rounded-lg border-2 ${
+                      isTop
+                        ? 'border-[#5865F2] bg-blue-50 dark:bg-blue-900/20 dark:border-[#5865F2]'
+                        : 'border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2 gap-2">
+                      <span className="flex items-center gap-2 flex-1 min-w-0">
+                        {option.emoji && <span className="text-lg md:text-xl shrink-0">{option.emoji}</span>}
+                        <span className="text-base md:text-lg dark:text-white truncate">{option.text}</span>
+                        {isTop && <Trophy className="size-4 md:size-5 text-[#5865F2] shrink-0" />}
+                      </span>
+                      <span className="text-sm md:text-lg dark:text-white shrink-0">
+                        {option.votes} ({percentage}%)
+                      </span>
+                    </div>
+                    <Progress value={percentage} className="h-2 md:h-3" />
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-4 md:space-y-6">
+          <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+            <h3 className="mb-4 dark:text-white">Estatísticas</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Votos</span>
+                <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Opções</span>
+                <span className="text-lg md:text-xl dark:text-white">{poll.options.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Taxa de Participação</span>
+                <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes > 0 ? '68%' : '0%'}</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+            <h3 className="mb-4 dark:text-white">Ações</h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm md:text-base dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+              >
+                <Download className="size-4 mr-2" />
+                Exportar Resultados
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm md:text-base dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+              >
+                <Share2 className="size-4 mr-2" />
+                Compartilhar
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+            <h3 className="mb-4 dark:text-white">Distribuição de Votos</h3>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-gray-600 dark:text-gray-400">Sem votos suficientes para exibir o gráfico.</p>
+            )}
+          </Card>
+        </div>
+      </div>
+
+      <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+        <h3 className="mb-4 md:mb-6 dark:text-white">Comparação de Votos</h3>
+        {barChartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={barChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="name" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--background)',
+                  border: '1px solid var(--border)',
+                }}
+              />
+              <Bar dataKey="votes" fill="#5865F2" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-sm text-gray-600 dark:text-gray-400">Sem dados suficientes para exibir a comparação.</p>
+        )}
+      </Card>
+    </div>
+  );
+}
