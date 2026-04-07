@@ -187,7 +187,7 @@ export function CreatePoll() {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Qual jogo jogaremos hoje?"
+                placeholder="Ex: Votação para o livro do mês de Abril de 2026"
                 required
                 className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
