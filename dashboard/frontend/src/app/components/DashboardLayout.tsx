@@ -1,14 +1,30 @@
 import { Outlet, Link, useLocation } from 'react-router';
-import { BarChart3, Plus, History, Activity, Bot, Shield, FileText, Upload, Menu, X, Sun, Moon } from 'lucide-react';
+import {
+  BarChart3,
+  Plus,
+  History,
+  Activity,
+  Bot,
+  Shield,
+  FileText,
+  Upload,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  LogOut,
+} from 'lucide-react';
 import { cn } from './ui/utils';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Button } from './ui/button';
+import { useAuth } from '../context/AuthContext';
 
 export function DashboardLayout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { path: '/', label: 'Visão Geral', icon: BarChart3 },
@@ -35,6 +51,17 @@ export function DashboardLayout() {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:bg-white/10">
             {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              void logout();
+            }}
+            className="text-white hover:bg-white/10"
+            aria-label="Sair"
+          >
+            <LogOut className="size-5" />
           </Button>
           <Button
             variant="ghost"
@@ -95,12 +122,33 @@ export function DashboardLayout() {
         </nav>
 
         <div className="p-4 border-t border-white/10">
-          <div className="bg-white/5 rounded-lg p-4">
-            <p className="text-xs text-white/70 mb-1">Status do Bot</p>
-            <div className="flex items-center gap-2">
-              <div className="size-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm">Online</span>
+          <div className="bg-white/5 rounded-lg p-4 space-y-3">
+            <div>
+              <p className="text-xs text-white/70 mb-1">Conectado como</p>
+              <p className="text-sm font-medium truncate" title={user?.username || 'Usuário'}>
+                {user?.username || 'Usuário'}
+              </p>
             </div>
+
+            <div>
+              <p className="text-xs text-white/70 mb-1">Status do Bot</p>
+              <div className="flex items-center gap-2">
+                <div className="size-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm">Online</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              onClick={() => {
+                void logout();
+              }}
+            >
+              <LogOut className="size-4 mr-2" />
+              Sair
+            </Button>
           </div>
         </div>
       </aside>
