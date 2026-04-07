@@ -228,7 +228,17 @@ function resolveExecutionChannel(guildObj, target) {
   return fallbackChannel || null;
 }
 
-function buildFakeInteraction({ commandName, commandType, options, user, guild, member, target, executionChannel }) {
+function buildFakeInteraction({
+  commandName,
+  commandType,
+  options,
+  user,
+  guild,
+  member,
+  target,
+  executionChannel,
+  dashboardSource,
+}) {
   // Cria um "options resolver" simples, compatível com os métodos mais usados
   function createOptionsResolver(rawOptions) {
     const optionArray = normalizeOptionsPayload(rawOptions);
@@ -303,6 +313,7 @@ function buildFakeInteraction({ commandName, commandType, options, user, guild, 
     guildId: guild?.id,
     channel: executionChannel,
     channelId: executionChannel?.id || target?.channelId || null,
+    dashboardSource: dashboardSource || null,
     options: createOptionsResolver(options),
     user,
     member,
@@ -472,6 +483,7 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
     await hydrateDraftsFromDiskIfNeeded();
 
     const drafts = Array.from(client.draftPolls.values())
+      .filter((draft) => draft.origem === 'dashboard-create')
       .map((draft) => ({
         id: draft.id,
         title: draft.titulo,
@@ -491,7 +503,7 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
 router.post('/:commandName', validateDashboardToken, async (req, res) => {
   try {
     const { commandName } = req.params;
-    const { options, guild, commandType, target } = req.body;
+    const { options, guild, commandType, target, dashboardSource } = req.body;
 
     if (commandName === 'rascunho') {
       await hydrateDraftsFromDiskIfNeeded();
@@ -549,6 +561,7 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       member: guildMember,
       target: target || {},
       executionChannel,
+      dashboardSource,
     });
 
     logDashboardCommand('info', 'execute_start', {

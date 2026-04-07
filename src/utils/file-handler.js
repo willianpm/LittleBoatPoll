@@ -7,6 +7,37 @@ const DEFAULT_ROLE_BINDINGS = {
   mensalistaRoleByGuild: {},
 };
 
+function normalizeMemberEntry(entry, fallbackAddedBy = null) {
+  if (!entry) return null;
+
+  if (typeof entry === 'string') {
+    return {
+      id: entry,
+      addedAt: null,
+      addedBy: fallbackAddedBy,
+    };
+  }
+
+  if (typeof entry === 'object') {
+    const id = entry.id || entry.userId || entry.usuarioId;
+    if (!id) return null;
+
+    return {
+      id: String(id),
+      addedAt: entry.addedAt || entry.adicionadoEm || entry.createdAt || entry.criadoEm || null,
+      addedBy: entry.addedBy || entry.adicionadoPor || null,
+    };
+  }
+
+  return null;
+}
+
+function normalizeMemberList(data, key, fallbackAddedBy = null) {
+  const rawList = Array.isArray(data) ? data : Array.isArray(data?.[key]) ? data[key] : [];
+
+  return rawList.map((entry) => normalizeMemberEntry(entry, fallbackAddedBy)).filter(Boolean);
+}
+
 /**
  * Normaliza estrutura de role-bindings para formato esperado
  * @param {Object} data - Dados brutos carregados do JSON
@@ -74,7 +105,10 @@ function saveJsonFile(filePath, data) {
  * @returns {Object} Objeto com array de IDs
  */
 function loadMensalistas() {
-  return loadJsonFile(DATA_FILES.mensalistas, { mensalistas: [] });
+  const data = loadJsonFile(DATA_FILES.mensalistas, { mensalistas: [] });
+  return {
+    mensalistas: normalizeMemberList(data, 'mensalistas'),
+  };
 }
 
 /**
@@ -83,7 +117,8 @@ function loadMensalistas() {
  * @returns {boolean} true se sucesso
  */
 function saveMensalistas(data) {
-  return saveJsonFile(DATA_FILES.mensalistas, data);
+  const mensalistas = normalizeMemberList(data, 'mensalistas');
+  return saveJsonFile(DATA_FILES.mensalistas, { mensalistas });
 }
 
 /**
@@ -115,7 +150,10 @@ function saveRoleBindings(data) {
  * @returns {Object} Objeto com array de IDs de usuários
  */
 function loadCriadores() {
-  return loadJsonFile(DATA_FILES.criadores, { criadores: [] });
+  const data = loadJsonFile(DATA_FILES.criadores, { criadores: [] });
+  return {
+    criadores: normalizeMemberList(data, 'criadores'),
+  };
 }
 
 /**
@@ -124,7 +162,8 @@ function loadCriadores() {
  * @returns {boolean} true se sucesso
  */
 function saveCriadores(data) {
-  return saveJsonFile(DATA_FILES.criadores, data);
+  const criadores = normalizeMemberList(data, 'criadores');
+  return saveJsonFile(DATA_FILES.criadores, { criadores });
 }
 
 /**

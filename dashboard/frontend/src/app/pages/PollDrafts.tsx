@@ -1,48 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Plus, Send, FileText, Trash2, Edit, Sparkles, X } from 'lucide-react';
+import { Plus, Send, FileText, Trash2, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  createDraft,
   deleteDraft,
   editDraft,
-  getGuildChannels,
-  getGuilds,
   getDraftContextTargets,
   publishDraft,
-  type DashboardChannel,
-  type DashboardGuild,
   type DashboardDraftContext,
 } from '../lib/dashboard-api';
 
 type DraftItem = DashboardDraftContext;
 
 export function PollDrafts() {
+  const navigate = useNavigate();
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [createTitle, setCreateTitle] = useState('');
-  const [createDescription, setCreateDescription] = useState('');
-  const [createSelectedGuildId, setCreateSelectedGuildId] = useState('');
-  const [createSelectedChannelId, setCreateSelectedChannelId] = useState('');
-  const [createMaxVotes, setCreateMaxVotes] = useState(1);
-  const [createSubscriberWeight, setCreateSubscriberWeight] = useState<'yes' | 'no'>('no');
-  const [createGuilds, setCreateGuilds] = useState<DashboardGuild[]>([]);
-  const [createChannels, setCreateChannels] = useState<DashboardChannel[]>([]);
-  const [createLoadingGuilds, setCreateLoadingGuilds] = useState(true);
-  const [createLoadingChannels, setCreateLoadingChannels] = useState(false);
-  const [createSubmitting, setCreateSubmitting] = useState(false);
-  const [createOptions, setCreateOptions] = useState([
-    { id: '1', text: '', emoji: '' },
-    { id: '2', text: '', emoji: '' },
-  ]);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDraft, setEditingDraft] = useState<DraftItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -58,147 +38,6 @@ export function PollDrafts() {
   useEffect(() => {
     void loadDrafts();
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadCreateGuilds() {
-      setCreateLoadingGuilds(true);
-      try {
-        const data = await getGuilds();
-        if (!isMounted) return;
-
-        setCreateGuilds(data);
-        const activeGuild = data.find((guild) => guild.isActive);
-        if (activeGuild) {
-          setCreateSelectedGuildId(activeGuild.id);
-        }
-      } catch (error) {
-        if (!isMounted) return;
-        toast.error(error instanceof Error ? error.message : 'Falha ao carregar servidores');
-      } finally {
-        if (isMounted) {
-          setCreateLoadingGuilds(false);
-        }
-      }
-    }
-
-    loadCreateGuilds();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadCreateChannels() {
-      if (!createSelectedGuildId) {
-        setCreateChannels([]);
-        setCreateSelectedChannelId('');
-        return;
-      }
-
-      setCreateLoadingChannels(true);
-      setCreateSelectedChannelId('');
-
-      try {
-        const data = await getGuildChannels(createSelectedGuildId);
-        if (!isMounted) return;
-        setCreateChannels(data);
-      } catch (error) {
-        if (!isMounted) return;
-        setCreateChannels([]);
-        toast.error(error instanceof Error ? error.message : 'Falha ao carregar canais');
-      } finally {
-        if (isMounted) {
-          setCreateLoadingChannels(false);
-        }
-      }
-    }
-
-    loadCreateChannels();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [createSelectedGuildId]);
-
-  const validCreateOptions = useMemo(
-    () => createOptions.map((option) => option.text.trim()).filter(Boolean),
-    [createOptions],
-  );
-
-  const addCreateOption = () => {
-    if (createOptions.length < 10) {
-      setCreateOptions([...createOptions, { id: Date.now().toString(), text: '', emoji: '' }]);
-    }
-  };
-
-  const removeCreateOption = (id: string) => {
-    if (createOptions.length > 2) {
-      setCreateOptions(createOptions.filter((opt) => opt.id !== id));
-    }
-  };
-
-  const updateCreateOption = (id: string, field: 'text' | 'emoji', value: string) => {
-    setCreateOptions(createOptions.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)));
-  };
-
-  const handleCreateDraft = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!createSelectedGuildId) {
-      toast.error('Selecione um servidor');
-      return;
-    }
-
-    if (!createSelectedChannelId) {
-      toast.error('Selecione um canal');
-      return;
-    }
-
-    if (validCreateOptions.length < 2) {
-      toast.error('O rascunho precisa de pelo menos 2 opções');
-      return;
-    }
-
-    if (!createTitle.trim()) {
-      toast.error('Informe um título para o rascunho');
-      return;
-    }
-
-    setCreateSubmitting(true);
-    try {
-      const result = await createDraft({
-        guildId: createSelectedGuildId,
-        channelId: createSelectedChannelId,
-        title: createTitle.trim(),
-        optionsCsv: validCreateOptions.join(', '),
-        maxVotes: createMaxVotes,
-        pesoMensalista: createSubscriberWeight === 'yes' ? 'sim' : 'nao',
-      });
-
-      toast.success('Rascunho criado com sucesso!', {
-        description: typeof result.message === 'string' ? result.message : 'Use a lista abaixo para publicar.',
-      });
-
-      setCreateTitle('');
-      setCreateDescription('');
-      setCreateMaxVotes(1);
-      setCreateSubscriberWeight('no');
-      setCreateOptions([
-        { id: '1', text: '', emoji: '' },
-        { id: '2', text: '', emoji: '' },
-      ]);
-      await loadDrafts();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Falha ao criar rascunho');
-    } finally {
-      setCreateSubmitting(false);
-    }
-  };
 
   async function loadDrafts() {
     setLoadingDrafts(true);
@@ -292,247 +131,17 @@ export function PollDrafts() {
       <div className="mb-6 md:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Rascunhos de Enquete</h1>
-            <p className="text-gray-600 dark:text-gray-400">Salve, edite e publique rascunhos quando estiver pronto</p>
+            <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Publicar Enquete</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Gerencie e publique enquetes a partir dos rascunhos disponíveis
+            </p>
           </div>
-          <Button
-            className="bg-[#5865F2] hover:bg-[#4752C4] w-full sm:w-auto"
-            onClick={() => document.getElementById('draft-create-form')?.scrollIntoView({ behavior: 'smooth' })}
-          >
+          <Button className="bg-[#5865F2] hover:bg-[#4752C4] w-full sm:w-auto" onClick={() => navigate('/create')}>
             <Plus className="size-4 mr-2" />
-            Novo Rascunho
+            Criar Enquete
           </Button>
         </div>
       </div>
-
-      <Card id="draft-create-form" className="p-4 md:p-6 mb-6 md:mb-8 dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div>
-            <h2 className="text-lg md:text-xl dark:text-white">Criar Rascunho</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Use este formulário para salvar um rascunho de enquete.
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleCreateDraft} className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="create-title" className="dark:text-gray-200">
-                Título do Rascunho *
-              </Label>
-              <Input
-                id="create-title"
-                value={createTitle}
-                onChange={(e) => setCreateTitle(e.target.value)}
-                placeholder="Ex: Qual jogo jogaremos hoje?"
-                required
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="create-description" className="dark:text-gray-200">
-                Descrição do rascunho
-              </Label>
-              <Textarea
-                id="create-description"
-                value={createDescription}
-                onChange={(e) => setCreateDescription(e.target.value)}
-                placeholder="Adicione mais detalhes sobre o rascunho..."
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="create-server" className="dark:text-gray-200">
-                  Servidor *
-                </Label>
-                <Select
-                  required
-                  value={createSelectedGuildId}
-                  onValueChange={setCreateSelectedGuildId}
-                  disabled={createLoadingGuilds || createGuilds.length === 0}
-                >
-                  <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <SelectValue
-                      placeholder={createLoadingGuilds ? 'Carregando servidores...' : 'Selecione um servidor'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {createGuilds.map((server) => (
-                      <SelectItem key={server.id} value={server.id}>
-                        {server.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="create-channel" className="dark:text-gray-200">
-                  Canal *
-                </Label>
-                <Select
-                  required
-                  value={createSelectedChannelId}
-                  onValueChange={setCreateSelectedChannelId}
-                  disabled={!createSelectedGuildId || createLoadingChannels || createChannels.length === 0}
-                >
-                  <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <SelectValue
-                      placeholder={
-                        !createSelectedGuildId
-                          ? 'Selecione um servidor'
-                          : createLoadingChannels
-                            ? 'Carregando canais...'
-                            : 'Selecione um canal'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {createChannels.map((channel) => (
-                      <SelectItem key={channel.id} value={channel.id}>
-                        # {channel.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="create-duration" className="dark:text-gray-200">
-                Duração do rascunho
-              </Label>
-              <Select defaultValue="24h">
-                <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1h">1 hora</SelectItem>
-                  <SelectItem value="6h">6 horas</SelectItem>
-                  <SelectItem value="12h">12 horas</SelectItem>
-                  <SelectItem value="24h">24 horas</SelectItem>
-                  <SelectItem value="3d">3 dias</SelectItem>
-                  <SelectItem value="7d">7 dias</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-base md:text-lg dark:text-white">Opções de Resposta</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCreateOption}
-                disabled={createOptions.length >= 10}
-                className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-              >
-                <Plus className="size-4 mr-2" />
-                <span className="hidden sm:inline">Adicionar</span>
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {createOptions.map((option, index) => (
-                <div key={option.id} className="flex items-center gap-2 md:gap-3">
-                  <div className="w-12 md:w-16">
-                    <Input
-                      placeholder="😊"
-                      value={option.emoji}
-                      onChange={(e) => updateCreateOption(option.id, 'emoji', e.target.value)}
-                      maxLength={2}
-                      className="text-center dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Input
-                      placeholder={`Opção ${index + 1}`}
-                      value={option.text}
-                      onChange={(e) => updateCreateOption(option.id, 'text', e.target.value)}
-                      required
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    />
-                  </div>
-                  {createOptions.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeCreateOption(option.id)}
-                      className="dark:hover:bg-gray-700 shrink-0"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-base md:text-lg dark:text-white">Configurações Avançadas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="create-maxVotes" className="dark:text-gray-200">
-                  Número Máximo de Votos por Pessoa
-                </Label>
-                <Input
-                  id="create-maxVotes"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={createMaxVotes}
-                  onChange={(e) => {
-                    const nextValue = Number.parseInt(e.target.value, 10);
-                    setCreateMaxVotes(Number.isNaN(nextValue) ? 1 : nextValue);
-                  }}
-                  placeholder="1"
-                  className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Limite de opções que cada pessoa pode escolher
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="create-subscriberWeight" className="dark:text-gray-200">
-                  Mensalistas peso 2
-                </Label>
-                <Select
-                  value={createSubscriberWeight}
-                  onValueChange={(value: 'yes' | 'no') => setCreateSubscriberWeight(value)}
-                >
-                  <SelectTrigger
-                    id="create-subscriberWeight"
-                    className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="no">Não</SelectItem>
-                    <SelectItem value="yes">Sim</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Votos de mensalistas contam em dobro</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-            <Button type="submit" disabled={createSubmitting} className="flex-1 bg-[#5865F2] hover:bg-[#4752C4]">
-              <Sparkles className="size-4 mr-2" />
-              {createSubmitting ? 'Criando...' : 'Criar Rascunho'}
-            </Button>
-          </div>
-        </form>
-      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {loadingDrafts && (
@@ -625,10 +234,10 @@ export function PollDrafts() {
             <Button
               variant="outline"
               className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-              onClick={() => document.getElementById('draft-create-form')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => navigate('/create')}
             >
               <Plus className="size-4 mr-2" />
-              Criar Primeiro Rascunho
+              Criar Enquete
             </Button>
           </Card>
         )}

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import {
   addModerator,
   addSubscriber,
-  getGroupMemberIds,
+  getGroupMembers,
   getGuildMembers,
   getGuilds,
   removeModerator,
@@ -29,6 +29,8 @@ export function Moderation() {
   const [guilds, setGuilds] = useState<DashboardGuild[]>([]);
   const [selectedGuildId, setSelectedGuildId] = useState('');
   const [members, setMembers] = useState<DashboardMember[]>([]);
+  const [moderatorMembers, setModeratorMembers] = useState<User[]>([]);
+  const [subscriberMembers, setSubscriberMembers] = useState<User[]>([]);
   const [moderatorIds, setModeratorIds] = useState<string[]>([]);
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,6 +72,8 @@ export function Moderation() {
     async function loadGuildModerationData() {
       if (!selectedGuildId) {
         setMembers([]);
+        setModeratorMembers([]);
+        setSubscriberMembers([]);
         setModeratorIds([]);
         setSubscriberIds([]);
         return;
@@ -79,15 +83,37 @@ export function Moderation() {
       try {
         const [memberData, loadedModerators, loadedSubscribers] = await Promise.all([
           getGuildMembers(selectedGuildId),
-          getGroupMemberIds(selectedGuildId, 'criadores'),
-          getGroupMemberIds(selectedGuildId, 'mensalistas'),
+          getGroupMembers(selectedGuildId, 'criadores'),
+          getGroupMembers(selectedGuildId, 'mensalistas'),
         ]);
 
         if (!isMounted) return;
 
         setMembers(memberData);
-        setModeratorIds(loadedModerators);
-        setSubscriberIds(loadedSubscribers);
+        setModeratorMembers(
+          loadedModerators.map((entry) => {
+            const member = memberData.find((currentMember) => currentMember.id === entry.id);
+            return {
+              id: entry.id,
+              username: member?.username || entry.id,
+              displayName: member?.displayName || member?.username || entry.id,
+              addedAt: entry.addedAt || undefined,
+            };
+          }),
+        );
+        setSubscriberMembers(
+          loadedSubscribers.map((entry) => {
+            const member = memberData.find((currentMember) => currentMember.id === entry.id);
+            return {
+              id: entry.id,
+              username: member?.username || entry.id,
+              displayName: member?.displayName || member?.username || entry.id,
+              addedAt: entry.addedAt || undefined,
+            };
+          }),
+        );
+        setModeratorIds(loadedModerators.map((entry) => entry.id));
+        setSubscriberIds(loadedSubscribers.map((entry) => entry.id));
       } catch (error) {
         if (!isMounted) return;
         toast.error(error instanceof Error ? error.message : 'Falha ao carregar dados de moderação');
@@ -117,26 +143,20 @@ export function Moderation() {
   }, [members]);
 
   const moderators = useMemo<User[]>(() => {
-    return moderatorIds.map((id) => {
-      const member = memberById.get(id);
-      return {
-        id,
-        username: member?.username || id,
-        displayName: member?.displayName || member?.username || id,
-      };
-    });
-  }, [moderatorIds, memberById]);
+    return moderatorMembers.map((member) => ({
+      ...member,
+      username: member.username || memberById.get(member.id)?.username || member.id,
+      displayName: member.displayName || memberById.get(member.id)?.displayName || member.id,
+    }));
+  }, [moderatorMembers, memberById]);
 
   const subscribers = useMemo<User[]>(() => {
-    return subscriberIds.map((id) => {
-      const member = memberById.get(id);
-      return {
-        id,
-        username: member?.username || id,
-        displayName: member?.displayName || member?.username || id,
-      };
-    });
-  }, [subscriberIds, memberById]);
+    return subscriberMembers.map((member) => ({
+      ...member,
+      username: member.username || memberById.get(member.id)?.username || member.id,
+      displayName: member.displayName || memberById.get(member.id)?.displayName || member.id,
+    }));
+  }, [subscriberMembers, memberById]);
 
   const availableMembersForModerators = useMemo(
     () => members.filter((member) => !moderatorIds.includes(member.id)),
@@ -152,12 +172,34 @@ export function Moderation() {
     if (!selectedGuildId) return;
 
     const [loadedModerators, loadedSubscribers] = await Promise.all([
-      getGroupMemberIds(selectedGuildId, 'criadores'),
-      getGroupMemberIds(selectedGuildId, 'mensalistas'),
+      getGroupMembers(selectedGuildId, 'criadores'),
+      getGroupMembers(selectedGuildId, 'mensalistas'),
     ]);
 
-    setModeratorIds(loadedModerators);
-    setSubscriberIds(loadedSubscribers);
+    setModeratorMembers(
+      loadedModerators.map((entry) => {
+        const member = members.find((currentMember) => currentMember.id === entry.id);
+        return {
+          id: entry.id,
+          username: member?.username || entry.id,
+          displayName: member?.displayName || member?.username || entry.id,
+          addedAt: entry.addedAt || undefined,
+        };
+      }),
+    );
+    setSubscriberMembers(
+      loadedSubscribers.map((entry) => {
+        const member = members.find((currentMember) => currentMember.id === entry.id);
+        return {
+          id: entry.id,
+          username: member?.username || entry.id,
+          displayName: member?.displayName || member?.username || entry.id,
+          addedAt: entry.addedAt || undefined,
+        };
+      }),
+    );
+    setModeratorIds(loadedModerators.map((entry) => entry.id));
+    setSubscriberIds(loadedSubscribers.map((entry) => entry.id));
   }
 
   function resolveUserId(inputValue: string, availableMembers: DashboardMember[]) {
@@ -177,10 +219,15 @@ export function Moderation() {
   const formatDate = (date: string) => {
     if (!date) return 'Sem data';
 
-    return new Date(date).toLocaleDateString('pt-BR', {
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return 'Sem data';
+
+    return parsedDate.toLocaleString('pt-BR', {
       day: '2-digit',
-      month: 'short',
+      month: '2-digit',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -331,7 +378,9 @@ export function Moderation() {
                     className="flex items-center justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-3"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="text-2xl md:text-3xl shrink-0">{mod.avatar}</div>
+                      <div className="flex size-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-700 dark:bg-gray-600 dark:text-gray-100 shrink-0">
+                        {mod.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate dark:text-white">{mod.displayName}</p>
                         <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
@@ -422,7 +471,9 @@ export function Moderation() {
                     className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700/50 gap-3"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="text-2xl md:text-3xl shrink-0">{sub.avatar}</div>
+                      <div className="flex size-10 items-center justify-center rounded-full bg-yellow-200 text-sm font-semibold text-yellow-900 dark:bg-yellow-700 dark:text-white shrink-0">
+                        {sub.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate dark:text-white">{sub.displayName}</p>
                         <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
@@ -491,8 +542,7 @@ export function Moderation() {
 
               <div className="mt-4 md:mt-6 p-3 md:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700/50">
                 <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300">
-                  <strong>Benefícios:</strong> Mensalistas têm acesso a recursos premium como enquetes ilimitadas,
-                  análises avançadas e personalização.
+                  <strong>Benefícios:</strong> Mensalistas têm peso dois nas enquetes.
                 </p>
               </div>
             </Card>
