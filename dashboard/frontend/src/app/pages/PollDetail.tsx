@@ -4,8 +4,8 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
-import { getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
-import { ArrowLeft, Calendar, Clock, Users, Hash, Download, Share2, Trophy } from 'lucide-react';
+import { closePoll, getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
+import { ArrowLeft, Calendar, Clock, Hash, Trophy } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -24,6 +24,8 @@ export function PollDetail() {
   const [poll, setPoll] = useState<DashboardPoll | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const [closeError, setCloseError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,6 +103,30 @@ export function PollDetail() {
   }));
 
   const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
+
+  async function handleClosePoll() {
+    if (!id || !poll || poll.status !== 'active' || isClosing) {
+      return;
+    }
+
+    setIsClosing(true);
+    setCloseError(null);
+
+    try {
+      await closePoll({
+        pollId: id,
+        guildId: poll.serverId,
+        channelId: poll.channelId,
+      });
+
+      const refreshedPoll = await getPollDetail(id);
+      setPoll(refreshedPoll);
+    } catch (closePollError) {
+      setCloseError(closePollError instanceof Error ? closePollError.message : 'Falha ao encerrar a enquete');
+    } finally {
+      setIsClosing(false);
+    }
+  }
 
   return (
     <div className="p-4 md:p-8">
@@ -217,20 +243,19 @@ export function PollDetail() {
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <h3 className="mb-4 dark:text-white">Ações</h3>
             <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start text-sm md:text-base dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-              >
-                <Download className="size-4 mr-2" />
-                Exportar Resultados
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-sm md:text-base dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-              >
-                <Share2 className="size-4 mr-2" />
-                Compartilhar
-              </Button>
+              {poll.status === 'active' ? (
+                <Button
+                  variant="destructive"
+                  onClick={handleClosePoll}
+                  disabled={isClosing}
+                  className="w-full justify-start text-sm md:text-base"
+                >
+                  Encerrar Enquete
+                </Button>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-400">Esta enquete já foi encerrada.</p>
+              )}
+              {closeError && <p className="text-sm text-red-600 dark:text-red-400">{closeError}</p>}
             </div>
           </Card>
 

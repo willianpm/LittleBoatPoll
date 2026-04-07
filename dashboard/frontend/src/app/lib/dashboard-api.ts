@@ -251,6 +251,17 @@ export async function deleteDraft(id: string) {
   });
 }
 
+export async function closePoll(payload: { pollId: string; guildId?: string | null; channelId?: string | null }) {
+  return executeDashboardCommand('Encerrar Votação', {
+    commandType: 3,
+    guild: payload.guildId ? { id: payload.guildId } : undefined,
+    target: {
+      channelId: payload.channelId || undefined,
+      messageId: payload.pollId,
+    },
+  });
+}
+
 async function resolveCommandChannelId(guildId: string) {
   const channels = await getGuildChannels(guildId);
   const textChannel = channels.find((channel) => channel.type !== 2 && channel.type !== 13);
