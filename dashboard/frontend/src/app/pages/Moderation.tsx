@@ -343,9 +343,9 @@ export function Moderation() {
         <TabsList className="mb-6 w-full grid grid-cols-2 gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg h-auto">
           <TabsTrigger
             value="moderators"
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all
-                       data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400
-                       data-[state=active]:bg-[#5865F2] data-[state=active]:text-white data-[state=active]:shadow-md"
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all border-2
+                       data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400 data-[state=inactive]:border-transparent
+                       data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#5865F2] data-[state=active]:to-[#4752C4] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border-[#5865F2]"
           >
             <Shield className="size-5" />
             <span>Moderadores ({moderators.length})</span>
