@@ -30,7 +30,7 @@ export function DashboardLayout() {
     { path: '/', label: 'Visão Geral', icon: BarChart3 },
     { path: '/active', label: 'Enquetes Ativas', icon: Activity },
     { path: '/create', label: 'Criar Enquete', icon: Plus },
-    { path: '/drafts', label: 'Rascunhos de Enquete', icon: FileText },
+    { path: '/drafts', label: 'Publicar Enquete', icon: FileText },
     { path: '/csv', label: 'Enquete CSV', icon: Upload },
     { path: '/moderation', label: 'Moderação', icon: Shield },
     { path: '/history', label: 'Histórico', icon: History },

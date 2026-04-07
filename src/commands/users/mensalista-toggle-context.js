@@ -21,11 +21,11 @@ module.exports = {
       let mensalistasData = loadMensalistas();
 
       // Verifica se o usuário já é mensalista
-      const isMensalista = mensalistasData.mensalistas.includes(usuario.id);
+      const isMensalista = mensalistasData.mensalistas.some((entry) => entry.id === usuario.id);
 
       if (isMensalista) {
         // Remove mensalista
-        mensalistasData.mensalistas = mensalistasData.mensalistas.filter((id) => id !== usuario.id);
+        mensalistasData.mensalistas = mensalistasData.mensalistas.filter((entry) => entry.id !== usuario.id);
         saveMensalistas(mensalistasData);
 
         const removeEmbed = new EmbedBuilder()
@@ -43,7 +43,11 @@ module.exports = {
         logger.info(`Mensalista removido (contexto): ${usuario.username} (${usuario.id})`);
       } else {
         // Adiciona mensalista
-        mensalistasData.mensalistas.push(usuario.id);
+        mensalistasData.mensalistas.push({
+          id: usuario.id,
+          addedAt: new Date().toISOString(),
+          addedBy: interaction.user.id,
+        });
         saveMensalistas(mensalistasData);
 
         const addEmbed = new EmbedBuilder()

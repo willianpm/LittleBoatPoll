@@ -50,6 +50,7 @@ module.exports = {
 
     // Carrega ou inicializa o arquivo JSON
     let data = loadCriadores();
+    const hasCreator = (userId) => data.criadores.some((entry) => entry.id === userId);
 
     // =====================================
     // SUBCOMANDO: ADICIONAR
@@ -58,7 +59,7 @@ module.exports = {
       const usuario = interaction.options.getUser('usuario');
 
       // Verifica se já está na lista
-      if (data.criadores.includes(usuario.id)) {
+      if (hasCreator(usuario.id)) {
         return await interaction.reply({
           content: `❌ O usuário **${usuario.username}** já é um Criador de Enquetes!`,
           flags: MessageFlags.Ephemeral,
@@ -66,7 +67,11 @@ module.exports = {
       }
 
       // Adiciona à lista
-      data.criadores.push(usuario.id);
+      data.criadores.push({
+        id: usuario.id,
+        addedAt: new Date().toISOString(),
+        addedBy: interaction.user.id,
+      });
       saveCriadores(data);
 
       const embed = new EmbedBuilder()
@@ -95,7 +100,7 @@ module.exports = {
       const usuario = interaction.options.getUser('usuario');
 
       // Verifica se está na lista
-      if (!data.criadores.includes(usuario.id)) {
+      if (!hasCreator(usuario.id)) {
         return await interaction.reply({
           content: `❌ O usuário **${usuario.username}** não está na lista de Criadores!`,
           flags: MessageFlags.Ephemeral,
@@ -115,7 +120,7 @@ module.exports = {
       }
 
       // Remove da lista
-      data.criadores = data.criadores.filter((id) => id !== usuario.id);
+      data.criadores = data.criadores.filter((entry) => entry.id !== usuario.id);
       saveCriadores(data);
 
       const embed = new EmbedBuilder()
@@ -153,15 +158,24 @@ module.exports = {
 
       for (const userId of data.criadores) {
         try {
-          const user = await interaction.client.users.fetch(userId);
+          const user = await interaction.client.users.fetch(userId.id);
           if (user) {
-            lista += `• **${user.username}** (ID: \`${userId}\`)\n`;
+            const addedAt = userId.addedAt
+              ? ` | Adicionado em: <t:${Math.floor(new Date(userId.addedAt).getTime() / 1000)}:f>`
+              : '';
+            lista += `• **${user.username}** (ID: \`${userId.id}\`)${addedAt}\n`;
           } else {
-            lista += `• _Usuário não encontrado_ (ID: \`${userId}\`)\n`;
+            const addedAt = userId.addedAt
+              ? ` | Adicionado em: <t:${Math.floor(new Date(userId.addedAt).getTime() / 1000)}:f>`
+              : '';
+            lista += `• _Usuário não encontrado_ (ID: \`${userId.id}\`)${addedAt}\n`;
             usuariosNaoEncontrados++;
           }
         } catch (error) {
-          lista += `• _Erro ao buscar usuário_ (ID: \`${userId}\`)\n`;
+          const addedAt = userId.addedAt
+            ? ` | Adicionado em: <t:${Math.floor(new Date(userId.addedAt).getTime() / 1000)}:f>`
+            : '';
+          lista += `• _Erro ao buscar usuário_ (ID: \`${userId.id}\`)${addedAt}\n`;
           usuariosNaoEncontrados++;
         }
       }

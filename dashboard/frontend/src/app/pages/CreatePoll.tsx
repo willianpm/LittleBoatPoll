@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Plus, X, Sparkles } from 'lucide-react';
@@ -17,7 +16,6 @@ import {
 
 export function CreatePoll() {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [selectedGuildId, setSelectedGuildId] = useState('');
   const [selectedChannelId, setSelectedChannelId] = useState('');
   const [maxVotes, setMaxVotes] = useState(1);
@@ -29,8 +27,8 @@ export function CreatePoll() {
   const [submitting, setSubmitting] = useState(false);
 
   const [options, setOptions] = useState([
-    { id: '1', text: '', emoji: '' },
-    { id: '2', text: '', emoji: '' },
+    { id: '1', text: '' },
+    { id: '2', text: '' },
   ]);
 
   useEffect(() => {
@@ -103,7 +101,7 @@ export function CreatePoll() {
 
   const addOption = () => {
     if (options.length < 10) {
-      setOptions([...options, { id: Date.now().toString(), text: '', emoji: '' }]);
+      setOptions([...options, { id: Date.now().toString(), text: '' }]);
     }
   };
 
@@ -113,8 +111,8 @@ export function CreatePoll() {
     }
   };
 
-  const updateOption = (id: string, field: 'text' | 'emoji', value: string) => {
-    setOptions(options.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)));
+  const updateOption = (id: string, value: string) => {
+    setOptions(options.map((opt) => (opt.id === id ? { ...opt, text: value } : opt)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -156,12 +154,11 @@ export function CreatePoll() {
       });
 
       setTitle('');
-      setDescription('');
       setMaxVotes(1);
       setSubscriberWeight('no');
       setOptions([
-        { id: '1', text: '', emoji: '' },
-        { id: '2', text: '', emoji: '' },
+        { id: '1', text: '' },
+        { id: '2', text: '' },
       ]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Falha ao criar enquete');
@@ -193,20 +190,6 @@ export function CreatePoll() {
                 placeholder="Ex: Qual jogo jogaremos hoje?"
                 required
                 className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description" className="dark:text-gray-200">
-                Descrição
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Adicione mais detalhes sobre a enquete..."
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                rows={3}
               />
             </div>
 
@@ -306,20 +289,11 @@ export function CreatePoll() {
           <div className="space-y-3">
             {options.map((option, index) => (
               <div key={option.id} className="flex items-center gap-2 md:gap-3">
-                <div className="w-12 md:w-16">
-                  <Input
-                    placeholder="😊"
-                    value={option.emoji}
-                    onChange={(e) => updateOption(option.id, 'emoji', e.target.value)}
-                    maxLength={2}
-                    className="text-center dark:bg-gray-700 dark:border-gray-600"
-                  />
-                </div>
                 <div className="flex-1">
                   <Input
                     placeholder={`Opção ${index + 1}`}
                     value={option.text}
-                    onChange={(e) => updateOption(option.id, 'text', e.target.value)}
+                    onChange={(e) => updateOption(option.id, e.target.value)}
                     required
                     className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />

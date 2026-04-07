@@ -41,6 +41,12 @@ export interface DashboardMember {
   displayName: string;
 }
 
+export interface DashboardGroupMember {
+  id: string;
+  addedAt?: string | null;
+  addedBy?: string | null;
+}
+
 export interface DashboardDraftContext {
   id: string;
   title: string;
@@ -59,6 +65,7 @@ type CommandPayload = {
     channelId?: string;
     [key: string]: unknown;
   };
+  dashboardSource?: string;
 };
 
 type ApiResponse<T> = {
@@ -142,11 +149,22 @@ export async function getGuildMembers(guildId: string, query = '') {
 
 export async function getGroupMemberIds(guildId: string, group: 'mensalistas' | 'criadores') {
   const params = new URLSearchParams({ group });
-  const payload = await requestJson<{ ids: string[] }>(
+  const payload = await requestJson<{ ids: string[]; members?: DashboardGroupMember[] }>(
     `/auth/guilds/${encodeURIComponent(guildId)}/group-members?${params.toString()}`,
   );
 
-  return Array.isArray(payload.ids) ? payload.ids : [];
+  if (Array.isArray(payload.ids)) return payload.ids;
+  return Array.isArray(payload.members) ? payload.members.map((member) => member.id) : [];
+}
+
+export async function getGroupMembers(guildId: string, group: 'mensalistas' | 'criadores') {
+  const params = new URLSearchParams({ group });
+  const payload = await requestJson<{ ids: string[]; members?: DashboardGroupMember[] }>(
+    `/auth/guilds/${encodeURIComponent(guildId)}/group-members?${params.toString()}`,
+  );
+
+  if (Array.isArray(payload.members)) return payload.members;
+  return Array.isArray(payload.ids) ? payload.ids.map((id) => ({ id, addedAt: null, addedBy: null })) : [];
 }
 
 export async function getDraftContextTargets() {
@@ -168,11 +186,13 @@ export async function createDraft(payload: {
   optionsCsv: string;
   maxVotes: number;
   pesoMensalista: 'sim' | 'nao';
+  dashboardSource?: string;
 }) {
   return executeDashboardCommand('rascunho', {
     commandType: 1,
     guild: { id: payload.guildId },
     target: { channelId: payload.channelId },
+    dashboardSource: payload.dashboardSource || 'dashboard-create',
     options: {
       subcommand: 'criar',
       values: {

@@ -50,7 +50,7 @@ module.exports = {
       let data = loadCriadores();
 
       // Verifica se o usuário já é criador
-      const jaCriador = data.criadores.includes(targetUser.id);
+      const jaCriador = data.criadores.some((entry) => entry.id === targetUser.id);
 
       if (jaCriador) {
         // REMOVER criador
@@ -69,7 +69,7 @@ module.exports = {
         }
 
         // Remove da lista
-        data.criadores = data.criadores.filter((id) => id !== targetUser.id);
+        data.criadores = data.criadores.filter((entry) => entry.id !== targetUser.id);
         saveCriadores(data);
 
         await interaction.reply({
@@ -83,7 +83,11 @@ module.exports = {
         // ADICIONAR criador
 
         // Adiciona à lista
-        data.criadores.push(targetUser.id);
+        data.criadores.push({
+          id: targetUser.id,
+          addedAt: new Date().toISOString(),
+          addedBy: interaction.user.id,
+        });
         saveCriadores(data);
 
         await interaction.reply({
