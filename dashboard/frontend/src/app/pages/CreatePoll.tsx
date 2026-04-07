@@ -100,7 +100,7 @@ export function CreatePoll() {
   const validOptions = useMemo(() => options.map((option) => option.text.trim()).filter(Boolean), [options]);
 
   const addOption = () => {
-    if (options.length < 10) {
+    if (options.length < 20) {
       setOptions([...options, { id: Date.now().toString(), text: '' }]);
     }
   };
@@ -278,7 +278,7 @@ export function CreatePoll() {
               variant="outline"
               size="sm"
               onClick={addOption}
-              disabled={options.length >= 10}
+              disabled={options.length >= 20}
               className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Plus className="size-4 mr-2" />
