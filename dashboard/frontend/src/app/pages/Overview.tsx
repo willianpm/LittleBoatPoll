@@ -71,7 +71,7 @@ export function Overview() {
     <div className="p-4 md:p-8">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Visão Geral</h1>
-        <p className="text-gray-600 dark:text-gray-400">Dashboard de estatísticas do PollBot</p>
+        <p className="text-gray-600 dark:text-gray-400">Dashboard de estatísticas do Little Boat Poll</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
