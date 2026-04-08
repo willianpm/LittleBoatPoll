@@ -41,7 +41,7 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-dvh overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#5865F2] dark:bg-[#4752C4] text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -159,7 +159,7 @@ export function DashboardLayout() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pt-16 lg:pt-0">
+      <main className="flex-1 min-h-0 overflow-y-auto pt-16 lg:pt-0">
         <Outlet />
       </main>
     </div>

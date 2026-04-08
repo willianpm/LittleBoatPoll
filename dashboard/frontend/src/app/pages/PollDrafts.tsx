@@ -294,116 +294,118 @@ export function PollDrafts() {
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="dark:text-white">Editar Rascunho</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-hidden p-0 dark:bg-gray-800 dark:border-gray-700 sm:max-w-2xl">
+          <div className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden p-6">
+            <DialogHeader>
+              <DialogTitle className="dark:text-white">Editar Rascunho</DialogTitle>
+            </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-title" className="dark:text-gray-200">
-                Título
-              </Label>
-              <Input
-                id="edit-title"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+              <div>
+                <Label htmlFor="edit-title" className="dark:text-gray-200">
+                  Título
+                </Label>
+                <Input
+                  id="edit-title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
 
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <Label className="dark:text-gray-200">Opções</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addEditOption}
-                  disabled={editOptions.length >= 20}
-                  className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="dark:text-gray-200">Opções</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addEditOption}
+                    disabled={editOptions.length >= 20}
+                    className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
+                    <Plus className="size-4 mr-2" />
+                    Adicionar opção
+                  </Button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {editOptions.map((option, index) => (
+                    <div key={option.id} className="flex items-center gap-2">
+                      <Input
+                        value={option.text}
+                        onChange={(e) => updateEditOption(option.id, e.target.value)}
+                        placeholder={`Opção ${index + 1}`}
+                        className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeEditOption(option.id)}
+                        disabled={editOptions.length <= 2}
+                        className="dark:hover:bg-gray-700 shrink-0"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Você pode editar as opções existentes e adicionar novas (mínimo 2, máximo 20).
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-max-votes" className="dark:text-gray-200">
+                  Máximo de votos
+                </Label>
+                <Input
+                  id="edit-max-votes"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={editMaxVotes}
+                  onChange={(e) => {
+                    const nextValue = Number.parseInt(e.target.value, 10);
+                    setEditMaxVotes(Number.isNaN(nextValue) ? 1 : nextValue);
+                  }}
+                  className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-subscriber-weight" className="dark:text-gray-200">
+                  Mensalistas peso 2
+                </Label>
+                <select
+                  id="edit-subscriber-weight"
+                  value={editSubscriberWeight}
+                  onChange={(e) => setEditSubscriberWeight(e.target.value === 'sim' ? 'sim' : 'nao')}
+                  className="mt-1 h-9 w-full rounded-md border border-gray-600 bg-gray-700 px-3 text-sm text-white"
                 >
-                  <Plus className="size-4 mr-2" />
-                  Adicionar opção
-                </Button>
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim</option>
+                </select>
               </div>
-              <div className="mt-2 space-y-2">
-                {editOptions.map((option, index) => (
-                  <div key={option.id} className="flex items-center gap-2">
-                    <Input
-                      value={option.text}
-                      onChange={(e) => updateEditOption(option.id, e.target.value)}
-                      placeholder={`Opção ${index + 1}`}
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeEditOption(option.id)}
-                      disabled={editOptions.length <= 2}
-                      className="dark:hover:bg-gray-700 shrink-0"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Você pode editar as opções existentes e adicionar novas (mínimo 2, máximo 20).
-              </p>
             </div>
 
-            <div>
-              <Label htmlFor="edit-max-votes" className="dark:text-gray-200">
-                Máximo de votos
-              </Label>
-              <Input
-                id="edit-max-votes"
-                type="number"
-                min="1"
-                max="10"
-                value={editMaxVotes}
-                onChange={(e) => {
-                  const nextValue = Number.parseInt(e.target.value, 10);
-                  setEditMaxVotes(Number.isNaN(nextValue) ? 1 : nextValue);
-                }}
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="edit-subscriber-weight" className="dark:text-gray-200">
-                Mensalistas peso 2
-              </Label>
-              <select
-                id="edit-subscriber-weight"
-                value={editSubscriberWeight}
-                onChange={(e) => setEditSubscriberWeight(e.target.value === 'sim' ? 'sim' : 'nao')}
-                className="mt-1 h-9 w-full rounded-md border border-gray-600 bg-gray-700 px-3 text-sm text-white"
+            <DialogFooter className="pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditOpen(false)}
+                className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
               >
-                <option value="nao">Não</option>
-                <option value="sim">Sim</option>
-              </select>
-            </div>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={!editingDraft || actionLoadingId === editingDraft.id}
+                className="bg-[#5865F2] hover:bg-[#4752C4]"
+              >
+                {editingDraft && actionLoadingId === editingDraft.id ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </DialogFooter>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditOpen(false)}
-              className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSaveEdit}
-              disabled={!editingDraft || actionLoadingId === editingDraft.id}
-              className="bg-[#5865F2] hover:bg-[#4752C4]"
-            >
-              {editingDraft && actionLoadingId === editingDraft.id ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
