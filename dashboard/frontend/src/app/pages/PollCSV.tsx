@@ -6,7 +6,6 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Switch } from '../components/ui/switch';
-import { Badge } from '../components/ui/badge';
 import { mockServers } from '../data/mockData';
 import { Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,14 +22,9 @@ export function PollCSV() {
         // Simular parse do CSV
         setTimeout(() => {
           setParsedData({
-            title: 'Enquete importada do CSV',
-            description: 'Esta é uma enquete criada através de importação CSV',
-            options: [
-              { text: 'Opção 1', emoji: '1️⃣' },
-              { text: 'Opção 2', emoji: '2️⃣' },
-              { text: 'Opção 3', emoji: '3️⃣' },
-              { text: 'Opção 4', emoji: '4️⃣' },
-            ],
+            title: 'Escolha da próxima leitura do clube',
+            description: 'Votação importada por CSV para definir o próximo livro.',
+            options: [{ text: '1984' }, { text: 'Dom Casmurro' }, { text: 'Duna' }, { text: 'A Revolução dos Bichos' }],
           });
           toast.success('Arquivo CSV processado com sucesso!');
         }, 1000);
@@ -48,14 +42,14 @@ export function PollCSV() {
   };
 
   const downloadTemplate = () => {
-    const csvContent = `titulo,descricao,opcao1,emoji1,opcao2,emoji2,opcao3,emoji3
-"Qual sua linguagem favorita?","Escolha sua linguagem de programação preferida","JavaScript","💛","Python","🐍","Rust","🦀"`;
+    const csvContent = `nome-da-enquete;opcoes;max_votos;peso_mensalistas
+Qual livro vamos ler em maio?;1984|Duna|Dom Casmurro|Capitães da Areia;2;sim`;
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'template_enquete.csv';
+    a.download = 'template-clube-do-livro.csv';
     a.click();
     toast.success('Template baixado com sucesso!');
   };
@@ -63,8 +57,8 @@ export function PollCSV() {
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Enquete CSV</h1>
-        <p className="text-gray-600 dark:text-gray-400">Crie enquetes importando arquivos CSV</p>
+        <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Votações em CSV</h1>
+        <p className="text-gray-600 dark:text-gray-400">Crie votações do clube do livro importando um arquivo CSV</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
@@ -200,7 +194,6 @@ export function PollCSV() {
                         key={index}
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                       >
-                        <span className="text-xl md:text-2xl">{opt.emoji}</span>
                         <span className="dark:text-white text-sm md:text-base">{opt.text}</span>
                       </div>
                     ))}
@@ -271,25 +264,25 @@ export function PollCSV() {
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
                   <span>
-                    <strong>titulo</strong>: Título da enquete
+                    <strong>nome-da-enquete</strong>: Nome da votação
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
                   <span>
-                    <strong>descricao</strong>: Descrição opcional
+                    <strong>opcoes</strong> (ou <strong>opções</strong>): Lista de opções de leitura
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
                   <span>
-                    <strong>opcao1, opcao2, ...</strong>: Texto das opções
+                    <strong>max_votos</strong> (ou <strong>maxVotos</strong>): Máximo de votos por pessoa
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#5865F2]">•</span>
                   <span>
-                    <strong>emoji1, emoji2, ...</strong>: Emojis das opções
+                    <strong>peso_mensalistas</strong>: Use <strong>sim</strong> ou <strong>nao</strong>
                   </span>
                 </li>
               </ul>
@@ -302,8 +295,9 @@ export function PollCSV() {
               <div className="space-y-2 text-sm">
                 <p className="font-medium text-blue-900 dark:text-blue-300">Dicas importantes</p>
                 <ul className="space-y-1 text-blue-800 dark:text-blue-400">
-                  <li>• Use vírgulas para separar valores</li>
-                  <li>• Máximo de 10 opções por enquete</li>
+                  <li>• Use ; para separar colunas do CSV</li>
+                  <li>• Separe opções com vírgula, barra (/) ou pipe (|)</li>
+                  <li>• Máximo de 20 opções por enquete</li>
                   <li>• Codificação UTF-8 recomendada</li>
                   <li>• Baixe o template para facilitar</li>
                 </ul>
@@ -314,11 +308,8 @@ export function PollCSV() {
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <h3 className="mb-4 dark:text-white">Exemplo de CSV</h3>
             <pre className="text-xs bg-gray-900 text-green-400 p-3 md:p-4 rounded overflow-x-auto">
-              {`titulo,descricao,opcao1,emoji1
-"Melhor jogo",
-"Vote no melhor",
-"Valorant","🎯",
-"CS:GO","🔫"`}
+              {`nome-da-enquete;opcoes;max_votos;peso_mensalistas
+Qual livro vamos ler no próximo mês?;Duna|1984|Dom Casmurro;2;sim`}
             </pre>
           </Card>
         </div>
