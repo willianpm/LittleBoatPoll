@@ -190,20 +190,56 @@ describe('Dashboard Auth API - group members', () => {
 
   it('should return mensalista ids for valid guild', async () => {
     const { loadMensalistas } = require('../../src/utils/file-handler');
-    loadMensalistas.mockReturnValueOnce({ mensalistas: ['user-1', 'user-2'] });
+    loadMensalistas.mockReturnValueOnce({
+      mensalistas: [
+        {
+          id: 'user-1',
+          addedAt: '2026-04-08T12:30:00.000Z',
+          addedBy: 'user-2',
+        },
+        'user-2',
+      ],
+    });
 
     const res = await request(app).get('/api/auth/guilds/guild-1/group-members?group=mensalistas');
     expect(res.statusCode).toBe(200);
     expect(res.body.ids).toEqual(['user-1', 'user-2']);
+    expect(res.body.members).toEqual([
+      {
+        id: 'user-1',
+        addedAt: '2026-04-08T12:30:00.000Z',
+        addedBy: 'user-2',
+      },
+      {
+        id: 'user-2',
+        addedAt: null,
+        addedBy: null,
+      },
+    ]);
   });
 
   it('should return criador ids for valid guild', async () => {
     const { loadCriadores } = require('../../src/utils/file-handler');
-    loadCriadores.mockReturnValueOnce({ criadores: ['user-2'] });
+    loadCriadores.mockReturnValueOnce({
+      criadores: [
+        {
+          id: 'user-2',
+          adicionadoEm: '2026-04-01T09:00:00.000Z',
+          adicionadoPor: 'user-1',
+        },
+      ],
+    });
 
     const res = await request(app).get('/api/auth/guilds/guild-1/group-members?group=criadores');
     expect(res.statusCode).toBe(200);
     expect(res.body.ids).toEqual(['user-2']);
+    expect(res.body.members).toEqual([
+      {
+        id: 'user-2',
+        addedAt: '2026-04-01T09:00:00.000Z',
+        addedBy: 'user-1',
+      },
+    ]);
   });
 
   it('should return 400 for invalid group parameter', async () => {
