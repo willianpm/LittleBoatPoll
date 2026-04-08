@@ -489,6 +489,8 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
         title: draft.titulo,
         optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
         creatorId: draft.criadorId,
+        creatorName: draft.criadorNome || null,
+        options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
         updatedAt: draft.editadoEm || draft.criadoEm || null,
       }))
       .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
