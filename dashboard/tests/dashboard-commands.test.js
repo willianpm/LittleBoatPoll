@@ -259,4 +259,45 @@ describe('Dashboard Commands API', () => {
     expect(res.body.message).toMatch(/user-777/i);
     expect(executeMock).toHaveBeenCalledTimes(1);
   });
+
+  it('should return dashboard drafts with creator and options metadata', async () => {
+    client.draftPolls.set('DRAFT-1', {
+      id: 'DRAFT-1',
+      titulo: 'Enquete dashboard',
+      opcoes: ['Opção A', 'Opção B', 'Opção C'],
+      criadorId: 'user-42',
+      criadorNome: 'willian',
+      origem: 'dashboard-create',
+      criadoEm: '2026-04-01T10:00:00.000Z',
+      editadoEm: '2026-04-02T10:00:00.000Z',
+    });
+
+    client.draftPolls.set('DRAFT-2', {
+      id: 'DRAFT-2',
+      titulo: 'Enquete discord',
+      opcoes: ['A', 'B'],
+      criadorId: 'user-99',
+      criadorNome: 'outro-user',
+      origem: 'discord',
+      criadoEm: '2026-04-01T10:00:00.000Z',
+      editadoEm: '2026-04-02T10:00:00.000Z',
+    });
+
+    const res = await request(app).get('/api/commands/context-targets/drafts').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.drafts)).toBe(true);
+    expect(res.body.drafts).toHaveLength(1);
+    expect(res.body.drafts[0]).toEqual(
+      expect.objectContaining({
+        id: 'DRAFT-1',
+        title: 'Enquete dashboard',
+        optionsCount: 3,
+        creatorId: 'user-42',
+        creatorName: 'willian',
+        options: ['Opção A', 'Opção B', 'Opção C'],
+      }),
+    );
+  });
 });

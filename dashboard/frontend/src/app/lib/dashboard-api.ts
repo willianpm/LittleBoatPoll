@@ -52,6 +52,8 @@ export interface DashboardDraftContext {
   title: string;
   optionsCount: number;
   creatorId?: string | null;
+  creatorName?: string | null;
+  options?: string[];
   updatedAt?: string | null;
 }
 

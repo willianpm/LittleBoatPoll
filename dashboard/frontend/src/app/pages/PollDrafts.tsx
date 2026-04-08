@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Plus, Send, FileText, Trash2, Edit } from 'lucide-react';
+import { Plus, Send, FileText, Trash2, Edit, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   deleteDraft,
@@ -26,7 +26,7 @@ export function PollDrafts() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDraft, setEditingDraft] = useState<DraftItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editOptionsCsv, setEditOptionsCsv] = useState('');
+  const [editOptions, setEditOptions] = useState<Array<{ id: string; text: string }>>([]);
   const [editMaxVotes, setEditMaxVotes] = useState(1);
   const [editSubscriberWeight, setEditSubscriberWeight] = useState<'sim' | 'nao'>('nao');
 
@@ -79,19 +79,67 @@ export function PollDrafts() {
   };
 
   const openEditModal = (draft: DraftItem) => {
+    const draftOptions = Array.isArray(draft.options) ? draft.options : [];
+    const normalizedOptions = draftOptions
+      .filter((option) => typeof option === 'string')
+      .map((option, index) => ({ id: `${draft.id}-${index}`, text: option }));
+
     setEditingDraft(draft);
     setEditTitle(draft.title || '');
-    setEditOptionsCsv('');
+    setEditOptions(
+      normalizedOptions.length >= 2
+        ? normalizedOptions
+        : [
+            { id: `${draft.id}-fallback-1`, text: normalizedOptions[0]?.text || '' },
+            { id: `${draft.id}-fallback-2`, text: '' },
+          ],
+    );
     setEditMaxVotes(1);
     setEditSubscriberWeight('nao');
     setIsEditOpen(true);
   };
 
+  const addEditOption = () => {
+    if (editOptions.length >= 20) {
+      toast.error('Limite de 20 opções por enquete');
+      return;
+    }
+
+    setEditOptions((current) => [...current, { id: Date.now().toString(), text: '' }]);
+  };
+
+  const removeEditOption = (id: string) => {
+    if (editOptions.length <= 2) {
+      toast.error('A enquete precisa ter pelo menos 2 opções');
+      return;
+    }
+
+    setEditOptions((current) => current.filter((option) => option.id !== id));
+  };
+
+  const updateEditOption = (id: string, value: string) => {
+    setEditOptions((current) => current.map((option) => (option.id === id ? { ...option, text: value } : option)));
+  };
+
   const handleSaveEdit = async () => {
     if (!editingDraft) return;
 
+    const normalizedOptions = editOptions.map((option) => option.text.trim()).filter(Boolean);
+
     if (!editTitle.trim()) {
       toast.error('Informe um título para o rascunho');
+      return;
+    }
+
+    if (normalizedOptions.length < 2) {
+      toast.error('A enquete precisa ter pelo menos 2 opções válidas');
+      return;
+    }
+
+    const optionsLowerCase = normalizedOptions.map((option) => option.toLowerCase());
+    const hasDuplicatedOptions = new Set(optionsLowerCase).size !== optionsLowerCase.length;
+    if (hasDuplicatedOptions) {
+      toast.error('As opções devem ser únicas');
       return;
     }
 
@@ -100,7 +148,7 @@ export function PollDrafts() {
       const result = await editDraft({
         id: editingDraft.id,
         title: editTitle.trim(),
-        optionsCsv: editOptionsCsv.trim() || undefined,
+        optionsCsv: normalizedOptions.join(', '),
         maxVotes: editMaxVotes,
         pesoMensalista: editSubscriberWeight,
       });
@@ -167,6 +215,8 @@ export function PollDrafts() {
                     )}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                       <span className="truncate">Origem: dashboard</span>
+                      <span>•</span>
+                      <span className="truncate">Autor: {draft.creatorName || 'Autor desconhecido'}</span>
                       <span>•</span>
                       <span>{formatDate(draft.updatedAt || '')}</span>
                     </div>
@@ -263,16 +313,45 @@ export function PollDrafts() {
             </div>
 
             <div>
-              <Label htmlFor="edit-options" className="dark:text-gray-200">
-                Opções (separadas por vírgula)
-              </Label>
-              <Input
-                id="edit-options"
-                value={editOptionsCsv}
-                onChange={(e) => setEditOptionsCsv(e.target.value)}
-                placeholder="Deixe vazio para manter as opções atuais"
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
+              <div className="flex items-center justify-between gap-2">
+                <Label className="dark:text-gray-200">Opções</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addEditOption}
+                  disabled={editOptions.length >= 20}
+                  className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  <Plus className="size-4 mr-2" />
+                  Adicionar opção
+                </Button>
+              </div>
+              <div className="mt-2 space-y-2">
+                {editOptions.map((option, index) => (
+                  <div key={option.id} className="flex items-center gap-2">
+                    <Input
+                      value={option.text}
+                      onChange={(e) => updateEditOption(option.id, e.target.value)}
+                      placeholder={`Opção ${index + 1}`}
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeEditOption(option.id)}
+                      disabled={editOptions.length <= 2}
+                      className="dark:hover:bg-gray-700 shrink-0"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Você pode editar as opções existentes e adicionar novas (mínimo 2, máximo 20).
+              </p>
             </div>
 
             <div>
