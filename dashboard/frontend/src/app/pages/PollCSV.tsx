@@ -55,7 +55,7 @@ Qual livro vamos ler em maio?;1984|Duna|Dom Casmurro|Capitães da Areia;2;sim`;
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Votações em CSV</h1>
         <p className="text-gray-600 dark:text-gray-400">Crie votações do clube do livro importando um arquivo CSV</p>

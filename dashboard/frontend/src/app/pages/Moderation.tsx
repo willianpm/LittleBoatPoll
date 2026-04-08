@@ -336,7 +336,7 @@ export function Moderation() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Moderação</h1>
         <p className="text-gray-600 dark:text-gray-400">Gerencie moderadores e mensalistas do bot</p>

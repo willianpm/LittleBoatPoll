@@ -76,7 +76,7 @@ export function PollDetail() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto">
         <p className="dark:text-white">Carregando detalhes da enquete...</p>
       </div>
     );
@@ -84,7 +84,7 @@ export function PollDetail() {
 
   if (error || !poll) {
     return (
-      <div className="p-4 md:p-8">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto">
         <p className="dark:text-white">{error || 'Enquete não encontrada'}</p>
       </div>
     );
@@ -129,7 +129,7 @@ export function PollDetail() {
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <Link to="/history">
         <Button variant="ghost" className="mb-4 md:mb-6 dark:hover:bg-gray-800">
           <ArrowLeft className="size-4 mr-2" />
