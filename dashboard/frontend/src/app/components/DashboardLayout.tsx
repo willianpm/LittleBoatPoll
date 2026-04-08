@@ -46,7 +46,7 @@ export function DashboardLayout() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#5865F2] dark:bg-[#4752C4] text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Bot className="size-6" />
-          <h1 className="font-bold text-lg">PollBot</h1>
+          <h1 className="font-bold text-lg">Little Boat Poll</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:bg-white/10">
@@ -85,7 +85,7 @@ export function DashboardLayout() {
           <div className="flex items-center gap-3">
             <Bot className="size-8" />
             <div>
-              <h1 className="font-bold text-lg">PollBot</h1>
+              <h1 className="font-bold text-lg">Little Boat Poll</h1>
               <p className="text-xs text-white/70">Dashboard</p>
             </div>
           </div>

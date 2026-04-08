@@ -29,7 +29,7 @@ export function Login() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4 shadow-2xl">
             <Bot className="size-10 text-[#5865F2]" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">PollBot Dashboard</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Little Boat Poll Dashboard</h1>
           <p className="text-blue-100">Gerencie suas enquetes do Discord</p>
         </div>
 
@@ -50,7 +50,7 @@ export function Login() {
           </Button>
 
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-4">Recursos do PollBot:</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-4">Recursos do Little Boat Poll:</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <Shield className="size-4 text-[#5865F2]" />
