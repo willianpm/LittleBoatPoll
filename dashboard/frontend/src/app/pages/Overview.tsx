@@ -68,7 +68,7 @@ export function Overview() {
   const recentPolls = sortedPolls.slice(0, 4);
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl mb-2 dark:text-white">Visão Geral</h1>
         <p className="text-gray-600 dark:text-gray-400">Dashboard de estatísticas do Little Boat Poll</p>
@@ -125,7 +125,6 @@ export function Overview() {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, value }) => `${name}: ${value}`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -137,6 +136,19 @@ export function Overview() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            {statusData.map((item, index) => (
+              <div key={item.name} className="flex items-center gap-2 dark:text-gray-200">
+                <span
+                  className="inline-block size-2.5 rounded-full"
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                />
+                <span>
+                  {item.name}: {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
         </Card>
 
         <Card className="p-4 md:p-6 lg:col-span-2 dark:bg-gray-800 dark:border-gray-700">
