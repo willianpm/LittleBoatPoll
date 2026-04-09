@@ -33,10 +33,7 @@ function parsePollDescription(description: string | null | undefined): ParsedDes
   const boldMatches = [...normalized.matchAll(/\*\*([^*]+)\*\*/g)].map((match) => match[1].trim());
 
   if (boldMatches.length >= 2) {
-    const intro = normalized
-      .slice(0, normalized.indexOf('**'))
-      .replace(/\s+/g, ' ')
-      .trim();
+    const intro = normalized.slice(0, normalized.indexOf('**')).replace(/\s+/g, ' ').trim();
 
     return {
       intro: intro || 'Selecione uma opção:',
