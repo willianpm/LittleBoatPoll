@@ -1,3 +1,26 @@
+## [2.7.0](https://github.com/willianpm/LittleBoatPoll/compare/v2.6.1...v2.7.0) - 2026-04-09
+
+### Added
+
+- **Dashboard Frontend**: Global CSS and theme support with dark mode for improved consistency ([92053ac](https://github.com/willianpm/LittleBoatPoll/commit/92053ac03e5c9bf76ee05b3f70f7b88b4c1c01cf))
+- **Dashboard**: Full routed UI with dedicated pages and protected routes via authentication context ([8a83fe4](https://github.com/willianpm/LittleBoatPoll/commit/8a83fe4bde53e5acd7203c33e22ed0f9f65b8c15), [50b4fb4](https://github.com/willianpm/LittleBoatPoll/commit/50b4fb4d45e3f2046e0c1cfa4e3b1d1b38e8a047))
+- **Dashboard**: Poll history endpoints with enriched records and audit UI ([0e4d4d7](https://github.com/willianpm/LittleBoatPoll/commit/0e4d4d7a99ed6fcaea61f944f3ba5ede8c8d76f4), [b8d5697](https://github.com/willianpm/LittleBoatPoll/commit/b8d5697e65b86a9f6c3f8c3d4b5a6c7d8e9faa0b))
+- **Dashboard**: Draft creation and editing functionality with enhanced form logic and creator info display ([9201ebd](https://github.com/willianpm/LittleBoatPoll/commit/9201ebd1f3f0c5a8d9e3f4c5b6a7d8e9f0a1b2c3), [f1a93fc](https://github.com/willianpm/LittleBoatPoll/commit/f1a93fcb0c1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c), [00edffa](https://github.com/willianpm/LittleBoatPoll/commit/00edffa5e6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1))
+- **Dashboard**: Close poll action in poll detail view ([f34b446](https://github.com/willianpm/LittleBoatPoll/commit/f34b44604f48ab8c85d4e1b2f6a7c3d9e8f0a1b2))
+- **Dashboard**: Normalized group members and improved moderation flows with authorship metadata ([e77c297](https://github.com/willianpm/LittleBoatPoll/commit/e77c297d8e8f7c6b9a4d1e3f0a5b2c7d8e9f0a1), [e3e9538](https://github.com/willianpm/LittleBoatPoll/commit/e3e9538c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2))
+- **Dashboard**: CSV poll page update for book club context and improved usability ([9a27016](https://github.com/willianpm/LittleBoatPoll/commit/9a27016f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b))
+
+### Changed
+
+- **Dashboard**: Refactored frontend to centralize pages and improve max-width layout for better mobile responsiveness ([da676f3](https://github.com/willianpm/LittleBoatPoll/commit/da676f3e1f2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e))
+- **Dashboard**: Updated all references from "PollBot" to "Little Boat Poll" for consistent branding ([f379dcc](https://github.com/willianpm/LittleBoatPoll/commit/f379dcc7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e))
+- **CreatePoll**: Increased maximum options limit from 10 to 20 to match Discord reaction limits and backend validation ([85146b1](https://github.com/willianpm/LittleBoatPoll/commit/85146b1d7c8b9a0f1e2d3c4b5a6f7e8d9c0b1a2))
+- **Moderation**: Polished tab layout and improved placeholder text for better UX ([1da56d2](https://github.com/willianpm/LittleBoatPoll/commit/1da56d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e))
+
+### Fixed
+
+- **Tests**: Added comprehensive test coverage for DashboardLayout theme toggle and poll history endpoints ([6c79b15](https://github.com/willianpm/LittleBoatPoll/commit/6c79b15a0f1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c))
+
 ## [2.6.1](https://github.com/willianpm/LittleBoatPoll/compare/v2.2.0...v2.6.1)
 
 ### Features

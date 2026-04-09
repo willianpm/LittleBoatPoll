@@ -51,6 +51,7 @@ module.exports = {
 
       // Lê o arquivo de mensalistas
       let mensalistasData = loadMensalistas();
+      const monthlyMemberExists = (userId) => mensalistasData.mensalistas.some((entry) => entry.id === userId);
 
       // ====================================
       // SUBCOMANDO: ADICIONAR
@@ -59,7 +60,7 @@ module.exports = {
         const usuario = interaction.options.getUser('usuario');
 
         // Verifica se o usuário já está na lista
-        if (mensalistasData.mensalistas.includes(usuario.id)) {
+        if (monthlyMemberExists(usuario.id)) {
           return await interaction.reply({
             content: `⚠️ ${usuario.username} já está na lista de mensalistas!`,
             flags: MessageFlags.Ephemeral,
@@ -67,7 +68,11 @@ module.exports = {
         }
 
         // Adiciona o usuário
-        mensalistasData.mensalistas.push(usuario.id);
+        mensalistasData.mensalistas.push({
+          id: usuario.id,
+          addedAt: new Date().toISOString(),
+          addedBy: interaction.user.id,
+        });
         saveMensalistas(mensalistasData);
 
         const addEmbed = new EmbedBuilder()
@@ -93,7 +98,7 @@ module.exports = {
         const usuario = interaction.options.getUser('usuario');
 
         // Verifica se o usuário está na lista
-        const index = mensalistasData.mensalistas.indexOf(usuario.id);
+        const index = mensalistasData.mensalistas.findIndex((entry) => entry.id === usuario.id);
 
         if (index === -1) {
           return await interaction.reply({
@@ -136,10 +141,16 @@ module.exports = {
         let listaTexto = '';
         for (const mensalistaId of mensalistasData.mensalistas) {
           try {
-            const mensalistaUser = await client.users.fetch(mensalistaId);
-            listaTexto += `• ${mensalistaUser.username} (${mensalistaUser.id})\n`;
+            const mensalistaUser = await client.users.fetch(mensalistaId.id);
+            const addedAt = mensalistaId.addedAt
+              ? ` | Adicionado em: <t:${Math.floor(new Date(mensalistaId.addedAt).getTime() / 1000)}:f>`
+              : '';
+            listaTexto += `• ${mensalistaUser.username} (${mensalistaUser.id})${addedAt}\n`;
           } catch (error) {
-            listaTexto += `• ID: ${mensalistaId} (usuário não encontrado)\n`;
+            const addedAt = mensalistaId.addedAt
+              ? ` | Adicionado em: <t:${Math.floor(new Date(mensalistaId.addedAt).getTime() / 1000)}:f>`
+              : '';
+            listaTexto += `• ID: ${mensalistaId.id} (usuário não encontrado)${addedAt}\n`;
           }
         }
 

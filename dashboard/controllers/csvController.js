@@ -17,7 +17,6 @@ async function uploadCsv(req, res, next) {
 
   try {
     if (!req.file || !filePath) {
-      console.error('[csvController] Nenhum arquivo enviado.');
       const err = new Error('Arquivo não enviado.');
       err.statusCode = 400;
       throw err;
@@ -30,14 +29,12 @@ async function uploadCsv(req, res, next) {
 
     if (result.valid) {
       await botService.savePoll(result.data);
-      console.log('[csvController] Upload e processamento concluídos com sucesso.');
       res.status(200).json({
         success: true,
         draftsCreated: Array.isArray(result.data) ? result.data.length : 0,
         note: 'CSV importado como rascunho. Use o comando `/rascunho publicar` para criar a enquete ativa no Discord.',
       });
     } else {
-      console.error(`[csvController] Erro de validação: ${result.error}`);
       const err = new Error(result.error);
       err.statusCode = 400;
       throw err;
@@ -54,7 +51,6 @@ async function uploadCsv(req, res, next) {
 
     const statusCode = err.statusCode || 500;
     if (statusCode >= 500) {
-      console.error(`[csvController] Erro inesperado: ${err.message}`);
       return res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 
@@ -64,13 +60,11 @@ async function uploadCsv(req, res, next) {
       try {
         await fs.unlink(filePath);
         req.tempFileCleaned = true;
-        console.log(`[csvController:cleanup] Arquivo temporário deletado com sucesso: ${filePath}`);
       } catch (unlinkErr) {
-        if (unlinkErr.code === 'ENOENT') {
-          req.tempFileCleaned = true;
-          console.log(`[csvController:cleanup] Arquivo temporário já removido: ${filePath}`);
+        if (unlinkErr.code !== 'ENOENT') {
+          // Log silenciosamente se falhar, não queremos quebrar a resposta
         } else {
-          console.warn(`[csvController:cleanup] Falha ao deletar arquivo temporário: ${unlinkErr.message}`);
+          req.tempFileCleaned = true;
         }
       }
     }

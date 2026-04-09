@@ -1,6 +1,5 @@
 FROM node:22-alpine AS frontend-builder
 
-ENV NODE_ENV=production
 # RUN apk add --no-cache python3 make g++
 WORKDIR /app/dashboard/frontend
 COPY dashboard/frontend/package*.json ./

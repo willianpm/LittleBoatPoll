@@ -228,16 +228,10 @@ function loadDraftPolls() {
   }
 }
 
-// Inicializa arquivos de dados e armazena logs
-let logBoot = [];
-const originalConsoleLog = console.log;
-console.log = function (...args) {
-  logBoot.push(args.join(' '));
-};
+// Inicializa arquivos de dados na startup
 initDataFiles();
 loadActivePolls();
 loadDraftPolls();
-console.log = originalConsoleLog;
 
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
@@ -820,6 +814,10 @@ app.use('/api/auth', dashboardAuthRouter);
 const dashboardCommandsRouter = require('../../dashboard/api/dashboard-commands');
 app.use('/api/commands', dashboardCommandsRouter);
 
+// Rota read-only para histórico e detalhe de enquetes do dashboard
+const dashboardPollsRouter = require('../../dashboard/api/dashboard-polls');
+app.use('/api/polls', dashboardPollsRouter);
+
 // Rota para upload de CSV via dashboard
 const dashboardCsvRouter = require('../../dashboard/api/dashboard-csv');
 app.use('/api/csv', dashboardCsvRouter);
@@ -858,11 +856,6 @@ client.login(config.TOKEN);
 
 // Evento: Bot conectado e pronto
 client.once('clientReady', async () => {
-  // Exibe logs de carregamento
-  for (const line of logBoot) {
-    originalConsoleLog(line);
-  }
-
   // Binding de mensalistas
   await bindMensalistasRolesOnStartup();
 

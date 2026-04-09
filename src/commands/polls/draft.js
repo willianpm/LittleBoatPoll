@@ -197,6 +197,7 @@ async function handleCriar(interaction, client) {
     usarPesoMensalista: usarPesoMensalista,
     criadorId: interaction.user.id,
     criadorNome: interaction.user.username,
+    origem: interaction.dashboardSource || 'discord',
     criadoEm: new Date().toISOString(),
     editadoEm: new Date().toISOString(),
     status: 'rascunho',
@@ -508,6 +509,7 @@ async function handlePublicar(interaction, client) {
       maxVotos: draft.maxVotos,
       usarPesoMensalista: draft.usarPesoMensalista,
       criadoEm: new Date(),
+      criadoPor: draft.criadorId || interaction.user?.id || null,
       votos: {},
       status: 'ativa',
     });

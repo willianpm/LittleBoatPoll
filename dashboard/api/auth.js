@@ -401,6 +401,32 @@ router.get('/guilds/:guildId/channels', validateDashboardToken, async (req, res)
 });
 
 router.get('/guilds/:guildId/group-members', validateDashboardToken, (req, res) => {
+  const normalizeGroupEntries = (entries) => {
+    return Array.isArray(entries)
+      ? entries
+          .map((entry) => {
+            if (!entry) return null;
+            if (typeof entry === 'string') {
+              return { id: entry, addedAt: null, addedBy: null };
+            }
+
+            if (typeof entry === 'object') {
+              const id = entry.id || entry.userId || entry.usuarioId;
+              if (!id) return null;
+
+              return {
+                id: String(id),
+                addedAt: entry.addedAt || entry.adicionadoEm || entry.createdAt || entry.criadoEm || null,
+                addedBy: entry.addedBy || entry.adicionadoPor || null,
+              };
+            }
+
+            return null;
+          })
+          .filter(Boolean)
+      : [];
+  };
+
   try {
     const { guildId } = req.params;
     const { group } = req.query;
@@ -411,12 +437,14 @@ router.get('/guilds/:guildId/group-members', validateDashboardToken, (req, res) 
 
     if (group === 'mensalistas') {
       const data = loadMensalistas();
-      return res.json({ ids: data.mensalistas || [] });
+      const members = normalizeGroupEntries(data.mensalistas);
+      return res.json({ ids: members.map((entry) => entry.id), members });
     }
 
     if (group === 'criadores') {
       const data = loadCriadores();
-      return res.json({ ids: data.criadores || [] });
+      const members = normalizeGroupEntries(data.criadores);
+      return res.json({ ids: members.map((entry) => entry.id), members });
     }
 
     return res.status(400).json({ error: 'Parâmetro "group" inválido. Use "mensalistas" ou "criadores".' });

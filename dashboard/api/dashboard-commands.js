@@ -228,7 +228,17 @@ function resolveExecutionChannel(guildObj, target) {
   return fallbackChannel || null;
 }
 
-function buildFakeInteraction({ commandName, commandType, options, user, guild, member, target, executionChannel }) {
+function buildFakeInteraction({
+  commandName,
+  commandType,
+  options,
+  user,
+  guild,
+  member,
+  target,
+  executionChannel,
+  dashboardSource,
+}) {
   // Cria um "options resolver" simples, compatível com os métodos mais usados
   function createOptionsResolver(rawOptions) {
     const optionArray = normalizeOptionsPayload(rawOptions);
@@ -303,6 +313,7 @@ function buildFakeInteraction({ commandName, commandType, options, user, guild, 
     guildId: guild?.id,
     channel: executionChannel,
     channelId: executionChannel?.id || target?.channelId || null,
+    dashboardSource: dashboardSource || null,
     options: createOptionsResolver(options),
     user,
     member,
@@ -456,6 +467,7 @@ router.get('/context-targets/polls', validateDashboardToken, async (req, res) =>
         title: poll.titulo,
         options: poll.opcoes || [],
         status: poll.status,
+        creatorId: poll.criadoPor || poll.criadorId || null,
       }))
       .filter((poll) => poll.status === 'ativa');
 
@@ -471,11 +483,14 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
     await hydrateDraftsFromDiskIfNeeded();
 
     const drafts = Array.from(client.draftPolls.values())
+      .filter((draft) => draft.origem === 'dashboard-create')
       .map((draft) => ({
         id: draft.id,
         title: draft.titulo,
         optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
         creatorId: draft.criadorId,
+        creatorName: draft.criadorNome || null,
+        options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
         updatedAt: draft.editadoEm || draft.criadoEm || null,
       }))
       .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
@@ -490,7 +505,7 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
 router.post('/:commandName', validateDashboardToken, async (req, res) => {
   try {
     const { commandName } = req.params;
-    const { options, guild, commandType, target } = req.body;
+    const { options, guild, commandType, target, dashboardSource } = req.body;
 
     if (commandName === 'rascunho') {
       await hydrateDraftsFromDiskIfNeeded();
@@ -527,7 +542,7 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       (await guildObj.members?.fetch?.(req.dashboardAuth.userId).catch(() => null)) ||
       req.dashboardAuth.member;
 
-    if (effectiveType === 1 && !target?.channelId) {
+    if (effectiveType === 1 && commandName !== 'rascunho' && !target?.channelId) {
       return errorResponse(res, 400, 'channelId é obrigatório para comandos de chat (tipo 1)');
     }
 
@@ -548,6 +563,7 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       member: guildMember,
       target: target || {},
       executionChannel,
+      dashboardSource,
     });
 
     logDashboardCommand('info', 'execute_start', {
