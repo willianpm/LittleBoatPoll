@@ -9,6 +9,14 @@ const fs = require('fs');
 const { uploadCsv } = require('../controllers/csvController');
 const { validateDashboardToken } = require('./auth');
 
+// Logger opcional
+let logger;
+try {
+  logger = require('../../src/utils/logger');
+} catch {
+  logger = { warn: () => {}, error: () => {} };
+}
+
 const router = express.Router();
 
 // Configurar storage temporário para uploads
@@ -55,17 +63,15 @@ router.post('/upload', validateDashboardToken, upload.single('file'), uploadCsv)
 // Middleware de tratamento de erros centralizado para a rota de upload
 router.use(async (err, req, res, next) => {
   // Garante que o arquivo temporário seja removido em caso de qualquer erro
-  const filePath = req.file?.path || err.filePath;
+  // (fallback se o controller não conseguir limpar)
+  const filePath = req.file?.path || err?.filePath;
   if (filePath && !req.tempFileCleaned) {
     try {
       await fs.promises.unlink(filePath);
       req.tempFileCleaned = true;
-      console.log(`[ErrorHandler] Arquivo temporário deletado: ${filePath}`);
     } catch (unlinkErr) {
-      if (unlinkErr.code === 'ENOENT') {
-        req.tempFileCleaned = true;
-      } else {
-        console.error(`[ErrorHandler] Falha ao deletar arquivo temporário: ${unlinkErr.message}`);
+      if (unlinkErr.code !== 'ENOENT') {
+        logger.warn(`Falha ao deletar arquivo temporário ${filePath}: ${unlinkErr.message}`);
       }
     }
   }
@@ -82,7 +88,9 @@ router.use(async (err, req, res, next) => {
   if (err) {
     const statusCode = err.statusCode || 500;
     const message = statusCode >= 500 ? 'Erro interno no servidor.' : err.message;
-    console.error(`[ErrorHandler] Erro ${statusCode}: ${message}`, err);
+    if (statusCode >= 500) {
+      logger.error(`Erro no upload: ${statusCode} - ${message}`, err);
+    }
     return res.status(statusCode).json({ error: message });
   }
 

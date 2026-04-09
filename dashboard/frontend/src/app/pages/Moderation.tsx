@@ -362,10 +362,10 @@ export function Moderation() {
       </div>
 
       <Tabs defaultValue="moderators" className="w-full">
-        <TabsList className="mb-6 w-full grid grid-cols-2 gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg h-auto">
+        <TabsList className="mb-6 w-full grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg h-auto">
           <TabsTrigger
             value="moderators"
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all border-2
+            className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3 sm:py-4 rounded-lg font-semibold transition-all text-sm sm:text-base border-2
                        data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400 data-[state=inactive]:border-transparent
                        data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#5865F2] data-[state=active]:to-[#4752C4] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border-[#5865F2]"
           >
@@ -374,7 +374,7 @@ export function Moderation() {
           </TabsTrigger>
           <TabsTrigger
             value="subscribers"
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all
+            className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3 sm:py-4 rounded-lg font-semibold transition-all text-sm sm:text-base
                        data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-400
                        data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md"
           >
@@ -385,7 +385,7 @@ export function Moderation() {
 
         <TabsContent
           value="moderators"
-          className="min-h-[30rem] md:min-h-[34rem] transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100"
+          className="min-h-[20rem] md:min-h-[34rem] transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100"
         >
           {isLoading ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
@@ -519,7 +519,7 @@ export function Moderation() {
 
         <TabsContent
           value="subscribers"
-          className="min-h-[30rem] md:min-h-[34rem] transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100"
+          className="min-h-[20rem] md:min-h-[34rem] transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100"
         >
           {isLoading ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">

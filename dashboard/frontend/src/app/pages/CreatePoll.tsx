@@ -327,7 +327,7 @@ export function CreatePoll() {
                   id="maxVotes"
                   type="number"
                   min="1"
-                  max="10"
+                  max="20"
                   value={maxVotes}
                   onChange={(e) => {
                     const nextValue = Number.parseInt(e.target.value, 10);
