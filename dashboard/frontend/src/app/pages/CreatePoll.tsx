@@ -128,6 +128,12 @@ export function CreatePoll() {
       return;
     }
 
+    const selectedChannelExists = channels.some((channel) => channel.id === selectedChannelId);
+    if (!selectedChannelExists) {
+      toast.error('Canal inválido para o servidor selecionado. Selecione novamente.');
+      return;
+    }
+
     if (validOptions.length < 2) {
       toast.error('A enquete precisa de pelo menos 2 opções');
       return;

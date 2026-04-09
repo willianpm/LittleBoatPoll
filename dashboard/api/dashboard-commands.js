@@ -53,6 +53,16 @@ function normalizeOptionsPayload(rawOptions) {
   return [];
 }
 
+function getRequestedSubcommand(rawOptions) {
+  const normalized = normalizeOptionsPayload(rawOptions);
+  const subcommandOption = normalized.find((opt) => opt.type === 'SUB_COMMAND' || opt.type === 1);
+  if (!subcommandOption || typeof subcommandOption.name !== 'string') {
+    return null;
+  }
+
+  return subcommandOption.name;
+}
+
 async function hydrateDraftsFromDiskIfNeeded() {
   if (client.draftPolls.size > 0) {
     return;
@@ -207,10 +217,15 @@ function toDiscordMessagePayload(payload) {
   return safePayload;
 }
 
-function resolveExecutionChannel(guildObj, target) {
+function resolveExecutionChannel(guildObj, target, options = {}) {
+  const { allowFallback = true } = options;
   const fromTarget = target?.channelId ? guildObj.channels?.cache?.get(target.channelId) : null;
   if (fromTarget && typeof fromTarget.send === 'function' && fromTarget.isTextBased?.()) {
     return fromTarget;
+  }
+
+  if (target?.channelId || !allowFallback) {
+    return null;
   }
 
   if (
@@ -487,6 +502,8 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
       .map((draft) => ({
         id: draft.id,
         title: draft.titulo,
+        guildId: draft.guildId || null,
+        channelId: draft.channelId || null,
         optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
         creatorId: draft.criadorId,
         creatorName: draft.criadorNome || null,
@@ -503,9 +520,14 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
 });
 
 router.post('/:commandName', validateDashboardToken, async (req, res) => {
+  let requestedSubcommand = null;
+
   try {
     const { commandName } = req.params;
     const { options, guild, commandType, target, dashboardSource } = req.body;
+    requestedSubcommand = getRequestedSubcommand(options);
+    const isStrictDashboardFlow =
+      commandName === 'rascunho' && (requestedSubcommand === 'criar' || requestedSubcommand === 'publicar');
 
     if (commandName === 'rascunho') {
       await hydrateDraftsFromDiskIfNeeded();
@@ -527,8 +549,19 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       return errorResponse(res, 400, 'Tipo do comando inválido para o comando selecionado');
     }
 
+    if (isStrictDashboardFlow && !guild?.id) {
+      return errorResponse(res, 400, 'guild.id é obrigatório para criar/publicar rascunhos via dashboard');
+    }
+
     const effectiveGuildId = guild?.id || req.dashboardAuth.guildId;
     if (!req.dashboardAuth.accessibleGuildIds.includes(effectiveGuildId)) {
+      logDashboardCommand('warn', 'guild_access_denied', {
+        commandName,
+        userId: req.dashboardAuth.userId,
+        requestedGuildId: guild?.id || null,
+        fallbackGuildId: req.dashboardAuth.guildId,
+        effectiveGuildId,
+      });
       return errorResponse(res, 403, 'Acesso negado para o servidor informado');
     }
 
@@ -546,8 +579,28 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
       return errorResponse(res, 400, 'channelId é obrigatório para comandos de chat (tipo 1)');
     }
 
-    const executionChannel = resolveExecutionChannel(guildObj, target || {});
+    if (isStrictDashboardFlow && !target?.channelId) {
+      return errorResponse(res, 400, 'channelId é obrigatório para criar/publicar rascunhos via dashboard');
+    }
+
+    const executionChannel = resolveExecutionChannel(guildObj, target || {}, {
+      allowFallback: !isStrictDashboardFlow,
+    });
     if (!executionChannel && (effectiveType === 1 || effectiveType === 3)) {
+      logDashboardCommand('warn', 'channel_resolution_failed', {
+        commandName,
+        subcommand: requestedSubcommand,
+        userId: req.dashboardAuth.userId,
+        requestedGuildId: guild?.id || null,
+        effectiveGuildId,
+        requestedChannelId: target?.channelId || null,
+        isStrictDashboardFlow,
+      });
+
+      if (target?.channelId) {
+        return errorResponse(res, 404, 'Canal selecionado não encontrado ou indisponível no servidor informado');
+      }
+
       return errorResponse(res, 404, 'Servidor não encontrado ou sem canal de texto disponível para execução');
     }
 
@@ -568,10 +621,13 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
 
     logDashboardCommand('info', 'execute_start', {
       commandName,
+      subcommand: requestedSubcommand,
       guildId: effectiveGuildId,
       userId: req.dashboardAuth.userId,
       commandType: effectiveType,
+      requestedChannelId: target?.channelId || null,
       channelId: interaction.channelId,
+      strictChannelResolution: isStrictDashboardFlow,
     });
 
     const payload = await withCommandLock(commandName, async () => {
@@ -594,9 +650,12 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
 
     logDashboardCommand('info', 'execute_success', {
       commandName,
+      subcommand: requestedSubcommand,
       guildId: effectiveGuildId,
       userId: req.dashboardAuth.userId,
       message: friendlyMessage,
+      requestedChannelId: target?.channelId || null,
+      resolvedChannelId: interaction.channelId,
     });
 
     return successResponse(res, friendlyMessage);
@@ -607,8 +666,10 @@ router.post('/:commandName', validateDashboardToken, async (req, res) => {
 
     logDashboardCommand('error', 'execute_failed', {
       commandName: req.params.commandName,
+      subcommand: requestedSubcommand,
       guildId: req.body?.guild?.id || req.dashboardAuth?.guildId,
       userId: req.dashboardAuth?.userId,
+      requestedChannelId: req.body?.target?.channelId || null,
       error: err.message,
       stack: err.stack,
     });

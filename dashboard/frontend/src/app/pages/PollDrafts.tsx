@@ -53,9 +53,19 @@ export function PollDrafts() {
   }
 
   const handlePublishDraft = async (id: string) => {
+    const targetDraft = drafts.find((draft) => draft.id === id);
+    if (!targetDraft?.guildId || !targetDraft?.channelId) {
+      toast.error('Este rascunho não possui servidor/canal vinculados para publicação segura');
+      return;
+    }
+
     setActionLoadingId(id);
     try {
-      const result = await publishDraft(id);
+      const result = await publishDraft({
+        id,
+        guildId: targetDraft.guildId,
+        channelId: targetDraft.channelId,
+      });
       toast.success(typeof result.message === 'string' ? result.message : 'Enquete publicada com sucesso!');
       await loadDrafts();
     } catch (error) {

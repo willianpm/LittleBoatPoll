@@ -195,6 +195,8 @@ async function handleCriar(interaction, client) {
     opcoes: opcoes,
     maxVotos: maxVotos,
     usarPesoMensalista: usarPesoMensalista,
+    guildId: interaction.guildId || null,
+    channelId: interaction.channelId || null,
     criadorId: interaction.user.id,
     criadorNome: interaction.user.username,
     origem: interaction.dashboardSource || 'discord',
@@ -502,6 +504,7 @@ async function handlePublicar(interaction, client) {
     // Cria a enquete ativa em memória
     client.activePolls.set(msg.id, {
       messageId: msg.id,
+      guildId: interaction.guildId || null,
       channelId: targetChannel.id,
       titulo: draft.titulo,
       opcoes: draft.opcoes,
@@ -545,7 +548,10 @@ async function handlePublicar(interaction, client) {
 
     logger.info(`Rascunho publicado como enquete: ${draft.titulo} | Msg ID: ${msg.id} | Canal: ${targetChannel.name}`);
   } catch (error) {
-    logger.error(`Erro ao publicar rascunho: ${error.message}`);
+    logger.error(
+      `Erro ao publicar rascunho: ${error.message} | Draft: ${draftId} | Guild: ${interaction.guildId || 'n/a'} | ` +
+        `Canal solicitado: ${canalEscolhido?.id || interaction.channelId || 'n/a'}`,
+    );
     await interaction.editReply({
       content: '❌ Erro ao publicar o rascunho. Verifique minhas permissões no canal.',
     });

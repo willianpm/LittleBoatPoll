@@ -46,6 +46,21 @@ describe('permissions - authorization checks', () => {
   });
 
   test('deve retornar true para criador interno cadastrado por ID', () => {
+    loadCriadores.mockReturnValue({
+      criadores: [
+        {
+          id: 'member-1',
+          addedAt: '2026-04-09T00:00:00.000Z',
+          addedBy: 'owner-1',
+        },
+      ],
+    });
+
+    const member = createMember({ memberId: 'member-1' });
+    expect(isCriador(member)).toBe(true);
+  });
+
+  test('deve continuar aceitando criador legado salvo como string', () => {
     loadCriadores.mockReturnValue({ criadores: ['member-1'] });
 
     const member = createMember({ memberId: 'member-1' });
