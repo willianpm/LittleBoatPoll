@@ -71,8 +71,12 @@ export function PollHistory() {
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1 relative">
+          <Label htmlFor="search-polls" className="sr-only">
+            Buscar enquetes
+          </Label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 dark:text-gray-500" />
           <Input
+            id="search-polls"
             placeholder="Buscar enquetes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

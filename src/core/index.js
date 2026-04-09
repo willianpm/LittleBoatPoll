@@ -228,16 +228,10 @@ function loadDraftPolls() {
   }
 }
 
-// Inicializa arquivos de dados e armazena logs
-let logBoot = [];
-const originalConsoleLog = console.log;
-console.log = function (...args) {
-  logBoot.push(args.join(' '));
-};
+// Inicializa arquivos de dados na startup
 initDataFiles();
 loadActivePolls();
 loadDraftPolls();
-console.log = originalConsoleLog;
 
 // Sincroniza reações das enquetes ativas após o bot iniciar
 async function syncPollReactions() {
@@ -862,11 +856,6 @@ client.login(config.TOKEN);
 
 // Evento: Bot conectado e pronto
 client.once('clientReady', async () => {
-  // Exibe logs de carregamento
-  for (const line of logBoot) {
-    originalConsoleLog(line);
-  }
-
   // Binding de mensalistas
   await bindMensalistasRolesOnStartup();
 

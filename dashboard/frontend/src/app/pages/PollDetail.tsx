@@ -262,24 +262,26 @@ export function PollDetail() {
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <h3 className="mb-4 dark:text-white">Distribuição de Votos</h3>
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="aspect-square max-h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
               <p className="text-sm text-gray-600 dark:text-gray-400">Sem votos suficientes para exibir o gráfico.</p>
             )}
@@ -290,20 +292,22 @@ export function PollDetail() {
       <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
         <h3 className="mb-4 md:mb-6 dark:text-white">Comparação de Votos</h3>
         {barChartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--background)',
-                  border: '1px solid var(--border)',
-                }}
-              />
-              <Bar dataKey="votes" fill="#5865F2" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="aspect-video max-h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--background)',
+                    border: '1px solid var(--border)',
+                  }}
+                />
+                <Bar dataKey="votes" fill="#5865F2" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <p className="text-sm text-gray-600 dark:text-gray-400">Sem dados suficientes para exibir a comparação.</p>
         )}
