@@ -23,8 +23,10 @@ import { useAuth } from '../context/AuthContext';
 export function DashboardLayout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
+
+  const effectiveTheme = theme === 'system' ? resolvedTheme : theme;
 
   const navItems = [
     { path: '/', label: 'Visão Geral', icon: BarChart3 },
@@ -37,7 +39,8 @@ export function DashboardLayout() {
   ];
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const currentTheme = effectiveTheme || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -49,8 +52,14 @@ export function DashboardLayout() {
           <h1 className="font-bold text-lg">Little Boat Poll</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:bg-white/10">
-            {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="text-white hover:bg-white/10"
+            aria-label="Alternar tema"
+          >
+            {effectiveTheme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
           </Button>
           <Button
             variant="ghost"
@@ -96,8 +105,9 @@ export function DashboardLayout() {
                 size="icon"
                 onClick={toggleTheme}
                 className="hidden lg:flex text-white hover:bg-white/10"
+                aria-label="Alternar tema"
               >
-                {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+                {effectiveTheme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
               </Button>
             </div>
 
