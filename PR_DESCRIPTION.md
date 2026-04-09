@@ -11,17 +11,20 @@ This PR introduces a comprehensive dashboard refactor with version 2.7.0 (MINOR 
 ## Changes
 
 ### Overview
+
 - Version bumped: 2.6.1 → 2.7.0 (MINOR)
 - 22 commits across implementation and documentation
 - Comprehensive dashboard modernization with responsive design and accessibility improvements
 
 ### Backend Changes
+
 - CSV cleanup consolidated in error middleware (eliminated duplication)
 - Dead code removed (logBoot from src/core/index.js)
 - Poll history endpoints added with enriched records
 - Error handling centralized with proper logger fallback patterns
 
 ### Frontend Changes
+
 - Full routing implementation with authentication context and protected routes
 - 5 components refactored for mobile/tablet/desktop responsiveness
 - Accessibility improvements: aria-current, semantic labels, proper heading hierarchy
@@ -29,6 +32,7 @@ This PR introduces a comprehensive dashboard refactor with version 2.7.0 (MINOR 
 - Global CSS theming with dark mode support
 
 ### Testing & Quality
+
 - ✅ 123/123 tests passing
 - ✅ 0 ESLint warnings (--max-warnings=0)
 - ✅ Prettier compliant (commit 79350e2)
@@ -46,6 +50,7 @@ This PR introduces a comprehensive dashboard refactor with version 2.7.0 (MINOR 
 ## Checklist
 
 ### Pre-Merge Validations
+
 - [x] Code follows style guidelines (Prettier, ESLint)
 - [x] Self-review completed
 - [x] Comments added for complex logic
@@ -55,14 +60,16 @@ This PR introduces a comprehensive dashboard refactor with version 2.7.0 (MINOR 
 - [x] Performance impact assessed (negligible)
 
 ### Accessibility
+
 - [x] aria-current implemented for navigation
 - [x] Semantic HTML used throughout
 - [x] Color contrast meets WCAG standards
 - [x] Touch targets sized appropriately (min 44x44px)
 
 ### Responsiveness
+
 - [x] Tested on mobile (375px)
-- [x] Tested on tablet (768px)  
+- [x] Tested on tablet (768px)
 - [x] Tested on desktop (1920px)
 - [x] CSS media queries implemented
 - [x] No horizontal scrolling on mobile
@@ -72,29 +79,34 @@ This PR introduces a comprehensive dashboard refactor with version 2.7.0 (MINOR 
 To verify this PR:
 
 1. **Checkout branch**:
+
    ```bash
    git checkout refactor/dashboard-vanilla-css
    git pull origin refactor/dashboard-vanilla-css
    ```
 
 2. **Install dependencies** (if needed):
+
    ```bash
    npm install
    npm --prefix dashboard/frontend install
    ```
 
 3. **Run tests**:
+
    ```bash
    npm run test
    ```
 
 4. **Run linting**:
+
    ```bash
    npm run lint
    npm run format:check
    ```
 
 5. **Build frontend**:
+
    ```bash
    npm run dashboard:frontend:build
    ```
@@ -109,11 +121,13 @@ To verify this PR:
 ## Files Changed
 
 **Statistics**:
+
 - Files: 113
 - Additions: +13,363
 - Deletions: -3,172
 
 **Key Files**:
+
 - `package.json` - version 2.7.0
 - `CHANGELOG.md` - 2.7.0 release notes
 - `src/core/index.js` - dead code removed
@@ -126,6 +140,7 @@ To verify this PR:
 ## Deployment Notes
 
 ### After Merge
+
 1. Create release tag: `git tag v2.7.0`
 2. Push tag to origin: `git push origin v2.7.0`
 3. Deploy to staging environment
@@ -134,7 +149,9 @@ To verify this PR:
 6. Deploy to production if all clear
 
 ### Rollback Plan
+
 If critical issues occur:
+
 1. `git revert <merge-commit-hash>`
 2. Tag as hotfix: `git tag v2.6.2`
 3. Push hotfix and investigate root cause
