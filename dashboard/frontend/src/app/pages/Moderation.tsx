@@ -36,6 +36,7 @@ export function Moderation() {
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isGuildDataLoading, setIsGuildDataLoading] = useState(false);
+  const [isUpdatingGroups, setIsUpdatingGroups] = useState(false);
   const [modInput, setModInput] = useState('');
   const [subInput, setSubInput] = useState('');
 
@@ -176,7 +177,7 @@ export function Moderation() {
   async function refreshGroups() {
     if (!selectedGuildId) return;
 
-    setIsGuildDataLoading(true);
+    setIsUpdatingGroups(true);
     try {
       const [loadedModerators, loadedSubscribers] = await Promise.all([
         getGroupMembers(selectedGuildId, 'criadores'),
@@ -210,7 +211,7 @@ export function Moderation() {
       setModeratorIds(loadedModerators.map((entry) => entry.id));
       setSubscriberIds(loadedSubscribers.map((entry) => entry.id));
     } finally {
-      setIsGuildDataLoading(false);
+      setIsUpdatingGroups(false);
     }
   }
 
@@ -456,6 +457,7 @@ export function Moderation() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveModerator(mod.id)}
+                        disabled={isUpdatingGroups}
                         className="shrink-0 dark:hover:bg-gray-600"
                       >
                         <Trash2 className="size-4 text-red-600 dark:text-red-400" />
@@ -500,9 +502,13 @@ export function Moderation() {
                     </p>
                   </div>
 
-                  <Button type="submit" className="w-full bg-[#5865F2] hover:bg-[#4752C4]" disabled={!selectedGuildId}>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#5865F2] hover:bg-[#4752C4]"
+                    disabled={!selectedGuildId || isUpdatingGroups}
+                  >
                     <UserPlus className="size-4 mr-2" />
-                    Adicionar Moderador
+                    {isUpdatingGroups ? 'Atualizando...' : 'Adicionar Moderador'}
                   </Button>
                 </form>
 
@@ -590,6 +596,7 @@ export function Moderation() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveSubscriber(sub.id)}
+                        disabled={isUpdatingGroups}
                         className="shrink-0 dark:hover:bg-gray-600"
                       >
                         <Trash2 className="size-4 text-red-600 dark:text-red-400" />
@@ -637,10 +644,10 @@ export function Moderation() {
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
-                    disabled={!selectedGuildId}
+                    disabled={!selectedGuildId || isUpdatingGroups}
                   >
                     <UserPlus className="size-4 mr-2" />
-                    Adicionar Mensalista
+                    {isUpdatingGroups ? 'Atualizando...' : 'Adicionar Mensalista'}
                   </Button>
                 </form>
 
