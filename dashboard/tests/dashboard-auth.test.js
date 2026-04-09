@@ -7,17 +7,26 @@ jest.mock('../../src/core/client', () => ({
   },
 }));
 
-jest.mock('../../src/utils/permissions', () => ({
-  isCriador: jest.fn(() => true),
-}));
-
 jest.mock('../../src/utils/file-handler', () => ({
   loadMensalistas: jest.fn(() => ({ mensalistas: [] })),
   loadCriadores: jest.fn(() => ({ criadores: [] })),
 }));
 
 const { client } = require('../../src/core/client');
+const { loadCriadores } = require('../../src/utils/file-handler');
 const { authRouter } = require('../api/auth');
+
+beforeEach(() => {
+  loadCriadores.mockReturnValue({
+    criadores: [
+      {
+        id: 'user-1',
+        addedAt: '2026-04-09T00:00:00.000Z',
+        addedBy: 'admin-1',
+      },
+    ],
+  });
+});
 
 describe('Dashboard Auth API - guild selectors', () => {
   let app;
@@ -223,6 +232,15 @@ describe('Dashboard Auth API - group members', () => {
     loadCriadores.mockReturnValueOnce({
       criadores: [
         {
+          id: 'user-1',
+          addedAt: '2026-04-09T00:00:00.000Z',
+          addedBy: 'user-1',
+        },
+      ],
+    });
+    loadCriadores.mockReturnValueOnce({
+      criadores: [
+        {
           id: 'user-2',
           adicionadoEm: '2026-04-01T09:00:00.000Z',
           adicionadoPor: 'user-1',
@@ -397,6 +415,16 @@ describe('Dashboard Auth API - OAuth session persistence', () => {
   });
 
   it('should save dashboard auth in session before redirecting back to frontend', async () => {
+    loadCriadores.mockReturnValueOnce({
+      criadores: [
+        {
+          id: 'user-1',
+          addedAt: '2026-04-09T00:00:00.000Z',
+          addedBy: 'admin-1',
+        },
+      ],
+    });
+
     global.fetch = jest
       .fn()
       .mockResolvedValueOnce({
