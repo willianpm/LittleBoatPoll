@@ -404,26 +404,26 @@ router.get('/guilds/:guildId/group-members', validateDashboardToken, (req, res) 
   const normalizeGroupEntries = (entries) => {
     return Array.isArray(entries)
       ? entries
-        .map((entry) => {
-          if (!entry) return null;
-          if (typeof entry === 'string') {
-            return { id: entry, addedAt: null, addedBy: null };
-          }
+          .map((entry) => {
+            if (!entry) return null;
+            if (typeof entry === 'string') {
+              return { id: entry, addedAt: null, addedBy: null };
+            }
 
-          if (typeof entry === 'object') {
-            const id = entry.id || entry.userId || entry.usuarioId;
-            if (!id) return null;
+            if (typeof entry === 'object') {
+              const id = entry.id || entry.userId || entry.usuarioId;
+              if (!id) return null;
 
-            return {
-              id: String(id),
-              addedAt: entry.addedAt || entry.adicionadoEm || entry.createdAt || entry.criadoEm || null,
-              addedBy: entry.addedBy || entry.adicionadoPor || null,
-            };
-          }
+              return {
+                id: String(id),
+                addedAt: entry.addedAt || entry.adicionadoEm || entry.createdAt || entry.criadoEm || null,
+                addedBy: entry.addedBy || entry.adicionadoPor || null,
+              };
+            }
 
-          return null;
-        })
-        .filter(Boolean)
+            return null;
+          })
+          .filter(Boolean)
       : [];
   };
 
