@@ -19,6 +19,37 @@ import {
   CartesianGrid,
 } from 'recharts';
 
+type ParsedDescription = {
+  intro: string;
+  options: string[];
+};
+
+function parsePollDescription(description: string | null | undefined): ParsedDescription {
+  if (!description) {
+    return { intro: 'Sem descrição', options: [] };
+  }
+
+  const normalized = description.trim();
+  const boldMatches = [...normalized.matchAll(/\*\*([^*]+)\*\*/g)].map((match) => match[1].trim());
+
+  if (boldMatches.length >= 2) {
+    const intro = normalized
+      .slice(0, normalized.indexOf('**'))
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return {
+      intro: intro || 'Selecione uma opção:',
+      options: boldMatches,
+    };
+  }
+
+  return {
+    intro: normalized.replace(/\s+/g, ' '),
+    options: [],
+  };
+}
+
 export function PollDetail() {
   const { id } = useParams();
   const [poll, setPoll] = useState<DashboardPoll | null>(null);
@@ -103,6 +134,7 @@ export function PollDetail() {
   }));
 
   const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
+  const parsedDescription = parsePollDescription(poll.description);
 
   async function handleClosePoll() {
     if (!id || !poll || poll.status !== 'active' || isClosing) {
@@ -143,7 +175,18 @@ export function PollDetail() {
             <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-3">
               <div className="flex-1">
                 <h1 className="text-xl md:text-2xl mb-2 dark:text-white">{poll.title}</h1>
-                <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-4">{poll.description}</p>
+                <div className="mb-4">
+                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">{parsedDescription.intro}</p>
+                  {parsedDescription.options.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-sm md:text-base text-gray-600 dark:text-gray-300">
+                      {parsedDescription.options.map((option, index) => (
+                        <li key={`${option}-${index}`} className="leading-relaxed break-words">
+                          {option}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
                 <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center gap-1">
