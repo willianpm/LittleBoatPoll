@@ -3,7 +3,21 @@ const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permission
 const crypto = require('crypto');
 const { validatePollOptions, parseOptions } = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS } = require('../../utils/constants');
+const { DEFAULT_DURATION_KEY, calculateEndsAt, isValidDurationKey } = require('../../utils/poll-duration');
 const logger = require('../../utils/logger');
+
+const DURATION_LABELS = {
+  '1h': '1 hora',
+  '6h': '6 horas',
+  '12h': '12 horas',
+  '24h': '24 horas',
+  '3d': '3 dias',
+  '7d': '7 dias',
+};
+
+function formatDurationLabel(durationKey) {
+  return DURATION_LABELS[durationKey] || DURATION_LABELS[DEFAULT_DURATION_KEY];
+}
 
 /**
  * COMANDO: /rascunho
@@ -47,6 +61,20 @@ module.exports = {
             .setDescription('Mensalistas têm peso 2 nos votos?')
             .setRequired(false)
             .addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' }),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('duracao')
+            .setDescription('Duração da enquete após publicação')
+            .setRequired(false)
+            .addChoices(
+              { name: '1 hora', value: '1h' },
+              { name: '6 horas', value: '6h' },
+              { name: '12 horas', value: '12h' },
+              { name: '24 horas', value: '24h' },
+              { name: '3 dias', value: '3d' },
+              { name: '7 dias', value: '7d' },
+            ),
         ),
     )
     .addSubcommand((subcommand) =>
@@ -69,6 +97,20 @@ module.exports = {
             .setDescription('Mudar peso de mensalistas?')
             .setRequired(false)
             .addChoices({ name: 'Sim - Peso 2', value: 'sim' }, { name: 'Não - Peso 1', value: 'nao' }),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('duracao')
+            .setDescription('Nova duração da enquete')
+            .setRequired(false)
+            .addChoices(
+              { name: '1 hora', value: '1h' },
+              { name: '6 horas', value: '6h' },
+              { name: '12 horas', value: '12h' },
+              { name: '24 horas', value: '24h' },
+              { name: '3 dias', value: '3d' },
+              { name: '7 dias', value: '7d' },
+            ),
         ),
     )
     .addSubcommand((subcommand) =>
@@ -171,6 +213,8 @@ async function handleCriar(interaction, client) {
   const opcoesString = interaction.options.getString('opcoes');
   const maxVotos = interaction.options.getInteger('max_votos') || 1;
   const pesoMensalistaOption = interaction.options.getString('peso_mensalista') || 'nao';
+  const durationKeyRaw = interaction.options.getString('duracao');
+  const durationKey = isValidDurationKey(durationKeyRaw) ? durationKeyRaw : DEFAULT_DURATION_KEY;
   const usarPesoMensalista = pesoMensalistaOption === 'sim';
 
   // Processa as opções
@@ -195,6 +239,7 @@ async function handleCriar(interaction, client) {
     opcoes: opcoes,
     maxVotos: maxVotos,
     usarPesoMensalista: usarPesoMensalista,
+    durationKey,
     guildId: interaction.guildId || null,
     channelId: interaction.channelId || null,
     criadorId: interaction.user.id,
@@ -221,6 +266,7 @@ async function handleCriar(interaction, client) {
       { name: 'Opções', value: opcoes.join(', ') },
       { name: 'Máximo de Votos', value: `${maxVotos}`, inline: true },
       { name: 'Peso Mensalista', value: usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true },
+      { name: 'Duração', value: formatDurationLabel(durationKey), inline: true },
       {
         name: 'Próximos Passos',
         value: `
@@ -269,6 +315,7 @@ async function handleEditar(interaction, client) {
   const novasOpcoesString = interaction.options.getString('opcoes');
   const novoMaxVotos = interaction.options.getInteger('max_votos');
   const novoPesoOption = interaction.options.getString('peso_mensalista');
+  const novaDuracao = interaction.options.getString('duracao');
 
   // Atualiza o título se fornecido
   if (novoTitulo) {
@@ -317,6 +364,10 @@ async function handleEditar(interaction, client) {
     draft.usarPesoMensalista = novoPesoOption === 'sim';
   }
 
+  if (novaDuracao && isValidDurationKey(novaDuracao)) {
+    draft.durationKey = novaDuracao;
+  }
+
   // Atualiza timestamp de edição
   draft.editadoEm = new Date().toISOString();
 
@@ -334,6 +385,7 @@ async function handleEditar(interaction, client) {
       { name: 'Opções', value: draft.opcoes.join(', ') },
       { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true },
       { name: 'Peso Mensalista', value: draft.usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true },
+      { name: 'Duração', value: formatDurationLabel(draft.durationKey || DEFAULT_DURATION_KEY), inline: true },
     )
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
@@ -413,6 +465,7 @@ async function handleExibir(interaction, client) {
       { name: 'Criador', value: `<@${draft.criadorId}>`, inline: true },
       { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true },
       { name: 'Peso Mensalista', value: pesoInfo, inline: true },
+      { name: 'Duração', value: formatDurationLabel(draft.durationKey || DEFAULT_DURATION_KEY), inline: true },
       { name: 'Criado em', value: `<t:${Math.floor(new Date(draft.criadoEm).getTime() / 1000)}:f>` },
       { name: 'Editado em', value: `<t:${Math.floor(new Date(draft.editadoEm).getTime() / 1000)}:f>` },
       { name: 'Status', value: '📝 Rascunho (não publicado)' },
@@ -501,6 +554,10 @@ async function handlePublicar(interaction, client) {
       await msg.react(emojiNumeros[i]);
     }
 
+    const criadoEm = new Date().toISOString();
+    const durationKey = isValidDurationKey(draft.durationKey) ? draft.durationKey : DEFAULT_DURATION_KEY;
+    const endsAt = calculateEndsAt(criadoEm, durationKey, DEFAULT_DURATION_KEY);
+
     // Cria a enquete ativa em memória
     client.activePolls.set(msg.id, {
       messageId: msg.id,
@@ -511,7 +568,9 @@ async function handlePublicar(interaction, client) {
       emojiNumeros: emojiNumeros.slice(0, draft.opcoes.length),
       maxVotos: draft.maxVotos,
       usarPesoMensalista: draft.usarPesoMensalista,
-      criadoEm: new Date(),
+      durationKey,
+      criadoEm,
+      endsAt,
       criadoPor: draft.criadorId || interaction.user?.id || null,
       votos: {},
       status: 'ativa',

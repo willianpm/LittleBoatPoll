@@ -6,6 +6,8 @@ const fs = require('fs');
 const router = express.Router();
 const { client } = require('../../src/core/client'); // Garante acesso ao client e comandos
 const { validateDashboardToken } = require('./auth');
+const { resolveGuildAndChannel } = require('./utils/guild-channel-resolver');
+const { isValidDurationKey } = require('../../src/utils/poll-duration');
 
 const EPHEMERAL_FLAG = 64;
 const COMMAND_LOCKED_ERROR_CODE = 'COMMAND_LOCKED';
@@ -493,23 +495,42 @@ router.get('/context-targets/polls', validateDashboardToken, async (req, res) =>
   }
 });
 
-router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) => {
+router.get('/context-targets/drafts', validateDashboardToken, async (req, res) => {
   try {
     await hydrateDraftsFromDiskIfNeeded();
+    const accessibleGuildIds = new Set(req.dashboardAuth.accessibleGuildIds || []);
 
     const drafts = Array.from(client.draftPolls.values())
       .filter((draft) => draft.origem === 'dashboard-create')
-      .map((draft) => ({
-        id: draft.id,
-        title: draft.titulo,
-        guildId: draft.guildId || null,
-        channelId: draft.channelId || null,
-        optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
-        creatorId: draft.criadorId,
-        creatorName: draft.criadorNome || null,
-        options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
-        updatedAt: draft.editadoEm || draft.criadoEm || null,
-      }))
+      .map((draft) => {
+        const resolvedTarget = resolveGuildAndChannel({
+          guildId: draft.guildId || null,
+          channelId: draft.channelId || null,
+        });
+        const resolvedGuildId = draft.guildId || resolvedTarget.serverId || null;
+        const parsedMaxVotes = Number(draft.maxVotos);
+        const safeMaxVotes = Number.isFinite(parsedMaxVotes)
+          ? Math.min(10, Math.max(1, Math.trunc(parsedMaxVotes)))
+          : 1;
+
+        return {
+          id: draft.id,
+          title: draft.titulo,
+          guildId: resolvedGuildId,
+          channelId: draft.channelId || resolvedTarget.channelId || null,
+          serverName: resolvedTarget.serverName || null,
+          channelName: resolvedTarget.channelName || null,
+          optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
+          creatorId: draft.criadorId,
+          creatorName: draft.criadorNome || null,
+          options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
+          maxVotes: safeMaxVotes,
+          pesoMensalista: draft.usarPesoMensalista ? 'sim' : 'nao',
+          durationKey: isValidDurationKey(draft.durationKey) ? draft.durationKey : '24h',
+          updatedAt: draft.editadoEm || draft.criadoEm || null,
+        };
+      })
+      .filter((draft) => draft.guildId && accessibleGuildIds.has(draft.guildId))
       .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
 
     return successResponse(res, 'Rascunhos carregados com sucesso', 200, { drafts });

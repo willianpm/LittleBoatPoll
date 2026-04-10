@@ -267,10 +267,22 @@ describe('Dashboard Commands API', () => {
   });
 
   it('should return dashboard drafts with creator and options metadata', async () => {
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: { cache: new Map([['channel-1', { id: 'channel-1', name: 'geral', isTextBased: () => true }]]) },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
     client.draftPolls.set('DRAFT-1', {
       id: 'DRAFT-1',
       titulo: 'Enquete dashboard',
       opcoes: ['Opção A', 'Opção B', 'Opção C'],
+      guildId: 'guild-1',
+      channelId: 'channel-1',
+      maxVotos: -2,
       criadorId: 'user-42',
       criadorNome: 'willian',
       origem: 'dashboard-create',
@@ -299,12 +311,108 @@ describe('Dashboard Commands API', () => {
       expect.objectContaining({
         id: 'DRAFT-1',
         title: 'Enquete dashboard',
-        guildId: null,
-        channelId: null,
+        guildId: 'guild-1',
+        channelId: 'channel-1',
+        serverName: 'Guild 1',
+        channelName: 'geral',
         optionsCount: 3,
         creatorId: 'user-42',
         creatorName: 'willian',
         options: ['Opção A', 'Opção B', 'Opção C'],
+        maxVotes: 1,
+      }),
+    );
+  });
+
+  it('should not return drafts from unauthorized guilds', async () => {
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: { cache: new Map([['channel-1', { id: 'channel-1', name: 'geral', isTextBased: () => true }]]) },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+    client.guilds.cache.set('guild-2', {
+      id: 'guild-2',
+      name: 'Guild 2',
+      channels: { cache: new Map([['channel-2', { id: 'channel-2', name: 'off-topic', isTextBased: () => true }]]) },
+      members: {
+        cache: new Map([['user-2', { id: 'user-2', permissions: { has: () => true }, guild: { ownerId: 'owner-2' } }]]),
+      },
+    });
+
+    client.draftPolls.set('DRAFT-1', {
+      id: 'DRAFT-1',
+      titulo: 'Enquete guild 1',
+      opcoes: ['A', 'B'],
+      guildId: 'guild-1',
+      channelId: 'channel-1',
+      criadorId: 'user-1',
+      criadorNome: 'willian',
+      origem: 'dashboard-create',
+      criadoEm: '2026-04-01T10:00:00.000Z',
+      editadoEm: '2026-04-02T10:00:00.000Z',
+    });
+
+    client.draftPolls.set('DRAFT-2', {
+      id: 'DRAFT-2',
+      titulo: 'Enquete guild 2',
+      opcoes: ['C', 'D'],
+      guildId: 'guild-2',
+      channelId: 'channel-2',
+      criadorId: 'user-2',
+      criadorNome: 'outro-user',
+      origem: 'dashboard-create',
+      criadoEm: '2026-04-01T10:00:00.000Z',
+      editadoEm: '2026-04-02T10:00:00.000Z',
+    });
+
+    const res = await request(app).get('/api/commands/context-targets/drafts').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.drafts)).toBe(true);
+    expect(res.body.drafts).toHaveLength(1);
+    expect(res.body.drafts[0].id).toBe('DRAFT-1');
+  });
+
+  it('should return resolved guildId for legacy dashboard draft with only channelId', async () => {
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: { cache: new Map([['channel-1', { id: 'channel-1', name: 'geral', isTextBased: () => true }]]) },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    client.draftPolls.set('DRAFT-LEGACY', {
+      id: 'DRAFT-LEGACY',
+      titulo: 'Enquete legado',
+      opcoes: ['Opção A', 'Opção B'],
+      guildId: null,
+      channelId: 'channel-1',
+      criadorId: 'user-42',
+      criadorNome: 'willian',
+      origem: 'dashboard-create',
+      criadoEm: '2026-04-01T10:00:00.000Z',
+      editadoEm: '2026-04-02T10:00:00.000Z',
+    });
+
+    const res = await request(app).get('/api/commands/context-targets/drafts').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.drafts)).toBe(true);
+    expect(res.body.drafts).toHaveLength(1);
+    expect(res.body.drafts[0]).toEqual(
+      expect.objectContaining({
+        id: 'DRAFT-LEGACY',
+        guildId: 'guild-1',
+        channelId: 'channel-1',
+        serverName: 'Guild 1',
+        channelName: 'geral',
       }),
     );
   });
@@ -347,6 +455,54 @@ describe('Dashboard Commands API', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.error).toMatch(/guild\.id é obrigatório/i);
+  });
+
+  it('should pass duration option for rascunho criar from dashboard payload', async () => {
+    const executeMock = jest.fn(async (interaction) => {
+      const duracao = interaction.options.getString('duracao');
+      await interaction.reply({ content: `duração recebida: ${duracao}` });
+    });
+
+    client.commands.set('rascunho', {
+      data: {
+        toJSON: () => ({ name: 'rascunho', description: 'Gerencia rascunhos', type: 1, options: [] }),
+      },
+      execute: executeMock,
+    });
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: {
+        cache: new Map([['channel-1', { id: 'channel-1', isTextBased: () => true, send: jest.fn() }]]),
+      },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    const res = await request(app)
+      .post('/api/commands/rascunho')
+      .send({
+        commandType: 1,
+        guild: { id: 'guild-1' },
+        dashboardSource: 'dashboard-create',
+        options: {
+          subcommand: 'criar',
+          values: {
+            titulo: 'Teste duração',
+            opcoes: 'A, B',
+            max_votos: 1,
+            duracao: '6h',
+          },
+        },
+        target: { channelId: 'channel-1' },
+      })
+      .set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toMatch(/6h/i);
+    expect(executeMock).toHaveBeenCalledTimes(1);
   });
 
   it('should reject rascunho publicar when selected channel is missing in guild', async () => {

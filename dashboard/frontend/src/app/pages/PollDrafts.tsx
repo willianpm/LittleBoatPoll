@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Plus, Send, FileText, Trash2, Edit, X } from 'lucide-react';
+import { Plus, Send, FileText, Trash2, Edit, X, Server, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   deleteDraft,
@@ -17,6 +17,7 @@ import {
 } from '../lib/dashboard-api';
 
 type DraftItem = DashboardDraftContext;
+const ALLOWED_DURATION_KEYS = new Set(['1h', '6h', '12h', '24h', '3d', '7d']);
 
 export function PollDrafts() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export function PollDrafts() {
   const [editOptions, setEditOptions] = useState<Array<{ id: string; text: string }>>([]);
   const [editMaxVotes, setEditMaxVotes] = useState(1);
   const [editSubscriberWeight, setEditSubscriberWeight] = useState<'sim' | 'nao'>('nao');
+  const [editDurationKey, setEditDurationKey] = useState<'1h' | '6h' | '12h' | '24h' | '3d' | '7d'>('24h');
 
   const sortedDrafts = useMemo(
     () => [...drafts].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))),
@@ -104,8 +106,14 @@ export function PollDrafts() {
             { id: `${draft.id}-fallback-2`, text: '' },
           ],
     );
-    setEditMaxVotes(1);
-    setEditSubscriberWeight('nao');
+    const parsedMaxVotes = Number(draft.maxVotes ?? 1);
+    const safeMaxVotes = Number.isFinite(parsedMaxVotes) ? Math.min(10, Math.max(1, Math.trunc(parsedMaxVotes))) : 1;
+    const normalizedDurationKey =
+      typeof draft.durationKey === 'string' && ALLOWED_DURATION_KEYS.has(draft.durationKey) ? draft.durationKey : '24h';
+
+    setEditMaxVotes(safeMaxVotes);
+    setEditSubscriberWeight(draft.pesoMensalista === 'sim' ? 'sim' : 'nao');
+    setEditDurationKey(normalizedDurationKey);
     setIsEditOpen(true);
   };
 
@@ -161,6 +169,7 @@ export function PollDrafts() {
         optionsCsv: normalizedOptions.join(', '),
         maxVotes: editMaxVotes,
         pesoMensalista: editSubscriberWeight,
+        durationKey: editDurationKey,
       });
 
       toast.success(typeof result.message === 'string' ? result.message : 'Rascunho atualizado com sucesso!');
@@ -211,6 +220,10 @@ export function PollDrafts() {
         {!loadingDrafts &&
           sortedDrafts.map((draft) => {
             const isActionLoading = actionLoadingId === draft.id;
+            const serverName = draft.serverName || 'Servidor desconhecido';
+            const channelName = draft.channelName || 'Canal desconhecido';
+            const serverTooltip = `${serverName} (${draft.guildId || 'ID indisponível'})`;
+            const channelTooltip = `${channelName} (${draft.channelId || 'ID indisponível'})`;
 
             return (
               <Card key={draft.id} className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
@@ -234,6 +247,26 @@ export function PollDrafts() {
                   >
                     Rascunho
                   </Badge>
+                </div>
+
+                <div className="mb-4 rounded-md border border-[#5865F2]/30 p-3 dark:border-[#5865F2]/50">
+                  <p className="text-xs font-medium uppercase tracking-wide text-[#4752C4] dark:text-[#A8B1FF]">
+                    Destino da publicação
+                  </p>
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="flex items-center gap-2 min-w-0 rounded-md px-2 py-1">
+                      <Server className="size-4 shrink-0 text-[#5865F2]" />
+                      <span className="text-sm text-gray-800 dark:text-gray-100 truncate" title={serverTooltip}>
+                        {serverName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 min-w-0 rounded-md px-2 py-1">
+                      <Hash className="size-4 shrink-0 text-[#5865F2]" />
+                      <span className="text-sm text-gray-800 dark:text-gray-100 truncate" title={channelTooltip}>
+                        {channelName}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mb-4">
@@ -392,6 +425,27 @@ export function PollDrafts() {
                 >
                   <option value="nao">Não</option>
                   <option value="sim">Sim</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-duration" className="dark:text-gray-200">
+                  Duração
+                </Label>
+                <select
+                  id="edit-duration"
+                  value={editDurationKey}
+                  onChange={(e) =>
+                    setEditDurationKey((e.target.value as '1h' | '6h' | '12h' | '24h' | '3d' | '7d') || '24h')
+                  }
+                  className="mt-1 h-9 w-full rounded-md border border-gray-600 bg-gray-700 px-3 text-sm text-white"
+                >
+                  <option value="1h">1 hora</option>
+                  <option value="6h">6 horas</option>
+                  <option value="12h">12 horas</option>
+                  <option value="24h">24 horas</option>
+                  <option value="3d">3 dias</option>
+                  <option value="7d">7 dias</option>
                 </select>
               </div>
             </div>

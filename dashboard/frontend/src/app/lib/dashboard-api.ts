@@ -5,6 +5,8 @@ export interface DashboardPollOption {
   emoji?: string | null;
 }
 
+export type DurationKey = '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
+
 export interface DashboardPoll {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ export interface DashboardPoll {
   channelName: string;
   createdAt?: string | null;
   endsAt?: string | null;
+  durationKey?: DurationKey | null;
   status: 'active' | 'ended';
   totalVotes: number;
   options: DashboardPollOption[];
@@ -52,10 +55,15 @@ export interface DashboardDraftContext {
   title: string;
   guildId?: string | null;
   channelId?: string | null;
+  serverName?: string | null;
+  channelName?: string | null;
   optionsCount: number;
   creatorId?: string | null;
   creatorName?: string | null;
   options?: string[];
+  maxVotes?: number;
+  pesoMensalista?: 'sim' | 'nao';
+  durationKey?: DurationKey;
   updatedAt?: string | null;
 }
 
@@ -190,6 +198,7 @@ export async function createDraft(payload: {
   optionsCsv: string;
   maxVotes: number;
   pesoMensalista: 'sim' | 'nao';
+  durationKey?: DurationKey;
   dashboardSource?: string;
 }) {
   return executeDashboardCommand('rascunho', {
@@ -204,6 +213,7 @@ export async function createDraft(payload: {
         opcoes: payload.optionsCsv,
         max_votos: payload.maxVotes,
         peso_mensalista: payload.pesoMensalista,
+        duracao: payload.durationKey || '24h',
       },
     },
   });
@@ -215,12 +225,14 @@ export async function editDraft(payload: {
   optionsCsv?: string;
   maxVotes?: number;
   pesoMensalista?: 'sim' | 'nao';
+  durationKey?: DurationKey;
 }) {
   const values: Record<string, unknown> = { id: payload.id };
   if (payload.title) values.titulo = payload.title;
   if (payload.optionsCsv) values.opcoes = payload.optionsCsv;
   if (typeof payload.maxVotes === 'number') values.max_votos = payload.maxVotes;
   if (payload.pesoMensalista) values.peso_mensalista = payload.pesoMensalista;
+  if (payload.durationKey) values.duracao = payload.durationKey;
 
   return executeDashboardCommand('rascunho', {
     commandType: 1,
