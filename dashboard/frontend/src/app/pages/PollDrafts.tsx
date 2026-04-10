@@ -220,9 +220,6 @@ export function PollDrafts() {
                       <FileText className="size-5 text-gray-400 dark:text-gray-500 shrink-0" />
                       <h3 className="text-base md:text-lg dark:text-white truncate">{draft.title}</h3>
                     </div>
-                    {draft.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{draft.description}</p>
-                    )}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                       <span className="truncate">Origem: dashboard</span>
                       <span>•</span>
