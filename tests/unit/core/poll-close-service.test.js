@@ -68,14 +68,14 @@ describe('poll-close-service', () => {
       activePolls: new Map([['msg-1', poll]]),
       saveActivePolls: jest.fn(() => {
         const current = client.activePolls.get('msg-1');
-        saveSnapshots.push(
-          current
-            ? {
-              status: current.status,
-              hasFinalizadaEm: Object.prototype.hasOwnProperty.call(current, 'finalizadaEm'),
-            }
-            : null,
-        );
+        let snapshot = null;
+        if (current) {
+          snapshot = {
+            status: current.status,
+            hasFinalizadaEm: Object.prototype.hasOwnProperty.call(current, 'finalizadaEm'),
+          };
+        }
+        saveSnapshots.push(snapshot);
       }),
       users: {
         fetch: jest.fn(),
@@ -127,14 +127,14 @@ describe('poll-close-service', () => {
       activePolls: new Map([['msg-1', poll]]),
       saveActivePolls: jest.fn(() => {
         const current = client.activePolls.get('msg-1');
-        saveSnapshots.push(
-          current
-            ? {
-              status: current.status,
-              hasFinalizadaEm: Object.prototype.hasOwnProperty.call(current, 'finalizadaEm'),
-            }
-            : null,
-        );
+        let snapshot = null;
+        if (current) {
+          snapshot = {
+            status: current.status,
+            hasFinalizadaEm: Object.prototype.hasOwnProperty.call(current, 'finalizadaEm'),
+          };
+        }
+        saveSnapshots.push(snapshot);
       }),
       users: {
         fetch: jest.fn(),
