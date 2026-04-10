@@ -71,6 +71,7 @@ describe('Dashboard Polls API', () => {
         'active-1',
         {
           messageId: 'active-1',
+          guildId: 'guild-1',
           channelId: 'channel-1',
           titulo: 'Enquete ativa',
           opcoes: ['A', 'B'],
@@ -120,6 +121,7 @@ describe('Dashboard Polls API', () => {
         expect.objectContaining({
           id: 'active-1',
           title: 'Enquete ativa',
+          serverId: 'guild-1',
           serverName: 'Guild One',
           channelName: 'geral',
           status: 'active',

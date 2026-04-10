@@ -28,6 +28,12 @@ jest.mock('../../src/core/client', () => ({
   },
 }));
 
+jest.mock('../../src/utils/config', () => ({
+  DATA_FILES: {
+    draftPolls: './__tmp_drafts__.json',
+  },
+}));
+
 const { client } = require('../../src/core/client');
 const dashboardCommandsRouter = require('../api/dashboard-commands');
 
@@ -293,11 +299,91 @@ describe('Dashboard Commands API', () => {
       expect.objectContaining({
         id: 'DRAFT-1',
         title: 'Enquete dashboard',
+        guildId: null,
+        channelId: null,
         optionsCount: 3,
         creatorId: 'user-42',
         creatorName: 'willian',
         options: ['Opção A', 'Opção B', 'Opção C'],
       }),
     );
+  });
+
+  it('should reject rascunho criar without explicit guild id in strict dashboard flow', async () => {
+    client.commands.set('rascunho', {
+      data: {
+        toJSON: () => ({ name: 'rascunho', description: 'Gerencia rascunhos', type: 1, options: [] }),
+      },
+      execute: jest.fn(),
+    });
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: {
+        cache: new Map([['channel-1', { id: 'channel-1', isTextBased: () => true, send: jest.fn() }]]),
+      },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    const res = await request(app)
+      .post('/api/commands/rascunho')
+      .send({
+        commandType: 1,
+        dashboardSource: 'dashboard-create',
+        options: {
+          subcommand: 'criar',
+          values: {
+            titulo: 'Teste',
+            opcoes: 'A, B',
+            max_votos: 1,
+          },
+        },
+        target: { channelId: 'channel-1' },
+      })
+      .set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/guild\.id é obrigatório/i);
+  });
+
+  it('should reject rascunho publicar when selected channel is missing in guild', async () => {
+    client.commands.set('rascunho', {
+      data: {
+        toJSON: () => ({ name: 'rascunho', description: 'Gerencia rascunhos', type: 1, options: [] }),
+      },
+      execute: jest.fn(),
+    });
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: {
+        cache: new Map([['channel-1', { id: 'channel-1', isTextBased: () => true, send: jest.fn() }]]),
+      },
+      systemChannel: { id: 'system-1', isTextBased: () => true, send: jest.fn() },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    const res = await request(app)
+      .post('/api/commands/rascunho')
+      .send({
+        commandType: 1,
+        guild: { id: 'guild-1' },
+        dashboardSource: 'dashboard-drafts',
+        target: { channelId: 'channel-missing' },
+        options: {
+          subcommand: 'publicar',
+          values: { id: 'DRAFT-1' },
+        },
+      })
+      .set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/Canal selecionado não encontrado/i);
   });
 });

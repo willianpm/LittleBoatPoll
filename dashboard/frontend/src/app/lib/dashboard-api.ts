@@ -50,6 +50,8 @@ export interface DashboardGroupMember {
 export interface DashboardDraftContext {
   id: string;
   title: string;
+  guildId?: string | null;
+  channelId?: string | null;
   optionsCount: number;
   creatorId?: string | null;
   creatorName?: string | null;
@@ -229,13 +231,16 @@ export async function editDraft(payload: {
   });
 }
 
-export async function publishDraft(id: string) {
+export async function publishDraft(payload: { id: string; guildId: string; channelId: string }) {
   return executeDashboardCommand('rascunho', {
     commandType: 1,
+    guild: { id: payload.guildId },
+    target: { channelId: payload.channelId },
+    dashboardSource: 'dashboard-drafts',
     options: {
       subcommand: 'publicar',
       values: {
-        id,
+        id: payload.id,
       },
     },
   });

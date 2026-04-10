@@ -81,9 +81,22 @@ function isCriador(member, _guildIdOverride) {
   // Carrega os criadores internos do arquivo (via file-handler)
   const criadoresData = loadCriadores();
   const criadores = criadoresData.criadores || [];
+  const criadorIds = criadores
+    .map((entry) => {
+      if (typeof entry === 'string') {
+        return extractSnowflake(entry);
+      }
+
+      if (entry && typeof entry === 'object') {
+        return extractSnowflake(entry.id || entry.userId || entry.usuarioId);
+      }
+
+      return null;
+    })
+    .filter(Boolean);
 
   // Verifica se o ID do usuário está na lista interna de criadores
-  if (memberId && criadores.includes(memberId)) {
+  if (memberId && criadorIds.includes(memberId)) {
     return true;
   }
 
