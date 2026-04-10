@@ -49,6 +49,70 @@ describe('poll-close-service', () => {
     expect(empate).toBe(false);
   });
 
+  it('uses vote map key as voter id when usuario field is missing or inconsistent', () => {
+    const poll = {
+      opcoes: ['A', 'B'],
+      emojiNumeros: ['1️⃣', '2️⃣'],
+      votos: {
+        userA: { peso: 1, reacoes: ['1️⃣'] },
+        userB: { usuario: 'outro-valor', peso: 1, reacoes: ['2️⃣'] },
+      },
+    };
+
+    const { resultados } = computePollResults(poll);
+
+    const resultadoA = resultados.find((resultado) => resultado.opcao === 'A');
+    const resultadoB = resultados.find((resultado) => resultado.opcao === 'B');
+
+    expect(resultadoA.votantes).toEqual(['userA']);
+    expect(resultadoB.votantes).toEqual(['userB']);
+  });
+
+  it('treats mensalista weight as number even when stored as string', async () => {
+    const poll = {
+      titulo: 'Enquete teste',
+      opcoes: ['A'],
+      emojiNumeros: ['1️⃣'],
+      maxVotos: 1,
+      usarPesoMensalista: true,
+      votos: {
+        userA: { usuario: 'userA', peso: '2', reacoes: ['1️⃣'] },
+      },
+      criadoEm: '2026-04-10T10:00:00.000Z',
+      status: 'ativa',
+    };
+
+    const interaction = {
+      guildId: 'guild-1',
+      channelId: 'channel-1',
+      guild: { name: 'Guild 1' },
+      channel: { name: 'geral' },
+      reply: jest.fn(async () => {}),
+    };
+
+    const client = {
+      activePolls: new Map([['msg-1', poll]]),
+      saveActivePolls: jest.fn(() => {}),
+      users: {
+        fetch: jest.fn(async () => ({ id: 'userA' })),
+      },
+      channels: {
+        fetch: jest.fn(),
+      },
+    };
+
+    const result = await closePollByMessageId({
+      client,
+      messageId: 'msg-1',
+      interaction,
+      reason: 'manual',
+    });
+
+    expect(result.success).toBe(true);
+    expect(client.users.fetch).toHaveBeenCalledWith('userA');
+    expect(interaction.reply).toHaveBeenCalledTimes(1);
+  });
+
   it('restores active status before persisting rollback on close failure', async () => {
     const poll = {
       titulo: 'Enquete teste',

@@ -9,7 +9,7 @@ async function buildMensalistasList(client, poll) {
     const mensalistasQueVotaram = [];
 
     for (const [userId, votoData] of Object.entries(poll.votos || {})) {
-      if (votoData?.peso === 2) {
+      if (Number(votoData?.peso) === 2) {
         mensalistasQueVotaram.push(userId);
       }
     }
@@ -45,14 +45,14 @@ function computePollResults(poll) {
     votantes: [],
   }));
 
-  for (const votoData of Object.values(poll.votos || {})) {
+  for (const [userId, votoData] of Object.entries(poll.votos || {})) {
     const peso = Number.isFinite(Number(votoData?.peso)) ? Number(votoData.peso) : 1;
 
     for (const emoji of votoData.reacoes || []) {
       const index = poll.emojiNumeros.indexOf(emoji);
       if (index !== -1) {
         resultados[index].pontos += peso;
-        resultados[index].votantes.push(votoData.usuario);
+        resultados[index].votantes.push(userId);
       }
     }
   }
