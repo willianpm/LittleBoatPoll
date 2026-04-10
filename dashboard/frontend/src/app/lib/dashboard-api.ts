@@ -53,6 +53,8 @@ export interface DashboardDraftContext {
   title: string;
   guildId?: string | null;
   channelId?: string | null;
+  serverName?: string | null;
+  channelName?: string | null;
   optionsCount: number;
   creatorId?: string | null;
   creatorName?: string | null;

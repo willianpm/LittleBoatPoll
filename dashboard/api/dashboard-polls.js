@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { client } = require('../../src/core/client');
 const { loadVotacoes } = require('../../src/utils/file-handler');
 const { validateDashboardToken } = require('./auth');
+const { resolveGuildAndChannel } = require('./utils/guild-channel-resolver');
 
 const router = express.Router();
 
@@ -12,44 +13,6 @@ function safeArray(value) {
 
 function computeTotalVotes(options) {
   return safeArray(options).reduce((sum, option) => sum + (Number(option?.votes || option?.pontos || 0) || 0), 0);
-}
-
-function resolveGuildAndChannel({ guildId = null, channelId = null } = {}) {
-  const guilds = Array.from(client.guilds?.cache?.values() || []);
-
-  if (guildId) {
-    const guild = client.guilds.cache.get(guildId);
-    if (guild) {
-      const channel = channelId ? guild.channels?.cache?.get(channelId) : null;
-      return {
-        serverId: guild.id,
-        serverName: guild.name || 'Servidor desconhecido',
-        channelId: channel?.id || channelId || null,
-        channelName: channel?.name || null,
-      };
-    }
-  }
-
-  if (channelId) {
-    for (const guild of guilds) {
-      const channel = guild.channels?.cache?.get(channelId);
-      if (channel) {
-        return {
-          serverId: guild.id,
-          serverName: guild.name || 'Servidor desconhecido',
-          channelId: channel.id,
-          channelName: channel.name || null,
-        };
-      }
-    }
-  }
-
-  return {
-    serverId: guildId || null,
-    serverName: guildId ? `Servidor ${guildId}` : 'Servidor desconhecido',
-    channelId,
-    channelName: channelId ? `Canal ${channelId}` : null,
-  };
 }
 
 function normalizeOption(option, index = 0) {

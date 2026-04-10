@@ -267,10 +267,21 @@ describe('Dashboard Commands API', () => {
   });
 
   it('should return dashboard drafts with creator and options metadata', async () => {
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: { cache: new Map([['channel-1', { id: 'channel-1', name: 'geral', isTextBased: () => true }]]) },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
     client.draftPolls.set('DRAFT-1', {
       id: 'DRAFT-1',
       titulo: 'Enquete dashboard',
       opcoes: ['Opção A', 'Opção B', 'Opção C'],
+      guildId: 'guild-1',
+      channelId: 'channel-1',
       criadorId: 'user-42',
       criadorNome: 'willian',
       origem: 'dashboard-create',
@@ -299,8 +310,10 @@ describe('Dashboard Commands API', () => {
       expect.objectContaining({
         id: 'DRAFT-1',
         title: 'Enquete dashboard',
-        guildId: null,
-        channelId: null,
+        guildId: 'guild-1',
+        channelId: 'channel-1',
+        serverName: 'Guild 1',
+        channelName: 'geral',
         optionsCount: 3,
         creatorId: 'user-42',
         creatorName: 'willian',

@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Plus, Send, FileText, Trash2, Edit, X } from 'lucide-react';
+import { Plus, Send, FileText, Trash2, Edit, X, Server, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   deleteDraft,
@@ -214,6 +214,10 @@ export function PollDrafts() {
         {!loadingDrafts &&
           sortedDrafts.map((draft) => {
             const isActionLoading = actionLoadingId === draft.id;
+            const serverName = draft.serverName || 'Servidor desconhecido';
+            const channelName = draft.channelName || 'Canal desconhecido';
+            const serverTooltip = `${serverName} (${draft.guildId || 'ID indisponível'})`;
+            const channelTooltip = `${channelName} (${draft.channelId || 'ID indisponível'})`;
 
             return (
               <Card key={draft.id} className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
@@ -237,6 +241,26 @@ export function PollDrafts() {
                   >
                     Rascunho
                   </Badge>
+                </div>
+
+                <div className="mb-4 rounded-md border border-[#5865F2]/30 p-3 dark:border-[#5865F2]/50">
+                  <p className="text-xs font-medium uppercase tracking-wide text-[#4752C4] dark:text-[#A8B1FF]">
+                    Destino da publicação
+                  </p>
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="flex items-center gap-2 min-w-0 rounded-md px-2 py-1">
+                      <Server className="size-4 shrink-0 text-[#5865F2]" />
+                      <span className="text-sm text-gray-800 dark:text-gray-100 truncate" title={serverTooltip}>
+                        {serverName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 min-w-0 rounded-md px-2 py-1">
+                      <Hash className="size-4 shrink-0 text-[#5865F2]" />
+                      <span className="text-sm text-gray-800 dark:text-gray-100 truncate" title={channelTooltip}>
+                        {channelName}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mb-4">
