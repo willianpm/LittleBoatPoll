@@ -10,6 +10,7 @@ export function ActivePolls() {
   const [polls, setPolls] = useState<DashboardPoll[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   useEffect(() => {
     let isMounted = true;
@@ -40,23 +41,56 @@ export function ActivePolls() {
     };
   }, []);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      const nowMs = Date.now();
+      setNowTick(nowMs);
+      setPolls((current) =>
+        current.filter((poll) => {
+          if (poll.status !== 'active' || !poll.endsAt) {
+            return true;
+          }
+
+          const endMs = Date.parse(poll.endsAt);
+          if (Number.isNaN(endMs)) {
+            return true;
+          }
+
+          return endMs > nowMs;
+        }),
+      );
+    }, 30 * 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const activePolls = useMemo(() => polls.filter((poll) => poll.status === 'active'), [polls]);
 
   const getTimeRemaining = (endsAt?: string | null) => {
     if (!endsAt) return 'Sem prazo';
 
-    const end = new Date(endsAt);
-    const now = new Date();
-    const diff = end.getTime() - now.getTime();
+    const endMs = Date.parse(endsAt);
+    const diff = endMs - nowTick;
 
-    if (Number.isNaN(end.getTime())) return 'Sem prazo';
+    if (Number.isNaN(endMs)) return 'Sem prazo';
     if (diff <= 0) return 'Encerrando';
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
+    const totalMinutes = Math.ceil(diff / (1000 * 60));
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
 
-    if (days > 0) return `${days}d ${hours % 24}h restantes`;
-    return `${hours}h restantes`;
+    if (days > 0) {
+      return `${days}d ${hours}h restantes`;
+    }
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m restantes`;
+    }
+
+    return `${minutes}m restantes`;
   };
 
   return (

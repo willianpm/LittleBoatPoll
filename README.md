@@ -111,6 +111,9 @@ Run these inside the appropriate Docker container or use `docker-compose exec` t
 
 Dashboard: Discord OAuth2, session via Redis. See [dashboard/README.md](dashboard/README.md) for endpoints and frontend details.
 
+Poll duration on dashboard: draft creation supports duration keys (`1h`, `6h`, `12h`, `24h`, `3d`, `7d`).
+When a draft is published, backend persists `endsAt` (UTC ISO) and polls are auto-closed by scheduler when deadline is reached.
+
 ## Environments
 
 Environments: `prod` and `staging` (see [docs/technical/staging-bot.md](docs/technical/staging-bot.md)).

@@ -132,6 +132,21 @@ This document describes the HTTP API exposed by the LittleBoatPoll backend (bot 
   - `503` bot offline
   - `500` internal error
 
+### Poll duration contract (dashboard)
+
+- `POST /api/commands/rascunho` with subcommand `criar` accepts `options.values.duracao`.
+- Allowed values: `1h`, `6h`, `12h`, `24h`, `3d`, `7d`.
+- If omitted, backend defaults to `24h` for dashboard-created drafts.
+- On `rascunho publicar`, backend computes `endsAt` in UTC ISO and persists it with the active poll record.
+- Active poll lifecycle:
+  - `status: ativa` while `now < endsAt`
+  - auto-close when `now >= endsAt`
+  - result is persisted in history with `status: ended`, `dataFinalizacao`, `endsAt`, `durationKey`, `closeReason`
+- Auto-close execution:
+  - periodic scheduler every 30 seconds
+  - startup sweep after reaction sync to close already expired polls
+  - close path is idempotent to avoid double-close races with manual context command
+
 ## CSV upload
 
 - Method: `POST`
