@@ -5,6 +5,8 @@ export interface DashboardPollOption {
   emoji?: string | null;
 }
 
+export type DurationKey = '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
+
 export interface DashboardPoll {
   id: string;
   title: string;
@@ -15,7 +17,7 @@ export interface DashboardPoll {
   channelName: string;
   createdAt?: string | null;
   endsAt?: string | null;
-  durationKey?: string | null;
+  durationKey?: DurationKey | null;
   status: 'active' | 'ended';
   totalVotes: number;
   options: DashboardPollOption[];
@@ -61,7 +63,7 @@ export interface DashboardDraftContext {
   options?: string[];
   maxVotes?: number;
   pesoMensalista?: 'sim' | 'nao';
-  durationKey?: '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
+  durationKey?: DurationKey;
   updatedAt?: string | null;
 }
 
@@ -196,7 +198,7 @@ export async function createDraft(payload: {
   optionsCsv: string;
   maxVotes: number;
   pesoMensalista: 'sim' | 'nao';
-  durationKey?: '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
+  durationKey?: DurationKey;
   dashboardSource?: string;
 }) {
   return executeDashboardCommand('rascunho', {
@@ -223,7 +225,7 @@ export async function editDraft(payload: {
   optionsCsv?: string;
   maxVotes?: number;
   pesoMensalista?: 'sim' | 'nao';
-  durationKey?: '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
+  durationKey?: DurationKey;
 }) {
   const values: Record<string, unknown> = { id: payload.id };
   if (payload.title) values.titulo = payload.title;

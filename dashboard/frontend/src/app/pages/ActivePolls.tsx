@@ -43,7 +43,22 @@ export function ActivePolls() {
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      setNowTick(Date.now());
+      const nowMs = Date.now();
+      setNowTick(nowMs);
+      setPolls((current) =>
+        current.filter((poll) => {
+          if (poll.status !== 'active' || !poll.endsAt) {
+            return true;
+          }
+
+          const endMs = Date.parse(poll.endsAt);
+          if (Number.isNaN(endMs)) {
+            return true;
+          }
+
+          return endMs > nowMs;
+        }),
+      );
     }, 30 * 1000);
 
     return () => {

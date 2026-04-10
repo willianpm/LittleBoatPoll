@@ -135,6 +135,7 @@ function buildResultEmbed(poll, resultados, empate, mensalistasList, reason) {
 
 async function closePollByMessageId({ client, messageId, interaction = null, reason = 'manual' }) {
   const poll = client.activePolls.get(messageId);
+  let removedFromActive = false;
 
   if (!poll) {
     return {
@@ -159,10 +160,10 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
     poll.finalizadaEm = new Date();
 
     const { resultados, vencedor, empate } = computePollResults(poll);
-    const mensalistasList = await buildMensalistasList(client, poll);
-    const resultEmbed = buildResultEmbed(poll, resultados, empate, mensalistasList, reason);
 
-    await notifyPollClosed({ interaction, client, poll, resultEmbed });
+    client.activePolls.delete(messageId);
+    removedFromActive = true;
+    client.saveActivePolls();
 
     const historicoData = loadVotacoes();
     historicoData.push({
@@ -194,8 +195,13 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
 
     saveVotacoes(historicoData);
 
-    client.activePolls.delete(messageId);
-    client.saveActivePolls();
+    const mensalistasList = await buildMensalistasList(client, poll);
+    const resultEmbed = buildResultEmbed(poll, resultados, empate, mensalistasList, reason);
+    try {
+      await notifyPollClosed({ interaction, client, poll, resultEmbed });
+    } catch (notifyError) {
+      logger.error(`Erro ao notificar encerramento da votação ${messageId}: ${notifyError.message}`);
+    }
 
     logger.info(`Votação finalizada (${reason}): ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
 
@@ -209,9 +215,17 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
   } catch (error) {
     logger.error(`Erro ao encerrar votação: ${error.message}`);
 
-    if (poll) {
-      poll.status = 'ativa';
+    if (removedFromActive) {
+      client.activePolls.set(messageId, poll);
+      try {
+        client.saveActivePolls();
+      } catch (saveError) {
+        logger.error(`Erro ao reverter estado da enquete ${messageId}: ${saveError.message}`);
+      }
     }
+
+    poll.status = 'ativa';
+    delete poll.finalizadaEm;
 
     return {
       success: false,

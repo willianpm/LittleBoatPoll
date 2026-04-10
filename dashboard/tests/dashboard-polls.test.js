@@ -127,6 +127,7 @@ describe('Dashboard Polls API', () => {
           serverName: 'Guild One',
           channelName: 'geral',
           endsAt: '2026-04-06T10:00:00Z',
+          durationKey: '24h',
           status: 'active',
         }),
         expect.objectContaining({

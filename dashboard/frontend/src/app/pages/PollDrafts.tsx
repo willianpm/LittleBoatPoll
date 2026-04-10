@@ -17,6 +17,7 @@ import {
 } from '../lib/dashboard-api';
 
 type DraftItem = DashboardDraftContext;
+const ALLOWED_DURATION_KEYS = new Set(['1h', '6h', '12h', '24h', '3d', '7d']);
 
 export function PollDrafts() {
   const navigate = useNavigate();
@@ -105,9 +106,14 @@ export function PollDrafts() {
             { id: `${draft.id}-fallback-2`, text: '' },
           ],
     );
-    setEditMaxVotes(Math.max(1, Number(draft.maxVotes || 1) || 1));
+    const parsedMaxVotes = Number(draft.maxVotes ?? 1);
+    const safeMaxVotes = Number.isFinite(parsedMaxVotes) ? Math.min(10, Math.max(1, Math.trunc(parsedMaxVotes))) : 1;
+    const normalizedDurationKey =
+      typeof draft.durationKey === 'string' && ALLOWED_DURATION_KEYS.has(draft.durationKey) ? draft.durationKey : '24h';
+
+    setEditMaxVotes(safeMaxVotes);
     setEditSubscriberWeight(draft.pesoMensalista === 'sim' ? 'sim' : 'nao');
-    setEditDurationKey(draft.durationKey || '24h');
+    setEditDurationKey(normalizedDurationKey);
     setIsEditOpen(true);
   };
 

@@ -4,7 +4,7 @@ function resolveGuildAndChannel({ guildId = null, channelId = null } = {}) {
   const guilds = Array.from(client.guilds?.cache?.values() || []);
 
   if (guildId) {
-    const guild = client.guilds.cache.get(guildId);
+    const guild = client.guilds?.cache?.get?.(guildId) || null;
     if (guild) {
       const channel = channelId ? guild.channels?.cache?.get(channelId) : null;
       return {
@@ -32,9 +32,9 @@ function resolveGuildAndChannel({ guildId = null, channelId = null } = {}) {
 
   return {
     serverId: guildId || null,
-    serverName: guildId ? `Servidor ${guildId}` : 'Servidor desconhecido',
+    serverName: 'Servidor desconhecido',
     channelId,
-    channelName: channelId ? `Canal ${channelId}` : null,
+    channelName: channelId ? 'Canal desconhecido' : null,
   };
 }
 

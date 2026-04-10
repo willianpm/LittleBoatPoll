@@ -16,6 +16,7 @@ const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require
 const { closePollByMessageId } = require('./poll-close-service');
 const { closeExpiredPolls } = require('./poll-autoclose');
 const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
+const { DEFAULT_DURATION_KEY, calculateEndsAt, isValidDurationKey } = require('../utils/poll-duration');
 
 // Exibe configuração na inicialização
 config.logConfig();
@@ -156,6 +157,8 @@ function loadActivePolls() {
 
       // Normaliza os dados para garantir compatibilidade com enquetes antigas
       const normalizedPolls = pollsArray.map(([id, poll]) => {
+        const durationKey = isValidDurationKey(poll.durationKey) ? poll.durationKey : DEFAULT_DURATION_KEY;
+        const createdAtRef = poll.criadoEm || poll.createdAt || null;
         return [
           id,
           {
@@ -163,8 +166,8 @@ function loadActivePolls() {
             channelId: poll.channelId || null,
             maxVotos: poll.maxVotos || 1,
             usarPesoMensalista: poll.usarPesoMensalista !== undefined ? poll.usarPesoMensalista : false,
-            durationKey: poll.durationKey || null,
-            endsAt: poll.endsAt || null,
+            durationKey,
+            endsAt: poll.endsAt || calculateEndsAt(createdAtRef, durationKey, DEFAULT_DURATION_KEY),
             votos: poll.votos || {},
             status: poll.status || 'ativa',
           },
@@ -714,6 +717,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     // Busca a votação ativa para esta mensagem
     const poll = client.activePolls.get(reaction.message.id);
     if (!poll) return;
+    if (poll.status !== 'ativa' || poll._closing) return;
 
     const emoji = reaction.emoji.name;
 
@@ -786,6 +790,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
 
     const poll = client.activePolls.get(reaction.message.id);
     if (!poll) return;
+    if (poll.status !== 'ativa' || poll._closing) return;
 
     const emoji = reaction.emoji.name;
 

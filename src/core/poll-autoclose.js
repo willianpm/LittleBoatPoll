@@ -41,9 +41,18 @@ async function closeExpiredPolls(client, closePollFn, options = {}) {
         closed++;
       } else {
         errors++;
+        if (typeof options.onError === 'function') {
+          options.onError(new Error(result?.message || 'Falha ao encerrar enquete expirada'), {
+            messageId,
+            reason: 'expired',
+          });
+        }
       }
     } catch (error) {
       errors++;
+      if (typeof options.onError === 'function') {
+        options.onError(error, { messageId, reason: 'expired' });
+      }
     }
   }
 

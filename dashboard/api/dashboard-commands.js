@@ -7,6 +7,7 @@ const router = express.Router();
 const { client } = require('../../src/core/client'); // Garante acesso ao client e comandos
 const { validateDashboardToken } = require('./auth');
 const { resolveGuildAndChannel } = require('./utils/guild-channel-resolver');
+const { isValidDurationKey } = require('../../src/utils/poll-duration');
 
 const EPHEMERAL_FLAG = 64;
 const COMMAND_LOCKED_ERROR_CODE = 'COMMAND_LOCKED';
@@ -519,7 +520,7 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
           options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
           maxVotes: Number(draft.maxVotos || 1) || 1,
           pesoMensalista: draft.usarPesoMensalista ? 'sim' : 'nao',
-          durationKey: draft.durationKey || '24h',
+          durationKey: isValidDurationKey(draft.durationKey) ? draft.durationKey : '24h',
           updatedAt: draft.editadoEm || draft.criadoEm || null,
         };
       })
