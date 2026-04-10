@@ -193,7 +193,9 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
       status: 'ended',
     });
 
-    saveVotacoes(historicoData);
+    if (saveVotacoes(historicoData) === false) {
+      throw new Error('falha ao salvar historico');
+    }
 
     const mensalistasList = await buildMensalistasList(client, poll);
     const resultEmbed = buildResultEmbed(poll, resultados, empate, mensalistasList, reason);

@@ -107,4 +107,61 @@ describe('poll-close-service', () => {
       hasFinalizadaEm: false,
     });
   });
+
+  it('rolls back close when saveVotacoes returns false', async () => {
+    const poll = {
+      titulo: 'Enquete teste',
+      opcoes: ['A'],
+      emojiNumeros: ['1️⃣'],
+      maxVotos: 1,
+      usarPesoMensalista: false,
+      votos: {
+        userA: { usuario: 'userA', peso: 1, reacoes: ['1️⃣'] },
+      },
+      criadoEm: '2026-04-10T10:00:00.000Z',
+      status: 'ativa',
+    };
+
+    const saveSnapshots = [];
+    const client = {
+      activePolls: new Map([['msg-1', poll]]),
+      saveActivePolls: jest.fn(() => {
+        const current = client.activePolls.get('msg-1');
+        saveSnapshots.push(
+          current
+            ? {
+              status: current.status,
+              hasFinalizadaEm: Object.prototype.hasOwnProperty.call(current, 'finalizadaEm'),
+            }
+            : null,
+        );
+      }),
+      users: {
+        fetch: jest.fn(),
+      },
+      channels: {
+        fetch: jest.fn(),
+      },
+    };
+
+    saveVotacoes.mockReturnValue(false);
+
+    const result = await closePollByMessageId({
+      client,
+      messageId: 'msg-1',
+      reason: 'manual',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.code).toBe('POLL_CLOSE_FAILED');
+    expect(client.activePolls.has('msg-1')).toBe(true);
+    expect(client.activePolls.get('msg-1').status).toBe('ativa');
+    expect(client.activePolls.get('msg-1').finalizadaEm).toBeUndefined();
+    expect(client.saveActivePolls).toHaveBeenCalledTimes(2);
+    expect(saveSnapshots[0]).toBeNull();
+    expect(saveSnapshots[1]).toEqual({
+      status: 'ativa',
+      hasFinalizadaEm: false,
+    });
+  });
 });
