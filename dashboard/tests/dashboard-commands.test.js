@@ -322,6 +322,46 @@ describe('Dashboard Commands API', () => {
     );
   });
 
+  it('should return resolved guildId for legacy dashboard draft with only channelId', async () => {
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: { cache: new Map([['channel-1', { id: 'channel-1', name: 'geral', isTextBased: () => true }]]) },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    client.draftPolls.set('DRAFT-LEGACY', {
+      id: 'DRAFT-LEGACY',
+      titulo: 'Enquete legado',
+      opcoes: ['Opção A', 'Opção B'],
+      guildId: null,
+      channelId: 'channel-1',
+      criadorId: 'user-42',
+      criadorNome: 'willian',
+      origem: 'dashboard-create',
+      criadoEm: '2026-04-01T10:00:00.000Z',
+      editadoEm: '2026-04-02T10:00:00.000Z',
+    });
+
+    const res = await request(app).get('/api/commands/context-targets/drafts').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.drafts)).toBe(true);
+    expect(res.body.drafts).toHaveLength(1);
+    expect(res.body.drafts[0]).toEqual(
+      expect.objectContaining({
+        id: 'DRAFT-LEGACY',
+        guildId: 'guild-1',
+        channelId: 'channel-1',
+        serverName: 'Guild 1',
+        channelName: 'geral',
+      }),
+    );
+  });
+
   it('should reject rascunho criar without explicit guild id in strict dashboard flow', async () => {
     client.commands.set('rascunho', {
       data: {

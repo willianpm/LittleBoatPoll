@@ -46,7 +46,7 @@ function computePollResults(poll) {
   }));
 
   for (const votoData of Object.values(poll.votos || {})) {
-    const peso = votoData.peso;
+    const peso = Number.isFinite(Number(votoData?.peso)) ? Number(votoData.peso) : 1;
 
     for (const emoji of votoData.reacoes || []) {
       const index = poll.emojiNumeros.indexOf(emoji);
@@ -215,6 +215,9 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
   } catch (error) {
     logger.error(`Erro ao encerrar votação: ${error.message}`);
 
+    poll.status = 'ativa';
+    delete poll.finalizadaEm;
+
     if (removedFromActive) {
       client.activePolls.set(messageId, poll);
       try {
@@ -223,9 +226,6 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
         logger.error(`Erro ao reverter estado da enquete ${messageId}: ${saveError.message}`);
       }
     }
-
-    poll.status = 'ativa';
-    delete poll.finalizadaEm;
 
     return {
       success: false,

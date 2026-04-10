@@ -510,8 +510,8 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
         return {
           id: draft.id,
           title: draft.titulo,
-          guildId: draft.guildId || null,
-          channelId: draft.channelId || null,
+          guildId: draft.guildId || resolvedTarget.serverId || null,
+          channelId: draft.channelId || resolvedTarget.channelId || null,
           serverName: resolvedTarget.serverName || null,
           channelName: resolvedTarget.channelName || null,
           optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
