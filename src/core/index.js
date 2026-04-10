@@ -13,6 +13,8 @@ const { RedisStore } = require('connect-redis');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 const { loadJsonFile, saveJsonFile, loadMensalistas, ensureDataFiles } = require('../utils/file-handler');
+const { closePollByMessageId } = require('./poll-close-service');
+const { closeExpiredPolls } = require('./poll-autoclose');
 const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
 
 // Exibe configuração na inicialização
@@ -20,6 +22,9 @@ config.logConfig();
 
 // Controle de verbosidade de logs (DEBUG=true para logs detalhados)
 const DEBUG_MODE = config.DEBUG_MODE;
+const AUTO_CLOSE_INTERVAL_MS = 30 * 1000;
+let autoCloseIntervalId = null;
+let autoCloseIsRunning = false;
 
 // =====================================
 // FUNÇÕES AUXILIARES
@@ -158,6 +163,8 @@ function loadActivePolls() {
             channelId: poll.channelId || null,
             maxVotos: poll.maxVotos || 1,
             usarPesoMensalista: poll.usarPesoMensalista !== undefined ? poll.usarPesoMensalista : false,
+            durationKey: poll.durationKey || null,
+            endsAt: poll.endsAt || null,
             votos: poll.votos || {},
             status: poll.status || 'ativa',
           },
@@ -170,6 +177,42 @@ function loadActivePolls() {
   } catch (error) {
     logger.error(`Erro ao carregar votações ativas: ${error.message}`);
   }
+}
+
+async function runAutoCloseSweep() {
+  if (autoCloseIsRunning) {
+    return;
+  }
+
+  autoCloseIsRunning = true;
+  try {
+    const result = await closeExpiredPolls(client, closePollByMessageId);
+    if (result.closed > 0 || result.errors > 0) {
+      logger.info(
+        `Auto-close: ${result.closed} enquete(s) encerrada(s), ${result.errors} erro(s), ${result.checked} verificada(s)`,
+      );
+    }
+  } catch (error) {
+    logger.error(`Erro no auto-close: ${error.message}`);
+  } finally {
+    autoCloseIsRunning = false;
+  }
+}
+
+function startAutoCloseScheduler() {
+  if (autoCloseIntervalId) {
+    return;
+  }
+
+  autoCloseIntervalId = setInterval(() => {
+    runAutoCloseSweep();
+  }, AUTO_CLOSE_INTERVAL_MS);
+
+  if (typeof autoCloseIntervalId.unref === 'function') {
+    autoCloseIntervalId.unref();
+  }
+
+  logger.info(`Auto-close scheduler ativo (intervalo ${AUTO_CLOSE_INTERVAL_MS / 1000}s)`);
 }
 
 // Inicializa arquivos essenciais usando file-handler
@@ -634,6 +677,16 @@ client.once('clientReady', async () => {
 
   // Verifica e remove votos que excedem o limite
   await enforceVoteLimits();
+
+  // Fecha automaticamente enquetes já expiradas após sincronização
+  await runAutoCloseSweep();
+
+  // Inicia o scheduler periódico de auto-close
+  startAutoCloseScheduler();
+
+  // Inicia o keep-alive do servidor web
+  startKeepAlive();
+  logger.info(`Keep-alive rodando na porta ${port}`);
 });
 
 // Evento: Interação criada (Slash Commands, Context Menu, Buttons, etc)
@@ -853,20 +906,3 @@ function startKeepAlive() {
 // LOGIN DO BOT
 // =====================================
 client.login(config.TOKEN);
-
-// Evento: Bot conectado e pronto
-client.once('clientReady', async () => {
-  // Binding de mensalistas
-  await bindMensalistasRolesOnStartup();
-
-  // Verifica e remove votos que excedem o limite
-  await enforceVoteLimits();
-
-  // Sincroniza reações das enquetes ativas
-  await syncPollReactions();
-
-  // Inicia o keep-alive e exibe logs finais
-  startKeepAlive();
-  logger.info(`Keep-alive rodando na porta ${port}`);
-  logger.info(`${client.user.tag} está ONLINE`);
-});

@@ -18,6 +18,7 @@ export function CreatePoll() {
   const [title, setTitle] = useState('');
   const [selectedGuildId, setSelectedGuildId] = useState('');
   const [selectedChannelId, setSelectedChannelId] = useState('');
+  const [durationKey, setDurationKey] = useState<'1h' | '6h' | '12h' | '24h' | '3d' | '7d'>('24h');
   const [maxVotes, setMaxVotes] = useState(1);
   const [subscriberWeight, setSubscriberWeight] = useState<'yes' | 'no'>('no');
   const [guilds, setGuilds] = useState<DashboardGuild[]>([]);
@@ -153,6 +154,7 @@ export function CreatePoll() {
         optionsCsv: validOptions.join(', '),
         maxVotes,
         pesoMensalista: subscriberWeight === 'yes' ? 'sim' : 'nao',
+        durationKey,
       });
 
       toast.success('Rascunho criado com sucesso!', {
@@ -160,6 +162,7 @@ export function CreatePoll() {
       });
 
       setTitle('');
+      setDurationKey('24h');
       setMaxVotes(1);
       setSubscriberWeight('no');
       setOptions([
@@ -259,7 +262,7 @@ export function CreatePoll() {
               <Label htmlFor="duration" className="dark:text-gray-200">
                 Duração
               </Label>
-              <Select defaultValue="24h">
+              <Select value={durationKey} onValueChange={(value) => setDurationKey(value as typeof durationKey)}>
                 <SelectTrigger className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>

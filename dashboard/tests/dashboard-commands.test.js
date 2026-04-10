@@ -349,6 +349,54 @@ describe('Dashboard Commands API', () => {
     expect(res.body.error).toMatch(/guild\.id é obrigatório/i);
   });
 
+  it('should pass duration option for rascunho criar from dashboard payload', async () => {
+    const executeMock = jest.fn(async (interaction) => {
+      const duracao = interaction.options.getString('duracao');
+      await interaction.reply({ content: `duração recebida: ${duracao}` });
+    });
+
+    client.commands.set('rascunho', {
+      data: {
+        toJSON: () => ({ name: 'rascunho', description: 'Gerencia rascunhos', type: 1, options: [] }),
+      },
+      execute: executeMock,
+    });
+    client.guilds.cache.set('guild-1', {
+      id: 'guild-1',
+      name: 'Guild 1',
+      channels: {
+        cache: new Map([['channel-1', { id: 'channel-1', isTextBased: () => true, send: jest.fn() }]]),
+      },
+      members: {
+        cache: new Map([['user-1', { id: 'user-1', permissions: { has: () => true }, guild: { ownerId: 'owner-1' } }]]),
+      },
+    });
+
+    const res = await request(app)
+      .post('/api/commands/rascunho')
+      .send({
+        commandType: 1,
+        guild: { id: 'guild-1' },
+        dashboardSource: 'dashboard-create',
+        options: {
+          subcommand: 'criar',
+          values: {
+            titulo: 'Teste duração',
+            opcoes: 'A, B',
+            max_votos: 1,
+            duracao: '6h',
+          },
+        },
+        target: { channelId: 'channel-1' },
+      })
+      .set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toMatch(/6h/i);
+    expect(executeMock).toHaveBeenCalledTimes(1);
+  });
+
   it('should reject rascunho publicar when selected channel is missing in guild', async () => {
     client.commands.set('rascunho', {
       data: {

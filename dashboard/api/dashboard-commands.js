@@ -508,6 +508,9 @@ router.get('/context-targets/drafts', validateDashboardToken, async (_req, res) 
         creatorId: draft.criadorId,
         creatorName: draft.criadorNome || null,
         options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
+        maxVotes: Number(draft.maxVotos || 1) || 1,
+        pesoMensalista: draft.usarPesoMensalista ? 'sim' : 'nao',
+        durationKey: draft.durationKey || '24h',
         updatedAt: draft.editadoEm || draft.criadoEm || null,
       }))
       .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));

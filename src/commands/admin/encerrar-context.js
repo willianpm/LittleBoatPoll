@@ -1,6 +1,6 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
-const { loadVotacoes, saveVotacoes } = require('../../utils/file-handler');
+const { closePollByMessageId } = require('../../core/poll-close-service');
 const logger = require('../../utils/logger');
 
 /**
@@ -27,178 +27,26 @@ module.exports = {
         });
       }
 
-      // Verifica se a enquete existe
       const poll = client.activePolls.get(messageId);
-
       if (!poll) {
         return await interaction.reply({
           content: '❌ Esta mensagem não é uma enquete ativa! Certifique-se de clicar na mensagem correta da enquete.',
           flags: MessageFlags.Ephemeral,
         });
       }
-
-      // Marca a enquete como finalizada
-      poll.status = 'finalizada';
-      poll.finalizadaEm = new Date();
-
-      // ====================================
-      // CÁLCULO DE VOTOS COM PESOS
-      // ====================================
-
-      // Inicializa contadores para cada opção
-      const resultados = poll.opcoes.map((opcao, index) => ({
-        opcao: opcao,
-        emoji: poll.emojiNumeros[index],
-        pontos: 0,
-        votantes: [],
-      }));
-
-      // Conta os votos com peso
-      for (const votoData of Object.values(poll.votos)) {
-        const peso = votoData.peso;
-
-        // Processa cada reação do usuário
-        for (const emoji of votoData.reacoes) {
-          const index = poll.emojiNumeros.indexOf(emoji);
-          if (index !== -1) {
-            resultados[index].pontos += peso;
-            resultados[index].votantes.push(votoData.usuario);
-          }
-        }
-      }
-
-      // Ordena por pontos (decrescente)
-      resultados.sort((a, b) => b.pontos - a.pontos);
-
-      // Determina o vencedor
-      const vencedor = resultados[0];
-      const empate = resultados.filter((r) => r.pontos === vencedor.pontos).length > 1;
-
-      let cor = empate ? '#FFFF00' : '#00FF00'; // Amarelo para empate, verde para vencedor único
-      let tituloResultado = empate ? 'RESULTADO: EMPATE! 🤝' : 'VENCEDOR! 🏆';
-
-      // ====================================
-      // CRIAÇÃO DO EMBED DE RESULTADO
-      // ====================================
-
-      const resultEmbed = new EmbedBuilder()
-        .setColor(cor)
-        .setTitle('📊 RESULTADO FINAL DA VOTAÇÃO 📊')
-        .setDescription(`${poll.titulo}\n\n${tituloResultado}`);
-
-      // Adiciona ranking de opções (apenas top 3)
-      const top3 = resultados.slice(0, 3);
-      top3.forEach((resultado, index) => {
-        const posicao = index === 0 && !empate ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
-        resultEmbed.addFields({
-          name: `${posicao} __**${resultado.opcao}**__`,
-          value: `**${resultado.pontos} pontos** • ${resultado.votantes.length} votante(s)`,
-          inline: false,
-        });
+      const closeResult = await closePollByMessageId({
+        client,
+        messageId,
+        interaction,
+        reason: 'manual',
       });
 
-      // Lista de Mensalistas que Votaram
-      let mensmentalList = '(nenhum)';
-      try {
-        const mensalistasQueVotaram = [];
-
-        // Verifica quem realmente votou com peso 2 nesta enquete
-        for (const [userId, votoData] of Object.entries(poll.votos)) {
-          if (votoData?.peso === 2) {
-            mensalistasQueVotaram.push(userId);
-          }
-        }
-
-        if (mensalistasQueVotaram.length > 0) {
-          // Busca os usuários e monta as menções
-          const mencoes = [];
-          for (const userId of mensalistasQueVotaram) {
-            try {
-              await client.users.fetch(userId);
-              mencoes.push(`<@${userId}>`);
-            } catch (error) {
-              logger.warn(`Não foi possível buscar usuário ${userId}`);
-            }
-          }
-
-          if (mencoes.length > 0) {
-            mensmentalList = mencoes.join(' ');
-          }
-        }
-      } catch (error) {
-        logger.error(`Erro ao buscar mensalistas: ${error.message}`);
-      }
-
-      // Adiciona a seção de mensalistas apenas se o peso de mensalista está ativado
-      if (poll.usarPesoMensalista) {
-        resultEmbed.addFields({
-          name: '👑 Mensalistas que votaram:',
-          value: `${mensmentalList}`,
-          inline: false,
+      if (!closeResult.success && !interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ Não foi possível encerrar esta votação agora. Tente novamente.',
+          flags: MessageFlags.Ephemeral,
         });
       }
-
-      const informacoesPeso = poll.usarPesoMensalista ? 'Mensalistas contam como peso 2' : 'Peso igual para todos';
-
-      const infoResumo =
-        `Total de participantes: ${Object.keys(poll.votos).length}\n` +
-        `Limite de votos: ${poll.maxVotos} por pessoa\n` +
-        `${informacoesPeso}\n\n` +
-        '*Mostrando apenas o TOP 3*';
-
-      resultEmbed
-        .addFields(
-          { name: '\u200B', value: '\u200B', inline: false },
-          {
-            name: 'ℹ️ Informações',
-            value: infoResumo,
-            inline: false,
-          },
-        )
-        .setFooter({
-          text: 'Votação finalizada',
-        })
-        .setTimestamp();
-
-      // Envia o resultado no canal
-      await interaction.reply({
-        embeds: [resultEmbed],
-      });
-
-      // Salva registro do resultado
-      const historicoData = loadVotacoes();
-
-      historicoData.push({
-        id: messageId,
-        titulo: poll.titulo,
-        description:
-          `Selecione até ${poll.maxVotos} opç${poll.maxVotos > 1 ? 'ões' : 'ão'}:\n\n` +
-          poll.opcoes.map((opcao, index) => `**${poll.emojiNumeros[index]} ${opcao}**`).join('\n\n'),
-        guildId: interaction.guildId,
-        guildName: interaction.guild?.name || null,
-        channelId: interaction.channelId,
-        channelName: interaction.channel?.name || null,
-        opcoes: poll.opcoes,
-        maxVotos: poll.maxVotos,
-        usarPesoMensalista: poll.usarPesoMensalista,
-        allowMultipleChoices: poll.maxVotos > 1,
-        anonymous: Boolean(poll.anonymous),
-        resultados: resultados,
-        vencedor: empate ? 'Empate' : vencedor.opcao,
-        participantes: Object.keys(poll.votos).length,
-        totalVotes: resultados.reduce((sum, resultado) => sum + (resultado.pontos || 0), 0),
-        dataCriacao: poll.criadoEm,
-        dataFinalizacao: poll.finalizadaEm,
-        status: 'ended',
-      });
-
-      saveVotacoes(historicoData);
-
-      // Remove a enquete das votações ativas e salva
-      client.activePolls.delete(messageId);
-      client.saveActivePolls();
-
-      logger.info(`Votação finalizada via contexto: ${poll.titulo} | Vencedor: ${empate ? 'Empate' : vencedor.opcao}`);
     } catch (error) {
       logger.error(`Erro ao encerrar votação: ${error.message}`);
       if (!interaction.replied && !interaction.deferred) {

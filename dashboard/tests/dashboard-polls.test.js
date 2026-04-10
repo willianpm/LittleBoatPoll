@@ -79,6 +79,8 @@ describe('Dashboard Polls API', () => {
           maxVotos: 1,
           usarPesoMensalista: false,
           criadoEm: '2026-04-05T10:00:00Z',
+          endsAt: '2026-04-06T10:00:00Z',
+          durationKey: '24h',
           votos: {
             'user-2': { peso: 1, reacoes: ['1️⃣'] },
           },
@@ -124,6 +126,7 @@ describe('Dashboard Polls API', () => {
           serverId: 'guild-1',
           serverName: 'Guild One',
           channelName: 'geral',
+          endsAt: '2026-04-06T10:00:00Z',
           status: 'active',
         }),
         expect.objectContaining({
