@@ -111,6 +111,7 @@ All commands must be executed inside the Docker containers. Use `docker-compose`
 
 ```bash
 docker-compose up --build
+docker-compose exec bot npm ci --include=dev
 docker-compose exec bot npm test
 docker-compose exec dashboard npm run test:dashboard
 ```
@@ -182,6 +183,15 @@ Make sure `DISCORD_OAUTH_REDIRECT_URI` matches the callback configured in the Di
 ### Frontend cannot reach the backend
 
 Confirm that the backend is running and that the Vite proxy target matches the active backend port.
+
+### `sh: jest: not found` inside `bot` container
+
+The `bot` image is built with production dependencies by default. Install dev dependencies before running tests in the container:
+
+```bash
+docker-compose exec bot npm ci --include=dev
+docker-compose exec bot npm test
+```
 
 ## Next Reading
 
