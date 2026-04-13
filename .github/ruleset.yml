@@ -2,8 +2,8 @@
 # Baseado estritamente em docs/development/GIT-WORKFLOW.md
 
 rules:
-  - name: Proteção develop
-    target: develop
+  - name: Proteção master
+    target: master
     type: branch
     enforcement: true
     conditions:
@@ -23,18 +23,6 @@ rules:
           - 'ci:'
           - 'chore:'
           - 'style:'
-      - merge-method: squash
-
-  - name: Proteção main
-    target: main
-    type: branch
-    enforcement: true
-    conditions:
-      - no-direct-push: true
-      - require-pull-request: true
-      - require-status-checks:
-          - npm test
-          - npm run lint
       - merge-method: squash
       - delete-branch-after-merge: true
 
