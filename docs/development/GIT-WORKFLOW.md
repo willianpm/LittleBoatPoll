@@ -1,12 +1,14 @@
 # Git Workflow
 
-This repository follows a GitHub Flow style based on the `develop` branch.
+This repository uses GitHub Flow with `master` as the canonical base branch.
+
+This project no longer uses GitFlow. Branch categories such as `release/*` and `hotfix/*` are not part of the default process.
 
 ## Branch Strategy
 
-- Base branch for active development: `develop`
-- Create short-lived branches from `develop`
-- Open pull requests back to `develop`
+- Base branch for active development: `master`
+- Create short-lived branches from `master`
+- Open pull requests back to `master`
 - Merge after checks and review approval
 
 ## Branch Naming
@@ -31,19 +33,19 @@ git config --global user.email "your.email@example.com"
 
 ## Standard Contribution Flow
 
-1. Sync local `develop`.
+1. Sync local `master`.
 2. Create a feature branch.
 3. Implement changes and run local checks.
 4. Commit with Conventional Commit prefixes.
 5. Push and open a pull request.
 6. Address CI or review feedback.
-7. Merge into `develop` and delete the branch.
+7. Merge into `master` and delete the branch.
 
 ## Commands
 
 ```bash
-git checkout develop
-git pull origin develop
+git checkout master
+git pull origin master
 git checkout -b feature/my-descriptive-change
 
 npm test
@@ -73,11 +75,11 @@ git push -u origin feature/my-descriptive-change
 
 ## Common Operations
 
-### Rebase with latest `develop`
+### Rebase with latest `master`
 
 ```bash
 git fetch origin
-git rebase origin/develop
+git rebase origin/master
 git push --force-with-lease
 ```
 

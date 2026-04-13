@@ -2,6 +2,8 @@
 
 This directory contains the Discord-based automation tooling used to validate the staging bot.
 
+Repository contribution and branch policy are defined in [../CONTRIBUTING.md](../CONTRIBUTING.md) and [../docs/development/GIT-WORKFLOW.md](../docs/development/GIT-WORKFLOW.md).
+
 ## Directory Layout
 
 ```text

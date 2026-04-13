@@ -1,6 +1,8 @@
 # LittleBoatPoll
 
-LittleBoatPoll is a Discord bot for book club polls, draft management, internal permissions, and an administrative dashboard. All environments require Docker and Redis.
+LittleBoatPoll is a Discord bot for book club polls, draft management, internal permissions, and an administrative dashboard.
+
+This document provides a project-level overview. Detailed procedures are maintained in dedicated documents to avoid duplication.
 
 ## Overview
 
@@ -12,20 +14,42 @@ Main components:
 - Centralized logger
 - Redis for session persistence
 
+## Source of Truth
+
+Use one canonical document per topic:
+
+- Setup and local runtime: [docs/development/SETUP.md](docs/development/SETUP.md)
+- Contribution process and pull request rules: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Branching model and Git operations: [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md)
+- API contracts: [docs/development/API.md](docs/development/API.md)
+- Architecture and runtime responsibilities: [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md)
+- Dashboard module overview: [dashboard/README.md](dashboard/README.md)
+- Dashboard integration details: [dashboard/INTEGRATION_GUIDE.md](dashboard/INTEGRATION_GUIDE.md)
+
 ## Quick Start
 
-1. Read [docs/development/SETUP.md](docs/development/SETUP.md) for setup and commands.
-2. Docker is required and local (non-Docker) execution is not supported. Run all services inside containers:
+1. Read [docs/development/SETUP.md](docs/development/SETUP.md).
+2. Start the stack in containers:
    - `docker-compose up --build`
-3. Configure `.env` (see below).
-4. All development and tests occur inside the containers.
-5. Contributing: see [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md).
+3. Configure `.env` based on `.env.example`.
+4. Run development and tests inside containers.
+5. Follow contribution rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Requirements
 
 - Docker
 - Redis
 - Discord bot token and application ID
+
+## Contribution Flow
+
+The repository uses GitHub Flow with `master` as the canonical base branch.
+
+- Create short-lived branches from `master`
+- Open pull requests to `master`
+- Merge only after review approval and required checks
+
+Full details and command examples are in [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md).
 
 ## Environment variables
 
@@ -128,7 +152,8 @@ See:
 
 - [docs/development/SETUP.md](docs/development/SETUP.md): setup and commands
 - [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md): structure and runtime
-- [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md): contribution
+- [CONTRIBUTING.md](CONTRIBUTING.md): contribution policy and pull request requirements
+- [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md): branch operations and Git examples
 - [docs/technical/setup-discord.md](docs/technical/setup-discord.md): Discord setup
 - [docs/technical/staging-bot.md](docs/technical/staging-bot.md): staging
 - [dashboard/README.md](dashboard/README.md): dashboard details

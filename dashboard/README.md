@@ -4,6 +4,8 @@ This directory contains the administrative dashboard for LittleBoatPoll.
 
 For the complete API surface, see [docs/development/API.md](../docs/development/API.md).
 
+Contribution and branching rules are maintained in [CONTRIBUTING.md](../CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](../docs/development/GIT-WORKFLOW.md).
+
 It includes:
 
 - backend HTTP routes in `api/`
