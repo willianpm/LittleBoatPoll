@@ -37,6 +37,15 @@ function buildDescription(record) {
   return `Selecione até ${maxVotes} opç${maxVotes > 1 ? 'ões' : 'ão'} em ${optionsCount} opção(ões) disponíveis.`;
 }
 
+function hasExpired(endsAt) {
+  if (!endsAt) return false;
+
+  const endsAtTime = new Date(endsAt).getTime();
+  if (Number.isNaN(endsAtTime)) return false;
+
+  return endsAtTime <= Date.now();
+}
+
 function normalizePollFromHistory(record, index = 0) {
   const createdAt = record?.createdAt || record?.dataCriacao || record?.criadoEm || record?.created_at || null;
   const endsAt = record?.endsAt || record?.dataFinalizacao || record?.finalizadaEm || null;
@@ -71,6 +80,7 @@ function normalizePollFromActive(entry) {
   const resolved = resolveGuildAndChannel({ guildId: poll?.guildId || null, channelId: poll?.channelId || null });
   const votes = poll?.votos || {};
   const emojiList = safeArray(poll?.emojiNumeros);
+  const isExpired = hasExpired(poll?.endsAt);
 
   const optionVotes = safeArray(poll?.opcoes).map((option, index) => {
     const emoji = emojiList[index] || null;
@@ -98,7 +108,7 @@ function normalizePollFromActive(entry) {
     createdAt: poll?.criadoEm || poll?.createdAt || null,
     endsAt: poll?.endsAt || null,
     durationKey: poll?.durationKey || null,
-    status: 'active',
+    status: isExpired ? 'ended' : 'active',
     totalVotes: computeTotalVotes(optionVotes),
     options: optionVotes,
     allowMultipleChoices: Boolean(poll?.usarPesoMensalista || poll?.maxVotos > 1),

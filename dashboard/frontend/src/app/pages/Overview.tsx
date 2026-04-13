@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Activity, TrendingUp, Server } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card } from '../components/ui/card';
@@ -81,7 +82,7 @@ export function Overview() {
               <Activity className="size-5 md:size-6 text-blue-600 dark:text-blue-400" />
             </div>
             <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
-              {polls.length > 0 ? `${activePolls.length}/${polls.length}` : '0/0'}
+              {activePolls.length > 0 ? `${activePolls.length}/${activePolls.length}` : '0/0'}
             </span>
           </div>
           <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Enquetes Ativas</h3>
@@ -169,29 +170,33 @@ export function Overview() {
             {!isLoading &&
               !error &&
               recentPolls.map((poll) => (
-                <div
+                <Link
                   key={poll.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-2"
+                  to={`/poll/${poll.id}`}
+                  aria-label={`Abrir detalhes da enquete ${poll.title}`}
+                  className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="mb-1 dark:text-white text-sm md:text-base truncate">{poll.title}</p>
-                    <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-600 dark:text-gray-400">
-                      <span className="truncate">{poll.serverName}</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span>{poll.totalVotes} votos</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span
-                        className={
-                          poll.status === 'active'
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-gray-500 dark:text-gray-400'
-                        }
-                      >
-                        {poll.status === 'active' ? 'Ativa' : 'Encerrada'}
-                      </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-2 transition-shadow hover:shadow-md">
+                    <div className="flex-1 min-w-0">
+                      <p className="mb-1 dark:text-white text-sm md:text-base truncate">{poll.title}</p>
+                      <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="truncate">{poll.serverName}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span>{poll.totalVotes} votos</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span
+                          className={
+                            poll.status === 'active'
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-gray-500 dark:text-gray-400'
+                          }
+                        >
+                          {poll.status === 'active' ? 'Ativa' : 'Encerrada'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
 
             {!isLoading && !error && recentPolls.length === 0 && (
