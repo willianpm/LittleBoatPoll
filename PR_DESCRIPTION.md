@@ -1,5 +1,8 @@
 # Pull Request: refactor/dashboard-vanilla-css → develop
 
+Historical note: this document is an archived snapshot of a specific PR and is not the canonical contribution guide.
+Use [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md) for the current repository process.
+
 ## Description
 
 This PR introduces a comprehensive dashboard refactor with version 2.7.0 (MINOR bump).

@@ -1,5 +1,8 @@
 # Branch Analysis Report: refactor/dashboard-vanilla-css
 
+Historical note: this report captures a specific branch state and is not normative for current contribution flow.
+Use [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](docs/development/GIT-WORKFLOW.md) for the current process.
+
 **Date**: 2026-04-09  
 **Branch**: refactor/dashboard-vanilla-css  
 **Base**: develop  

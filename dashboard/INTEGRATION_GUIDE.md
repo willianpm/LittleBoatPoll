@@ -2,6 +2,8 @@
 
 This document describes how the dashboard integrates with the bot runtime, how local development is expected to work, and how to test the current API surface.
 
+Repository contribution and branch policy are defined in [CONTRIBUTING.md](../CONTRIBUTING.md) and [docs/development/GIT-WORKFLOW.md](../docs/development/GIT-WORKFLOW.md).
+
 ## Current Integration Model
 
 The dashboard is split into:
