@@ -20,7 +20,7 @@ cd LittleBoatPoll
 Build and start all services with:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 This will start the bot, dashboard, and Redis service for session persistence. All development and testing must be performed inside the containers.
@@ -107,19 +107,19 @@ npm run test:dashboard
 
 ## 5. Start the Application
 
-All commands must be executed inside the Docker containers. Use `docker-compose` for build, start, and test operations.
+All commands must be executed inside the Docker containers. Use `docker compose` for build, start, and test operations.
 
 ```bash
-docker-compose up --build
-docker-compose exec bot npm ci --include=dev
-docker-compose exec bot npm test
-docker-compose exec dashboard npm run test:dashboard
+docker compose up --build
+docker compose exec bot npm ci --include=dev
+docker compose exec bot npm test
+docker compose exec dashboard npm run test:dashboard
 ```
 
 For frontend development, use the dashboard container:
 
 ```bash
-docker-compose exec dashboard npm run dashboard:frontend:dev
+docker compose exec dashboard npm run dashboard:frontend:dev
 ```
 
 ## Common Commands
@@ -189,8 +189,8 @@ Confirm that the backend is running and that the Vite proxy target matches the a
 The `bot` image is built with production dependencies by default. Install dev dependencies before running tests in the container:
 
 ```bash
-docker-compose exec bot npm ci --include=dev
-docker-compose exec bot npm test
+docker compose exec bot npm ci --include=dev
+docker compose exec bot npm test
 ```
 
 ## Next Reading

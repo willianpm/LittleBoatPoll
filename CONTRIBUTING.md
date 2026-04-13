@@ -27,7 +27,9 @@ git pull origin master
 git checkout -b feature/short-description
 ```
 
-2. Implement, test and run checks:
+2. Implement, test and run checks.
+
+Host workflow (requires local Node.js `>=22`):
 
 ```bash
 npm test
@@ -35,11 +37,13 @@ npm run lint
 npm run format:check
 ```
 
-If you run tests inside the `bot` container, install dev dependencies first:
+Container workflow (recommended when following the Docker-only setup):
 
 ```bash
 docker compose exec bot npm ci --include=dev
 docker compose exec bot npm test
+docker compose exec bot npm run lint
+docker compose exec bot npm run format:check
 ```
 
 3. Commit with Conventional Commits:

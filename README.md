@@ -30,7 +30,7 @@ Use one canonical document per topic:
 
 1. Read [docs/development/SETUP.md](docs/development/SETUP.md).
 2. Start the stack in containers:
-   - `docker-compose up --build`
+   - `docker compose up --build`
 3. Configure `.env` based on `.env.example`.
 4. Run development and tests inside containers.
 5. Follow contribution rules in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -93,7 +93,7 @@ For full setup and additional context, retain [docs/development/SETUP.md](docs/d
 Build and run:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 Redis is included in the compose setup.
@@ -129,7 +129,7 @@ Common `npm` scripts (run from the repository root):
 - `test`: run the full Jest test suite.
 - `test:dashboard`: run the dashboard-specific tests.
 
-Run these inside the appropriate Docker container or use `docker-compose exec` to run them in-container.
+Run these inside the appropriate Docker container or use `docker compose exec` to run them in-container.
 
 ## Dashboard
 
