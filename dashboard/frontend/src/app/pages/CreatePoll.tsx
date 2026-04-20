@@ -13,6 +13,21 @@ import {
   type DashboardChannel,
   type DashboardGuild,
 } from '../lib/dashboard-api';
+import { isValidDiscordEmoji } from '../lib/emoji-validation';
+
+type PollFormOption = {
+  id: string;
+  text: string;
+  emoji: string;
+};
+
+function createEmptyOption(id: string): PollFormOption {
+  return {
+    id,
+    text: '',
+    emoji: '',
+  };
+}
 
 export function CreatePoll() {
   const [title, setTitle] = useState('');
@@ -27,10 +42,8 @@ export function CreatePoll() {
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [options, setOptions] = useState([
-    { id: '1', text: '' },
-    { id: '2', text: '' },
-  ]);
+  const [options, setOptions] = useState<PollFormOption[]>([createEmptyOption('1'), createEmptyOption('2')]);
+  const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -98,11 +111,14 @@ export function CreatePoll() {
     };
   }, [selectedGuildId]);
 
-  const validOptions = useMemo(() => options.map((option) => option.text.trim()).filter(Boolean), [options]);
+  const hasOptionErrors = useMemo(
+    () => options.some((option) => Boolean(optionErrors[option.id])),
+    [optionErrors, options],
+  );
 
   const addOption = () => {
     if (options.length < 20) {
-      setOptions([...options, { id: Date.now().toString(), text: '' }]);
+      setOptions([...options, createEmptyOption(Date.now().toString())]);
     }
   };
 
@@ -112,8 +128,14 @@ export function CreatePoll() {
     }
   };
 
-  const updateOption = (id: string, value: string) => {
-    setOptions(options.map((opt) => (opt.id === id ? { ...opt, text: value } : opt)));
+  const updateOption = (id: string, field: 'text' | 'emoji', value: string) => {
+    setOptions(options.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)));
+    setOptionErrors((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -135,8 +157,40 @@ export function CreatePoll() {
       return;
     }
 
-    if (validOptions.length < 2) {
-      toast.error('A enquete precisa de pelo menos 2 opções');
+    const nextOptionErrors: Record<string, string> = {};
+    const normalizedOptions = options
+      .map((option) => ({
+        id: option.id,
+        text: option.text.trim(),
+        emoji: option.emoji.trim(),
+      }))
+      .filter((option) => option.text.length > 0 || option.emoji.length > 0);
+
+    normalizedOptions.forEach((option, index) => {
+      if (!option.text) {
+        nextOptionErrors[option.id] = `Preencha o texto da opção ${index + 1}`;
+        return;
+      }
+
+      if (!option.emoji) {
+        nextOptionErrors[option.id] = `Selecione um emoji válido para a opção ${index + 1}`;
+        return;
+      }
+
+      if (!isValidDiscordEmoji(option.emoji)) {
+        nextOptionErrors[option.id] =
+          'Emoji inválido. Use emoji Unicode do Discord ou formato customizado <:nome:id>/<a:nome:id>.';
+      }
+    });
+
+    if (Object.keys(nextOptionErrors).length > 0) {
+      setOptionErrors(nextOptionErrors);
+      toast.error('Corrija os emojis e textos das opções antes de salvar.');
+      return;
+    }
+
+    if (normalizedOptions.length < 2) {
+      toast.error('A enquete precisa de pelo menos 2 opções válidas com emoji');
       return;
     }
 
@@ -151,7 +205,7 @@ export function CreatePoll() {
         guildId: selectedGuildId,
         channelId: selectedChannelId,
         title: title.trim(),
-        optionsCsv: validOptions.join(', '),
+        options: normalizedOptions.map((option) => ({ text: option.text, emoji: option.emoji })),
         maxVotes,
         pesoMensalista: subscriberWeight === 'yes' ? 'sim' : 'nao',
         durationKey,
@@ -165,10 +219,8 @@ export function CreatePoll() {
       setDurationKey('24h');
       setMaxVotes(1);
       setSubscriberWeight('no');
-      setOptions([
-        { id: '1', text: '' },
-        { id: '2', text: '' },
-      ]);
+      setOptions([createEmptyOption('1'), createEmptyOption('2')]);
+      setOptionErrors({});
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Falha ao criar enquete');
     } finally {
@@ -297,30 +349,50 @@ export function CreatePoll() {
 
           <div className="space-y-3">
             {options.map((option, index) => (
-              <div key={option.id} className="flex items-center gap-2 md:gap-3">
-                <div className="flex-1">
-                  <Input
-                    placeholder={`Opção ${index + 1}`}
-                    value={option.text}
-                    onChange={(e) => updateOption(option.id, e.target.value)}
-                    required
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
+              <div key={option.id} className="space-y-1">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-28 md:w-36 shrink-0">
+                    <Input
+                      placeholder="😀 ou <:nome:id>"
+                      value={option.emoji}
+                      onChange={(e) => updateOption(option.id, 'emoji', e.target.value)}
+                      required
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      aria-label={`Emoji da opção ${index + 1}`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      placeholder={`Opção ${index + 1}`}
+                      value={option.text}
+                      onChange={(e) => updateOption(option.id, 'text', e.target.value)}
+                      required
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+                  {options.length > 2 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeOption(option.id)}
+                      className="dark:hover:bg-gray-700 shrink-0"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
                 </div>
-                {options.length > 2 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeOption(option.id)}
-                    className="dark:hover:bg-gray-700 shrink-0"
-                  >
-                    <X className="size-4" />
-                  </Button>
+                {optionErrors[option.id] && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{optionErrors[option.id]}</p>
                 )}
               </div>
             ))}
           </div>
+          {!hasOptionErrors && (
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+              Use emojis Unicode do Discord ou customizados no formato {'<:nome:id>'} e {'<a:nome:id>'}.
+            </p>
+          )}
         </Card>
 
         <Card className="p-4 md:p-6 mb-4 md:mb-6 dark:bg-gray-800 dark:border-gray-700">

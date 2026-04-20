@@ -72,6 +72,17 @@ async function hydrateReactionPayload(reaction) {
   }
 }
 
+function getReactionEmojiKey(reaction) {
+  const emoji = reaction?.emoji;
+  if (!emoji) return null;
+
+  if (emoji.id && emoji.name) {
+    return `<${emoji.animated ? 'a' : ''}:${emoji.name}:${emoji.id}>`;
+  }
+
+  return emoji.name || null;
+}
+
 async function replyInteractionExecutionError(interaction) {
   try {
     if (!interaction.replied && !interaction.deferred) {
@@ -247,10 +258,33 @@ function loadDraftPolls() {
 
       // Normaliza os dados
       const normalizedDrafts = draftsFiltrados.map((draft) => {
+        const normalizedOptions = Array.isArray(draft.opcoes)
+          ? draft.opcoes
+            .map((option) => {
+              if (typeof option === 'string') {
+                const text = option.trim();
+                if (!text) return null;
+                return { text, emoji: null };
+              }
+
+              if (!option || typeof option !== 'object') {
+                return null;
+              }
+
+              const text = typeof option.text === 'string' ? option.text.trim() : '';
+              const emoji = typeof option.emoji === 'string' ? option.emoji.trim() : null;
+
+              if (!text) return null;
+              return { text, emoji: emoji || null };
+            })
+            .filter(Boolean)
+          : [];
+
         return [
           draft.id,
           {
             ...draft,
+            opcoes: normalizedOptions,
             maxVotos: draft.maxVotos || 1,
             usarPesoMensalista: draft.usarPesoMensalista !== undefined ? draft.usarPesoMensalista : false,
             criadorId: draft.criadorId || null,
@@ -354,7 +388,10 @@ async function syncPollReactions() {
         const fetchPromise = reaction.users
           .fetch()
           .then((users) => {
-            reactionUsersMap.set(reaction.emoji.name, users);
+            const emojiKey = getReactionEmojiKey(reaction);
+            if (emojiKey) {
+              reactionUsersMap.set(emojiKey, users);
+            }
             return users;
           })
           .catch(() => null);
@@ -366,7 +403,8 @@ async function syncPollReactions() {
 
       // Para cada reação na mensagem (usando dados já cacheados)
       for (const reaction of message.reactions.cache.values()) {
-        const emoji = reaction.emoji.name;
+        const emoji = getReactionEmojiKey(reaction);
+        if (!emoji) continue;
 
         // Só processa emojis válidos da enquete
         if (!poll.emojiNumeros.includes(emoji)) continue;
@@ -503,7 +541,7 @@ async function enforceVoteLimits() {
           try {
             // Remove as reações em excesso da mensagem
             for (const emoji of reacoesParaRemover) {
-              const reaction = message.reactions.cache.find((r) => r.emoji.name === emoji);
+              const reaction = message.reactions.cache.find((r) => getReactionEmojiKey(r) === emoji);
               if (reaction) {
                 await reaction.users.remove(userId).catch((err) => {
                   if (err.code === 50013) {
@@ -719,7 +757,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (!poll) return;
     if (poll.status !== 'ativa' || poll._closing) return;
 
-    const emoji = reaction.emoji.name;
+    const emoji = getReactionEmojiKey(reaction);
+    if (!emoji) return;
 
     // Verifica se o emoji é válido para esta enquete
     if (!poll.emojiNumeros.includes(emoji)) {
@@ -792,7 +831,8 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (!poll) return;
     if (poll.status !== 'ativa' || poll._closing) return;
 
-    const emoji = reaction.emoji.name;
+    const emoji = getReactionEmojiKey(reaction);
+    if (!emoji) return;
 
     // Remove apenas esta reação específica
     if (poll.votos[user.id] && poll.votos[user.id].reacoes) {

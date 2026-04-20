@@ -279,7 +279,11 @@ describe('Dashboard Commands API', () => {
     client.draftPolls.set('DRAFT-1', {
       id: 'DRAFT-1',
       titulo: 'Enquete dashboard',
-      opcoes: ['Opção A', 'Opção B', 'Opção C'],
+      opcoes: [
+        { text: 'Opção A', emoji: '😀' },
+        { text: 'Opção B', emoji: '<:livro:123456789012345678>' },
+        { text: 'Opção C', emoji: '📚' },
+      ],
       guildId: 'guild-1',
       channelId: 'channel-1',
       maxVotos: -2,
@@ -318,7 +322,11 @@ describe('Dashboard Commands API', () => {
         optionsCount: 3,
         creatorId: 'user-42',
         creatorName: 'willian',
-        options: ['Opção A', 'Opção B', 'Opção C'],
+        options: [
+          { text: 'Opção A', emoji: '😀' },
+          { text: 'Opção B', emoji: '<:livro:123456789012345678>' },
+          { text: 'Opção C', emoji: '📚' },
+        ],
         maxVotes: 1,
       }),
     );
@@ -345,7 +353,10 @@ describe('Dashboard Commands API', () => {
     client.draftPolls.set('DRAFT-1', {
       id: 'DRAFT-1',
       titulo: 'Enquete guild 1',
-      opcoes: ['A', 'B'],
+      opcoes: [
+        { text: 'A', emoji: '🅰️' },
+        { text: 'B', emoji: '🅱️' },
+      ],
       guildId: 'guild-1',
       channelId: 'channel-1',
       criadorId: 'user-1',
@@ -358,7 +369,10 @@ describe('Dashboard Commands API', () => {
     client.draftPolls.set('DRAFT-2', {
       id: 'DRAFT-2',
       titulo: 'Enquete guild 2',
-      opcoes: ['C', 'D'],
+      opcoes: [
+        { text: 'C', emoji: '🇨' },
+        { text: 'D', emoji: '🇩' },
+      ],
       guildId: 'guild-2',
       channelId: 'channel-2',
       criadorId: 'user-2',
@@ -413,6 +427,10 @@ describe('Dashboard Commands API', () => {
         channelId: 'channel-1',
         serverName: 'Guild 1',
         channelName: 'geral',
+        options: [
+          { text: 'Opção A', emoji: null },
+          { text: 'Opção B', emoji: null },
+        ],
       }),
     );
   });

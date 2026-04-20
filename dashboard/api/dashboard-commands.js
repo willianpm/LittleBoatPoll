@@ -65,6 +65,29 @@ function getRequestedSubcommand(rawOptions) {
   return subcommandOption.name;
 }
 
+function normalizeDraftOption(option) {
+  if (typeof option === 'string') {
+    const text = option.trim();
+    if (!text) return null;
+    return { text, emoji: null };
+  }
+
+  if (!option || typeof option !== 'object') {
+    return null;
+  }
+
+  const text = typeof option.text === 'string' ? option.text.trim() : '';
+  const emoji = typeof option.emoji === 'string' ? option.emoji.trim() : null;
+
+  if (!text) return null;
+  return { text, emoji: emoji || null };
+}
+
+function normalizeDraftOptions(options) {
+  if (!Array.isArray(options)) return [];
+  return options.map((option) => normalizeDraftOption(option)).filter(Boolean);
+}
+
 async function hydrateDraftsFromDiskIfNeeded() {
   if (client.draftPolls.size > 0) {
     return;
@@ -503,6 +526,7 @@ router.get('/context-targets/drafts', validateDashboardToken, async (req, res) =
     const drafts = Array.from(client.draftPolls.values())
       .filter((draft) => draft.origem === 'dashboard-create')
       .map((draft) => {
+        const normalizedOptions = normalizeDraftOptions(draft.opcoes);
         const resolvedTarget = resolveGuildAndChannel({
           guildId: draft.guildId || null,
           channelId: draft.channelId || null,
@@ -520,10 +544,10 @@ router.get('/context-targets/drafts', validateDashboardToken, async (req, res) =
           channelId: draft.channelId || resolvedTarget.channelId || null,
           serverName: resolvedTarget.serverName || null,
           channelName: resolvedTarget.channelName || null,
-          optionsCount: Array.isArray(draft.opcoes) ? draft.opcoes.length : 0,
+          optionsCount: normalizedOptions.length,
           creatorId: draft.criadorId,
           creatorName: draft.criadorNome || null,
-          options: Array.isArray(draft.opcoes) ? draft.opcoes : [],
+          options: normalizedOptions,
           maxVotes: safeMaxVotes,
           pesoMensalista: draft.usarPesoMensalista ? 'sim' : 'nao',
           durationKey: isValidDurationKey(draft.durationKey) ? draft.durationKey : '24h',
