@@ -155,22 +155,26 @@ function formatGuildEmoji(emoji) {
   };
 }
 
-async function getGuildEmojis(guild) {
+async function getGuildEmojis(guild, options = {}) {
+  const { forceRefresh = false } = options;
+
   if (!guild) return [];
 
   const hydratedGuild = typeof guild.fetch === 'function' ? await guild.fetch().catch(() => guild) : guild;
   const emojiManager = hydratedGuild?.emojis || guild.emojis;
   if (!emojiManager) return [];
 
-  let emojiCollection = emojiManager.cache;
+  let emojiCollection = forceRefresh ? null : emojiManager.cache;
 
   if ((!emojiCollection || emojiCollection.size === 0) && typeof emojiManager.fetch === 'function') {
     const fetchedEmojis = await emojiManager.fetch().catch(() => null);
     if (fetchedEmojis?.size) {
       emojiCollection = fetchedEmojis;
-    } else if (emojiManager.cache?.size) {
-      emojiCollection = emojiManager.cache;
     }
+  }
+
+  if ((!emojiCollection || emojiCollection.size === 0) && emojiManager.cache?.size) {
+    emojiCollection = emojiManager.cache;
   }
 
   const emojis = Array.from(emojiCollection?.values?.() || [])
@@ -439,6 +443,26 @@ router.get('/guilds/:guildId/channels', validateDashboardToken, async (req, res)
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
     return res.json({ channels });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/guilds/:guildId/emojis', validateDashboardToken, async (req, res) => {
+  try {
+    const { guildId } = req.params;
+
+    if (!req.dashboardAuth.accessibleGuildIds.includes(guildId)) {
+      return res.status(403).json({ error: 'Acesso negado para a guild informada' });
+    }
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) {
+      return res.status(404).json({ error: 'Guild não encontrada' });
+    }
+
+    const emojis = await getGuildEmojis(guild, { forceRefresh: true });
+    return res.json({ emojis });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

@@ -4,15 +4,19 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, X, Sparkles } from 'lucide-react';
+import { Plus, X, Sparkles, Smile } from 'lucide-react';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { toast } from 'sonner';
 import {
   createDraft,
+  type DashboardGuildEmoji,
+  getGuildEmojis,
   getGuildChannels,
   getGuilds,
   type DashboardChannel,
   type DashboardGuild,
 } from '../lib/dashboard-api';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 
 type PollFormOption = {
   id: string;
@@ -29,6 +33,10 @@ function createEmptyOption(id: string): PollFormOption {
 }
 
 const NO_SERVER_EMOJI_VALUE = '__no_server_emoji__';
+function getDiscordEmojiUrl(emoji: DashboardGuildEmoji): string {
+  const extension = emoji.animated ? 'gif' : 'png';
+  return `https://cdn.discordapp.com/emojis/${emoji.id}.${extension}?size=64&quality=lossless`;
+}
 
 export function CreatePoll() {
   const [title, setTitle] = useState('');
@@ -39,8 +47,10 @@ export function CreatePoll() {
   const [subscriberWeight, setSubscriberWeight] = useState<'yes' | 'no'>('no');
   const [guilds, setGuilds] = useState<DashboardGuild[]>([]);
   const [channels, setChannels] = useState<DashboardChannel[]>([]);
+  const [guildEmojis, setGuildEmojis] = useState<DashboardGuildEmoji[]>([]);
   const [loadingGuilds, setLoadingGuilds] = useState(true);
   const [loadingChannels, setLoadingChannels] = useState(false);
+  const [loadingGuildEmojis, setLoadingGuildEmojis] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [options, setOptions] = useState<PollFormOption[]>([createEmptyOption('1'), createEmptyOption('2')]);
@@ -112,6 +122,43 @@ export function CreatePoll() {
     };
   }, [selectedGuildId]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadGuildEmojis() {
+      if (!selectedGuildId) {
+        setGuildEmojis([]);
+        return;
+      }
+
+      setLoadingGuildEmojis(true);
+
+      try {
+        const emojis = await getGuildEmojis(selectedGuildId);
+        if (!isMounted) return;
+
+        setGuildEmojis(emojis);
+        setGuilds((currentGuilds) =>
+          currentGuilds.map((guild) => (guild.id === selectedGuildId ? { ...guild, emojis } : guild)),
+        );
+      } catch (error) {
+        if (!isMounted) return;
+        setGuildEmojis([]);
+        toast.error(error instanceof Error ? error.message : 'Falha ao carregar emojis do servidor');
+      } finally {
+        if (isMounted) {
+          setLoadingGuildEmojis(false);
+        }
+      }
+    }
+
+    loadGuildEmojis();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedGuildId]);
+
   const hasOptionErrors = useMemo(
     () => options.some((option) => Boolean(optionErrors[option.id])),
     [optionErrors, options],
@@ -122,7 +169,15 @@ export function CreatePoll() {
     [guilds, selectedGuildId],
   );
 
-  const serverEmojis = useMemo(() => selectedGuild?.emojis || [], [selectedGuild]);
+  const serverEmojis = useMemo<DashboardGuildEmoji[]>(
+    () => (guildEmojis.length > 0 ? guildEmojis : selectedGuild?.emojis || []),
+    [guildEmojis, selectedGuild],
+  );
+  const hasCustomServerEmojis = serverEmojis.length > 0;
+  const serverEmojiByIdentifier = useMemo(
+    () => new Map(serverEmojis.map((emoji) => [emoji.identifier, emoji])),
+    [serverEmojis],
+  );
 
   const addOption = () => {
     if (options.length < 20) {
@@ -159,11 +214,6 @@ export function CreatePoll() {
       return;
     }
 
-    if (serverEmojis.length === 0) {
-      toast.error('Este servidor não possui emojis customizados disponíveis para enquetes');
-      return;
-    }
-
     const selectedChannelExists = channels.some((channel) => channel.id === selectedChannelId);
     if (!selectedChannelExists) {
       toast.error('Canal inválido para o servidor selecionado. Selecione novamente.');
@@ -191,7 +241,7 @@ export function CreatePoll() {
         return;
       }
 
-      if (!validEmojiIdentifiers.has(option.emoji)) {
+      if (hasCustomServerEmojis && !validEmojiIdentifiers.has(option.emoji)) {
         nextOptionErrors[option.id] = 'Selecione um emoji da lista do servidor para esta opção.';
       }
     });
@@ -364,30 +414,89 @@ export function CreatePoll() {
             {options.map((option, index) => (
               <div key={option.id} className="space-y-1">
                 <div className="flex items-center gap-2 md:gap-3">
-                  <div className="w-40 md:w-48 shrink-0">
-                    <Select
-                      value={option.emoji}
-                      onValueChange={(value) => {
-                        if (value === NO_SERVER_EMOJI_VALUE) return;
-                        updateOption(option.id, 'emoji', value);
-                      }}
-                    >
-                      <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <SelectValue placeholder="Emoji do servidor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {serverEmojis.length === 0 && (
-                          <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
-                            Nenhum emoji do servidor encontrado
-                          </SelectItem>
-                        )}
-                        {serverEmojis.map((emoji) => (
-                          <SelectItem key={emoji.id} value={emoji.identifier}>
-                            {emoji.identifier} :{emoji.name}:
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="w-14 md:w-16 shrink-0">
+                    {hasCustomServerEmojis ? (
+                      <Select
+                        value={option.emoji}
+                        disabled={loadingGuildEmojis}
+                        onValueChange={(value) => {
+                          if (value === NO_SERVER_EMOJI_VALUE) return;
+                          updateOption(option.id, 'emoji', value);
+                        }}
+                      >
+                        <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white px-2">
+                          {(() => {
+                            const selectedEmoji = serverEmojiByIdentifier.get(option.emoji);
+                            return selectedEmoji ? (
+                              <img
+                                src={getDiscordEmojiUrl(selectedEmoji)}
+                                alt={`Emoji ${selectedEmoji.name}`}
+                                className="size-5 object-contain"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                            );
+                          })()}
+                          <SelectValue placeholder="Selecionar emoji" className="sr-only" />
+                        </SelectTrigger>
+                        <SelectContent className="min-w-[220px]">
+                          {loadingGuildEmojis && (
+                            <SelectItem value="__loading_server_emojis__" disabled>
+                              Carregando emojis...
+                            </SelectItem>
+                          )}
+                          {serverEmojis.length === 0 && (
+                            <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
+                              Nenhum emoji disponível
+                            </SelectItem>
+                          )}
+                          {serverEmojis.map((emoji) => (
+                            <SelectItem key={emoji.id} value={emoji.identifier}>
+                              <span className="flex items-center gap-2">
+                                <img
+                                  src={getDiscordEmojiUrl(emoji)}
+                                  alt={`Emoji ${emoji.name}`}
+                                  className="size-5 object-contain"
+                                  loading="lazy"
+                                />
+                                <span className="truncate">:{emoji.name}:</span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full h-9 px-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            aria-label="Selecionar emoji padrão"
+                          >
+                            {option.emoji ? (
+                              <span className="text-base leading-none" aria-hidden="true">
+                                {option.emoji}
+                              </span>
+                            ) : (
+                              <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[352px] p-0 border-0" align="start">
+                          <EmojiPicker
+                            theme={Theme.DARK}
+                            lazyLoadEmojis
+                            searchDisabled={false}
+                            previewConfig={{ showPreview: false }}
+                            onEmojiClick={(emojiData) => updateOption(option.id, 'emoji', emojiData.emoji)}
+                            width={352}
+                            height={380}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                   <div className="flex-1">
                     <Input
@@ -418,7 +527,8 @@ export function CreatePoll() {
           </div>
           {!hasOptionErrors && (
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-              Escolha apenas emojis customizados do servidor.
+              Se o servidor não tiver emojis customizados, um painel completo de emojis (estilo Discord) fica
+              disponível.
             </p>
           )}
         </Card>

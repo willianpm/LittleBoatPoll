@@ -1,16 +1,34 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { CreatePoll } from './CreatePoll';
-import { createDraft, getGuildChannels, getGuilds } from '../lib/dashboard-api';
+import { createDraft, getGuildChannels, getGuildEmojis, getGuilds } from '../lib/dashboard-api';
 
 jest.mock('../lib/dashboard-api', () => ({
   createDraft: jest.fn(),
   getGuildChannels: jest.fn(),
+  getGuildEmojis: jest.fn(),
   getGuilds: jest.fn(),
 }));
 
 jest.mock('../components/ui/select', () => {
   const React = require('react');
+
+  function getTextContent(node: any): string {
+    if (typeof node === 'string' || typeof node === 'number') {
+      return String(node);
+    }
+
+    if (Array.isArray(node)) {
+      return node.map((child) => getTextContent(child)).join('');
+    }
+
+    if (React.isValidElement(node)) {
+      return getTextContent(node.props?.children);
+    }
+
+    return '';
+  }
+
   const SelectContext = React.createContext({
     value: '',
     onValueChange: null,
@@ -47,7 +65,7 @@ jest.mock('../components/ui/select', () => {
   }
 
   function SelectItem({ value, children }: any) {
-    return React.createElement('option', { value }, children);
+    return React.createElement('option', { value }, getTextContent(children));
   }
 
   return {
@@ -66,8 +84,24 @@ jest.mock('sonner', () => ({
   },
 }));
 
+jest.mock('emoji-picker-react', () => {
+  const React = require('react');
+  function EmojiPicker() {
+    return React.createElement('div', { 'data-testid': 'emoji-picker-mock' });
+  }
+
+  return {
+    __esModule: true,
+    default: EmojiPicker,
+    Theme: {
+      DARK: 'dark',
+    },
+  };
+});
+
 const mockedGetGuilds = getGuilds as jest.MockedFunction<typeof getGuilds>;
 const mockedGetGuildChannels = getGuildChannels as jest.MockedFunction<typeof getGuildChannels>;
+const mockedGetGuildEmojis = getGuildEmojis as jest.MockedFunction<typeof getGuildEmojis>;
 const mockedCreateDraft = createDraft as jest.MockedFunction<typeof createDraft>;
 
 describe('CreatePoll', () => {
@@ -82,6 +116,9 @@ describe('CreatePoll', () => {
       },
     ]);
     mockedGetGuildChannels.mockResolvedValue([{ id: 'channel-1', name: 'geral', type: 0 }]);
+    mockedGetGuildEmojis.mockResolvedValue([
+      { id: 'emoji-1', name: 'livro', animated: false, identifier: '<:livro:123456789012345678>' },
+    ]);
     mockedCreateDraft.mockResolvedValue({ success: true, message: 'ok' });
   });
 
@@ -112,6 +149,7 @@ describe('CreatePoll', () => {
     await waitFor(() => {
       expect(mockedGetGuilds).toHaveBeenCalled();
       expect(mockedGetGuildChannels).toHaveBeenCalledWith('guild-1');
+      expect(mockedGetGuildEmojis).toHaveBeenCalledWith('guild-1');
     });
 
     await selectChannel();
@@ -150,6 +188,7 @@ describe('CreatePoll', () => {
 
     await waitFor(() => {
       expect(mockedGetGuildChannels).toHaveBeenCalledWith('guild-1');
+      expect(mockedGetGuildEmojis).toHaveBeenCalledWith('guild-1');
     });
 
     await selectChannel();

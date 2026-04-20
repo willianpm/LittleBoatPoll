@@ -30,6 +30,7 @@ beforeEach(() => {
 
 describe('Dashboard Auth API - guild selectors', () => {
   let app;
+  let guildOneEmojiFetch;
 
   beforeAll(() => {
     app = express();
@@ -78,6 +79,20 @@ describe('Dashboard Auth API - guild selectors', () => {
       ],
     ]);
 
+    guildOneEmojiFetch = jest.fn(
+      async () =>
+        new Map([
+          [
+            'emoji-2',
+            {
+              id: 'emoji-2',
+              name: 'foguete',
+              animated: false,
+            },
+          ],
+        ]),
+    );
+
     client.guilds.cache = new Map([
       [
         'guild-1',
@@ -96,7 +111,7 @@ describe('Dashboard Auth API - guild selectors', () => {
                 },
               ],
             ]),
-            fetch: jest.fn(async () => null),
+            fetch: guildOneEmojiFetch,
           },
           members: {
             cache: membersCache,
@@ -180,6 +195,21 @@ describe('Dashboard Auth API - guild selectors', () => {
         id: 'channel-1',
         name: 'geral',
       }),
+    ]);
+  });
+
+  it('should return refreshed emojis for selected guild', async () => {
+    const res = await request(app).get('/api/auth/guilds/guild-1/emojis');
+
+    expect(res.statusCode).toBe(200);
+    expect(guildOneEmojiFetch).toHaveBeenCalled();
+    expect(res.body.emojis).toEqual([
+      {
+        id: 'emoji-2',
+        name: 'foguete',
+        animated: false,
+        identifier: '<:foguete:emoji-2>',
+      },
     ]);
   });
 });

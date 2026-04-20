@@ -159,6 +159,13 @@ export async function getGuildChannels(guildId: string) {
   return Array.isArray(payload.channels) ? payload.channels : [];
 }
 
+export async function getGuildEmojis(guildId: string) {
+  const payload = await requestJson<{ emojis: DashboardGuildEmoji[] }>(
+    `/auth/guilds/${encodeURIComponent(guildId)}/emojis`,
+  );
+  return Array.isArray(payload.emojis) ? payload.emojis : [];
+}
+
 export async function getGuildMembers(guildId: string, query = '') {
   const params = new URLSearchParams();
   if (query.trim()) {
