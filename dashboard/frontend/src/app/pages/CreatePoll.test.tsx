@@ -73,10 +73,38 @@ const mockedCreateDraft = createDraft as jest.MockedFunction<typeof createDraft>
 describe('CreatePoll', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    mockedGetGuilds.mockResolvedValue([{ id: 'guild-1', name: 'Guild One', isActive: true }]);
+    mockedGetGuilds.mockResolvedValue([
+      {
+        id: 'guild-1',
+        name: 'Guild One',
+        isActive: true,
+        emojis: [{ id: 'emoji-1', name: 'livro', animated: false, identifier: '<:livro:123456789012345678>' }],
+      },
+    ]);
     mockedGetGuildChannels.mockResolvedValue([{ id: 'channel-1', name: 'geral', type: 0 }]);
     mockedCreateDraft.mockResolvedValue({ success: true, message: 'ok' });
   });
+
+  const selectChannel = async () => {
+    const selects = await screen.findAllByRole('combobox');
+    const channelSelect = selects.find((element) =>
+      Array.from(element.querySelectorAll('option')).some((option) => option.textContent?.includes('# geral')),
+    );
+
+    expect(channelSelect).toBeTruthy();
+    fireEvent.change(channelSelect as HTMLSelectElement, { target: { value: 'channel-1' } });
+  };
+
+  const selectEmojiForOption = async (optionIndex: number, identifier: string) => {
+    const serverEmojiSelects = (await screen.findAllByRole('combobox')).filter((element) =>
+      Array.from(element.querySelectorAll('option')).some((option) => option.value === identifier),
+    );
+
+    expect(serverEmojiSelects.length).toBeGreaterThan(optionIndex);
+    fireEvent.change(serverEmojiSelects[optionIndex] as HTMLSelectElement, {
+      target: { value: identifier },
+    });
+  };
 
   it('envia rascunho com pelo menos 2 opções válidas incluindo emoji unicode e customizado', async () => {
     render(<CreatePoll />);
@@ -86,23 +114,18 @@ describe('CreatePoll', () => {
       expect(mockedGetGuildChannels).toHaveBeenCalledWith('guild-1');
     });
 
-    const selects = await screen.findAllByRole('combobox');
-    fireEvent.change(selects[1], { target: { value: 'channel-1' } });
+    await selectChannel();
 
     fireEvent.change(screen.getByLabelText('Título da Enquete *'), {
       target: { value: 'Nova enquete' },
     });
 
-    fireEvent.change(screen.getByLabelText('Emoji da opção 1'), {
-      target: { value: '😀' },
-    });
+    await selectEmojiForOption(0, '<:livro:123456789012345678>');
     fireEvent.change(screen.getByPlaceholderText('Opção 1'), {
       target: { value: 'Opção A' },
     });
 
-    fireEvent.change(screen.getByLabelText('Emoji da opção 2'), {
-      target: { value: '<:livro:123456789012345678>' },
-    });
+    await selectEmojiForOption(1, '<:livro:123456789012345678>');
     fireEvent.change(screen.getByPlaceholderText('Opção 2'), {
       target: { value: 'Opção B' },
     });
@@ -114,7 +137,7 @@ describe('CreatePoll', () => {
         expect.objectContaining({
           title: 'Nova enquete',
           options: [
-            { text: 'Opção A', emoji: '😀' },
+            { text: 'Opção A', emoji: '<:livro:123456789012345678>' },
             { text: 'Opção B', emoji: '<:livro:123456789012345678>' },
           ],
         }),
@@ -122,30 +145,24 @@ describe('CreatePoll', () => {
     });
   });
 
-  it('rejeita emoji inválido antes de enviar', async () => {
+  it('rejeita envio quando faltar seleção de emoji', async () => {
     render(<CreatePoll />);
 
     await waitFor(() => {
       expect(mockedGetGuildChannels).toHaveBeenCalledWith('guild-1');
     });
 
-    const selects = await screen.findAllByRole('combobox');
-    fireEvent.change(selects[1], { target: { value: 'channel-1' } });
+    await selectChannel();
 
     fireEvent.change(screen.getByLabelText('Título da Enquete *'), {
       target: { value: 'Nova enquete' },
     });
 
-    fireEvent.change(screen.getByLabelText('Emoji da opção 1'), {
-      target: { value: 'nao-emoji' },
-    });
     fireEvent.change(screen.getByPlaceholderText('Opção 1'), {
       target: { value: 'Opção A' },
     });
 
-    fireEvent.change(screen.getByLabelText('Emoji da opção 2'), {
-      target: { value: '😀' },
-    });
+    await selectEmojiForOption(1, '<:livro:123456789012345678>');
     fireEvent.change(screen.getByPlaceholderText('Opção 2'), {
       target: { value: 'Opção B' },
     });

@@ -12,18 +12,21 @@ import {
   deleteDraft,
   editDraft,
   getDraftContextTargets,
+  getGuilds,
   publishDraft,
+  type DashboardGuild,
   type DashboardDraftContext,
 } from '../lib/dashboard-api';
-import { isValidDiscordEmoji } from '../lib/emoji-validation';
 
 type DraftItem = DashboardDraftContext;
 type DraftOptionRow = { id: string; text: string; emoji: string };
 const ALLOWED_DURATION_KEYS = new Set(['1h', '6h', '12h', '24h', '3d', '7d']);
+const NO_SERVER_EMOJI_VALUE = '__no_server_emoji__';
 
 export function PollDrafts() {
   const navigate = useNavigate();
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
+  const [guilds, setGuilds] = useState<DashboardGuild[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -42,7 +45,17 @@ export function PollDrafts() {
 
   useEffect(() => {
     void loadDrafts();
+    void loadGuilds();
   }, []);
+
+  async function loadGuilds() {
+    try {
+      const data = await getGuilds();
+      setGuilds(data);
+    } catch {
+      setGuilds([]);
+    }
+  }
 
   async function loadDrafts() {
     setLoadingDrafts(true);
@@ -163,6 +176,13 @@ export function PollDrafts() {
     });
   };
 
+  const selectedDraftGuild = useMemo(() => {
+    if (!editingDraft?.guildId) return null;
+    return guilds.find((guild) => guild.id === editingDraft.guildId) || null;
+  }, [editingDraft?.guildId, guilds]);
+
+  const selectedDraftGuildEmojis = useMemo(() => selectedDraftGuild?.emojis || [], [selectedDraftGuild]);
+
   const handleSaveEdit = async () => {
     if (!editingDraft) return;
 
@@ -180,6 +200,13 @@ export function PollDrafts() {
     }
 
     const nextOptionErrors: Record<string, string> = {};
+    const validEmojiIdentifiers = new Set(selectedDraftGuildEmojis.map((emoji) => emoji.identifier));
+
+    if (selectedDraftGuildEmojis.length === 0) {
+      toast.error('Este servidor não possui emojis customizados disponíveis para enquetes');
+      return;
+    }
+
     normalizedOptions.forEach((option, index) => {
       if (!option.text) {
         nextOptionErrors[option.id] = `Preencha o texto da opção ${index + 1}`;
@@ -191,9 +218,8 @@ export function PollDrafts() {
         return;
       }
 
-      if (!isValidDiscordEmoji(option.emoji)) {
-        nextOptionErrors[option.id] =
-          'Emoji inválido. Use emoji Unicode do Discord ou formato customizado <:nome:id>/<a:nome:id>.';
+      if (!validEmojiIdentifiers.has(option.emoji)) {
+        nextOptionErrors[option.id] = 'Selecione um emoji da lista do servidor para esta opção.';
       }
     });
 
@@ -426,13 +452,31 @@ export function PollDrafts() {
                   {editOptions.map((option, index) => (
                     <div key={option.id} className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Input
-                          value={option.emoji}
-                          onChange={(e) => updateEditOption(option.id, 'emoji', e.target.value)}
-                          placeholder="😀 ou <:nome:id>"
-                          className="w-28 md:w-36 dark:bg-gray-700 dark:border-gray-600 dark:text-white shrink-0"
-                          aria-label={`Emoji da opção ${index + 1}`}
-                        />
+                        <div className="w-40 md:w-48 shrink-0 space-y-1">
+                          <Select
+                            value={option.emoji}
+                            onValueChange={(value) => {
+                              if (value === NO_SERVER_EMOJI_VALUE) return;
+                              updateEditOption(option.id, 'emoji', value);
+                            }}
+                          >
+                            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                              <SelectValue placeholder="Emoji do servidor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedDraftGuildEmojis.length === 0 && (
+                                <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
+                                  Nenhum emoji do servidor encontrado
+                                </SelectItem>
+                              )}
+                              {selectedDraftGuildEmojis.map((emoji) => (
+                                <SelectItem key={emoji.id} value={emoji.identifier}>
+                                  {emoji.identifier} :{emoji.name}:
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <Input
                           value={option.text}
                           onChange={(e) => updateEditOption(option.id, 'text', e.target.value)}
@@ -457,8 +501,7 @@ export function PollDrafts() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Use emoji Unicode do Discord ou customizado no formato {'<:nome:id>'}/{'<a:nome:id>'}. Mínimo 2,
-                  máximo 20 opções.
+                  Escolha emojis customizados do servidor. Mínimo 2, máximo 20 opções.
                 </p>
               </div>
 

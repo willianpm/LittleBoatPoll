@@ -143,6 +143,44 @@ function getDiscordGuildIconUrl(guild) {
   return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
 }
 
+function formatGuildEmoji(emoji) {
+  if (!emoji?.id || !emoji?.name) return null;
+
+  const animated = Boolean(emoji.animated);
+  return {
+    id: emoji.id,
+    name: emoji.name,
+    animated,
+    identifier: `<${animated ? 'a' : ''}:${emoji.name}:${emoji.id}>`,
+  };
+}
+
+async function getGuildEmojis(guild) {
+  if (!guild) return [];
+
+  const hydratedGuild = typeof guild.fetch === 'function' ? await guild.fetch().catch(() => guild) : guild;
+  const emojiManager = hydratedGuild?.emojis || guild.emojis;
+  if (!emojiManager) return [];
+
+  let emojiCollection = emojiManager.cache;
+
+  if ((!emojiCollection || emojiCollection.size === 0) && typeof emojiManager.fetch === 'function') {
+    const fetchedEmojis = await emojiManager.fetch().catch(() => null);
+    if (fetchedEmojis?.size) {
+      emojiCollection = fetchedEmojis;
+    } else if (emojiManager.cache?.size) {
+      emojiCollection = emojiManager.cache;
+    }
+  }
+
+  const emojis = Array.from(emojiCollection?.values?.() || [])
+    .map((emoji) => formatGuildEmoji(emoji))
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+
+  return emojis;
+}
+
 async function resolveAuthorizedMember(userId, preferredGuildId = null) {
   const candidateGuildIds = [];
   if (preferredGuildId) candidateGuildIds.push(preferredGuildId);
@@ -312,15 +350,21 @@ router.get('/me', async (req, res) => {
 
 router.get('/guilds', validateDashboardToken, async (req, res) => {
   try {
-    const guilds = Array.from(client.guilds.cache.values())
-      .filter((guild) => req.dashboardAuth.accessibleGuildIds.includes(guild.id))
-      .map((guild) => ({
-        id: guild.id,
-        name: guild.name,
-        icon: getDiscordGuildIconUrl(guild),
-        isActive: guild.id === req.dashboardAuth.guildId,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    const guildEntries = Array.from(client.guilds.cache.values()).filter((guild) =>
+      req.dashboardAuth.accessibleGuildIds.includes(guild.id),
+    );
+
+    const guilds = (
+      await Promise.all(
+        guildEntries.map(async (guild) => ({
+          id: guild.id,
+          name: guild.name,
+          icon: getDiscordGuildIconUrl(guild),
+          isActive: guild.id === req.dashboardAuth.guildId,
+          emojis: await getGuildEmojis(guild),
+        })),
+      )
+    ).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
     return res.json({ guilds });
   } catch (error) {
@@ -404,26 +448,26 @@ router.get('/guilds/:guildId/group-members', validateDashboardToken, (req, res) 
   const normalizeGroupEntries = (entries) => {
     return Array.isArray(entries)
       ? entries
-          .map((entry) => {
-            if (!entry) return null;
-            if (typeof entry === 'string') {
-              return { id: entry, addedAt: null, addedBy: null };
-            }
+        .map((entry) => {
+          if (!entry) return null;
+          if (typeof entry === 'string') {
+            return { id: entry, addedAt: null, addedBy: null };
+          }
 
-            if (typeof entry === 'object') {
-              const id = entry.id || entry.userId || entry.usuarioId;
-              if (!id) return null;
+          if (typeof entry === 'object') {
+            const id = entry.id || entry.userId || entry.usuarioId;
+            if (!id) return null;
 
-              return {
-                id: String(id),
-                addedAt: entry.addedAt || entry.adicionadoEm || entry.createdAt || entry.criadoEm || null,
-                addedBy: entry.addedBy || entry.adicionadoPor || null,
-              };
-            }
+            return {
+              id: String(id),
+              addedAt: entry.addedAt || entry.adicionadoEm || entry.createdAt || entry.criadoEm || null,
+              addedBy: entry.addedBy || entry.adicionadoPor || null,
+            };
+          }
 
-            return null;
-          })
-          .filter(Boolean)
+          return null;
+        })
+        .filter(Boolean)
       : [];
   };
 

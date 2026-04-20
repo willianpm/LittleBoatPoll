@@ -13,7 +13,6 @@ import {
   type DashboardChannel,
   type DashboardGuild,
 } from '../lib/dashboard-api';
-import { isValidDiscordEmoji } from '../lib/emoji-validation';
 
 type PollFormOption = {
   id: string;
@@ -28,6 +27,8 @@ function createEmptyOption(id: string): PollFormOption {
     emoji: '',
   };
 }
+
+const NO_SERVER_EMOJI_VALUE = '__no_server_emoji__';
 
 export function CreatePoll() {
   const [title, setTitle] = useState('');
@@ -116,6 +117,13 @@ export function CreatePoll() {
     [optionErrors, options],
   );
 
+  const selectedGuild = useMemo(
+    () => guilds.find((guild) => guild.id === selectedGuildId) || null,
+    [guilds, selectedGuildId],
+  );
+
+  const serverEmojis = useMemo(() => selectedGuild?.emojis || [], [selectedGuild]);
+
   const addOption = () => {
     if (options.length < 20) {
       setOptions([...options, createEmptyOption(Date.now().toString())]);
@@ -151,6 +159,11 @@ export function CreatePoll() {
       return;
     }
 
+    if (serverEmojis.length === 0) {
+      toast.error('Este servidor não possui emojis customizados disponíveis para enquetes');
+      return;
+    }
+
     const selectedChannelExists = channels.some((channel) => channel.id === selectedChannelId);
     if (!selectedChannelExists) {
       toast.error('Canal inválido para o servidor selecionado. Selecione novamente.');
@@ -158,6 +171,7 @@ export function CreatePoll() {
     }
 
     const nextOptionErrors: Record<string, string> = {};
+    const validEmojiIdentifiers = new Set(serverEmojis.map((emoji) => emoji.identifier));
     const normalizedOptions = options
       .map((option) => ({
         id: option.id,
@@ -177,9 +191,8 @@ export function CreatePoll() {
         return;
       }
 
-      if (!isValidDiscordEmoji(option.emoji)) {
-        nextOptionErrors[option.id] =
-          'Emoji inválido. Use emoji Unicode do Discord ou formato customizado <:nome:id>/<a:nome:id>.';
+      if (!validEmojiIdentifiers.has(option.emoji)) {
+        nextOptionErrors[option.id] = 'Selecione um emoji da lista do servidor para esta opção.';
       }
     });
 
@@ -351,15 +364,30 @@ export function CreatePoll() {
             {options.map((option, index) => (
               <div key={option.id} className="space-y-1">
                 <div className="flex items-center gap-2 md:gap-3">
-                  <div className="w-28 md:w-36 shrink-0">
-                    <Input
-                      placeholder="😀 ou <:nome:id>"
+                  <div className="w-40 md:w-48 shrink-0">
+                    <Select
                       value={option.emoji}
-                      onChange={(e) => updateOption(option.id, 'emoji', e.target.value)}
-                      required
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      aria-label={`Emoji da opção ${index + 1}`}
-                    />
+                      onValueChange={(value) => {
+                        if (value === NO_SERVER_EMOJI_VALUE) return;
+                        updateOption(option.id, 'emoji', value);
+                      }}
+                    >
+                      <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <SelectValue placeholder="Emoji do servidor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serverEmojis.length === 0 && (
+                          <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
+                            Nenhum emoji do servidor encontrado
+                          </SelectItem>
+                        )}
+                        {serverEmojis.map((emoji) => (
+                          <SelectItem key={emoji.id} value={emoji.identifier}>
+                            {emoji.identifier} :{emoji.name}:
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex-1">
                     <Input
@@ -390,7 +418,7 @@ export function CreatePoll() {
           </div>
           {!hasOptionErrors && (
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-              Use emojis Unicode do Discord ou customizados no formato {'<:nome:id>'} e {'<a:nome:id>'}.
+              Escolha apenas emojis customizados do servidor.
             </p>
           )}
         </Card>

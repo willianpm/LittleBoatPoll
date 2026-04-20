@@ -85,6 +85,19 @@ describe('Dashboard Auth API - guild selectors', () => {
           id: 'guild-1',
           name: 'Guild One',
           icon: null,
+          emojis: {
+            cache: new Map([
+              [
+                'emoji-1',
+                {
+                  id: 'emoji-1',
+                  name: 'livro',
+                  animated: false,
+                },
+              ],
+            ]),
+            fetch: jest.fn(async () => null),
+          },
           members: {
             cache: membersCache,
             fetch: jest.fn(async () => membersCache),
@@ -101,6 +114,10 @@ describe('Dashboard Auth API - guild selectors', () => {
           id: 'guild-2',
           name: 'Guild Two',
           icon: null,
+          emojis: {
+            cache: new Map(),
+            fetch: jest.fn(async () => null),
+          },
           members: {
             cache: membersCache,
             fetch: jest.fn(async () => membersCache),
@@ -136,6 +153,14 @@ describe('Dashboard Auth API - guild selectors', () => {
       expect.objectContaining({
         id: 'guild-1',
         name: 'Guild One',
+        emojis: [
+          {
+            id: 'emoji-1',
+            name: 'livro',
+            animated: false,
+            identifier: '<:livro:emoji-1>',
+          },
+        ],
       }),
     );
   });

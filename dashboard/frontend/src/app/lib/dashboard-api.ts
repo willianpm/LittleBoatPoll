@@ -10,6 +10,13 @@ export interface DashboardDraftOption {
   emoji?: string | null;
 }
 
+export interface DashboardGuildEmoji {
+  id: string;
+  name: string;
+  animated: boolean;
+  identifier: string;
+}
+
 export type DurationKey = '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
 
 export interface DashboardPoll {
@@ -35,6 +42,7 @@ export interface DashboardGuild {
   name: string;
   icon?: string | null;
   isActive?: boolean;
+  emojis?: DashboardGuildEmoji[];
 }
 
 export interface DashboardChannel {
