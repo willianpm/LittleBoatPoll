@@ -8,9 +8,7 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Plus, Send, FileText, Trash2, Edit, X, Server, Hash, Smile } from 'lucide-react';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { toast } from 'sonner';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import {
   deleteDraft,
   editDraft,
@@ -22,20 +20,15 @@ import {
   type DashboardDraftContext,
   type DashboardGuildEmoji,
 } from '../lib/dashboard-api';
+import { isValidDiscordCustomEmoji, isValidDiscordEmoji } from '../lib/emoji-validation';
+import { buildEmojiLookupByValue, getAvailableEmojis } from '../lib/emoji-merge';
 
 type DraftItem = DashboardDraftContext;
 type DraftOptionRow = { id: string; text: string; emoji: string };
 const ALLOWED_DURATION_KEYS = new Set(['1h', '6h', '12h', '24h', '3d', '7d']);
 const NO_SERVER_EMOJI_VALUE = '__no_server_emoji__';
-
-function isDiscordCustomEmojiIdentifier(value: string): boolean {
-  return /^<a?:[^:]+:\d+>$/.test(value);
-}
-
-function getDiscordEmojiUrl(emoji: DashboardGuildEmoji): string {
-  const extension = emoji.animated ? 'gif' : 'png';
-  return `https://cdn.discordapp.com/emojis/${emoji.id}.${extension}?size=64&quality=lossless`;
-}
+const CUSTOM_EMOJIS_HEADER_VALUE = '__custom_emojis_header__';
+const DEFAULT_EMOJIS_HEADER_VALUE = '__default_emojis_header__';
 
 export function PollDrafts() {
   const navigate = useNavigate();
@@ -235,11 +228,41 @@ export function PollDrafts() {
     () => (editingDraftGuildEmojis.length > 0 ? editingDraftGuildEmojis : selectedDraftGuild?.emojis || []),
     [editingDraftGuildEmojis, selectedDraftGuild],
   );
-  const hasCustomDraftEmojis = draftEmojis.length > 0;
-  const draftEmojiByIdentifier = useMemo(
-    () => new Map(draftEmojis.map((emoji) => [emoji.identifier, emoji])),
-    [draftEmojis],
+
+  const mergedDraftEmojis = useMemo(() => {
+    const merged = getAvailableEmojis(draftEmojis);
+    const selectedUnicode = editOptions
+      .map((option) => option.emoji.trim())
+      .filter((emoji) => emoji && !isValidDiscordCustomEmoji(emoji));
+
+    if (selectedUnicode.length === 0) return merged;
+
+    const valueSet = new Set(merged.map((emoji) => emoji.value));
+    const selectedEntries = selectedUnicode
+      .filter((emoji) => !valueSet.has(emoji))
+      .map((emoji) => ({
+        key: `default:${emoji}`,
+        value: emoji,
+        name: emoji,
+        source: 'default' as const,
+        isCustom: false,
+        unicode: emoji,
+      }));
+
+    return [...merged, ...selectedEntries];
+  }, [draftEmojis, editOptions]);
+
+  const customMergedDraftEmojis = useMemo(
+    () => mergedDraftEmojis.filter((emoji) => emoji.isCustom),
+    [mergedDraftEmojis],
   );
+
+  const defaultMergedDraftEmojis = useMemo(
+    () => mergedDraftEmojis.filter((emoji) => !emoji.isCustom),
+    [mergedDraftEmojis],
+  );
+
+  const mergedDraftEmojiByValue = useMemo(() => buildEmojiLookupByValue(mergedDraftEmojis), [mergedDraftEmojis]);
 
   const handleSaveEdit = async () => {
     if (!editingDraft) return;
@@ -271,11 +294,12 @@ export function PollDrafts() {
         return;
       }
 
-      if (
-        hasCustomDraftEmojis &&
-        isDiscordCustomEmojiIdentifier(option.emoji) &&
-        !validEmojiIdentifiers.has(option.emoji)
-      ) {
+      if (!isValidDiscordEmoji(option.emoji)) {
+        nextOptionErrors[option.id] = `Selecione um emoji válido para a opção ${index + 1}`;
+        return;
+      }
+
+      if (isValidDiscordCustomEmoji(option.emoji) && !validEmojiIdentifiers.has(option.emoji)) {
         nextOptionErrors[option.id] = 'Selecione um emoji da lista do servidor para esta opção.';
       }
     });
@@ -509,93 +533,95 @@ export function PollDrafts() {
                   {editOptions.map((option, index) => (
                     <div key={option.id} className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <div className="w-14 md:w-16 shrink-0">
-                          {hasCustomDraftEmojis ? (
-                            <Select
-                              value={option.emoji}
-                              disabled={loadingEditingDraftGuildEmojis}
-                              onValueChange={(value) => {
-                                if (value === NO_SERVER_EMOJI_VALUE) return;
-                                updateEditOption(option.id, 'emoji', value);
-                              }}
-                            >
-                              <SelectTrigger className="px-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                {(() => {
-                                  const selectedEmoji = draftEmojiByIdentifier.get(option.emoji);
-                                  return selectedEmoji ? (
+                        <div className="w-24 md:w-28 shrink-0">
+                          <Select
+                            value={option.emoji}
+                            disabled={loadingEditingDraftGuildEmojis}
+                            onValueChange={(value) => {
+                              if (
+                                value === NO_SERVER_EMOJI_VALUE ||
+                                value === CUSTOM_EMOJIS_HEADER_VALUE ||
+                                value === DEFAULT_EMOJIS_HEADER_VALUE
+                              ) {
+                                return;
+                              }
+
+                              updateEditOption(option.id, 'emoji', value);
+                            }}
+                          >
+                            <SelectTrigger className="px-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                              {(() => {
+                                const selectedEmoji = mergedDraftEmojiByValue.get(option.emoji);
+
+                                if (selectedEmoji?.isCustom && selectedEmoji.url) {
+                                  return (
                                     <img
-                                      src={getDiscordEmojiUrl(selectedEmoji)}
+                                      src={selectedEmoji.url}
                                       alt={`Emoji ${selectedEmoji.name}`}
                                       className="size-5 object-contain"
                                       loading="lazy"
                                     />
-                                  ) : option.emoji ? (
-                                    <span className="text-base leading-none" aria-hidden="true">
-                                      {option.emoji}
-                                    </span>
-                                  ) : (
-                                    <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
                                   );
-                                })()}
-                                <SelectValue placeholder="Selecionar emoji" className="sr-only" />
-                              </SelectTrigger>
-                              <SelectContent className="min-w-[220px]">
-                                {loadingEditingDraftGuildEmojis && (
-                                  <SelectItem value="__loading_editing_draft_emojis__" disabled>
-                                    Carregando emojis...
-                                  </SelectItem>
-                                )}
-                                {draftEmojis.length === 0 && (
-                                  <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
-                                    Nenhum emoji disponível
-                                  </SelectItem>
-                                )}
-                                {draftEmojis.map((emoji) => (
-                                  <SelectItem key={emoji.id} value={emoji.identifier}>
-                                    <span className="flex items-center gap-2">
+                                }
+
+                                if (selectedEmoji?.unicode) {
+                                  return (
+                                    <span className="text-base leading-none" aria-hidden="true">
+                                      {selectedEmoji.unicode}
+                                    </span>
+                                  );
+                                }
+
+                                return <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />;
+                              })()}
+                              <SelectValue placeholder="Selecionar emoji" className="sr-only" />
+                            </SelectTrigger>
+                            <SelectContent className="min-w-[250px]">
+                              {loadingEditingDraftGuildEmojis && (
+                                <SelectItem value="__loading_editing_draft_emojis__" disabled>
+                                  Carregando emojis...
+                                </SelectItem>
+                              )}
+
+                              <SelectItem value={CUSTOM_EMOJIS_HEADER_VALUE} disabled>
+                                Emojis do servidor
+                              </SelectItem>
+                              {customMergedDraftEmojis.length === 0 && (
+                                <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
+                                  Nenhum emoji customizado
+                                </SelectItem>
+                              )}
+                              {customMergedDraftEmojis.map((emoji) => (
+                                <SelectItem key={emoji.key} value={emoji.value}>
+                                  <span className="flex items-center gap-2">
+                                    {emoji.url && (
                                       <img
-                                        src={getDiscordEmojiUrl(emoji)}
+                                        src={emoji.url}
                                         alt={`Emoji ${emoji.name}`}
                                         className="size-5 object-contain"
                                         loading="lazy"
                                       />
-                                      <span className="truncate">:{emoji.name}:</span>
-                                    </span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="w-full h-9 px-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                  aria-label="Selecionar emoji padrão"
-                                >
-                                  {option.emoji ? (
+                                    )}
+                                    <span className="truncate">:{emoji.name}: (custom)</span>
+                                  </span>
+                                </SelectItem>
+                              ))}
+
+                              <SelectItem value={DEFAULT_EMOJIS_HEADER_VALUE} disabled>
+                                Emojis padrão
+                              </SelectItem>
+                              {defaultMergedDraftEmojis.map((emoji) => (
+                                <SelectItem key={emoji.key} value={emoji.value}>
+                                  <span className="flex items-center gap-2">
                                     <span className="text-base leading-none" aria-hidden="true">
-                                      {option.emoji}
+                                      {emoji.unicode}
                                     </span>
-                                  ) : (
-                                    <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
-                                  )}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[352px] p-0 border-0" align="start">
-                                <EmojiPicker
-                                  theme={Theme.DARK}
-                                  lazyLoadEmojis
-                                  searchDisabled={false}
-                                  previewConfig={{ showPreview: false }}
-                                  onEmojiClick={(emojiData) => updateEditOption(option.id, 'emoji', emojiData.emoji)}
-                                  width={352}
-                                  height={380}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          )}
+                                    <span className="truncate">{emoji.name} (padrão)</span>
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <Input
                           value={option.text}
@@ -621,8 +647,7 @@ export function PollDrafts() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Se o servidor não tiver emojis customizados, um painel completo de emojis (estilo Discord) fica
-                  disponível.
+                  Emojis customizados do servidor e emojis padrão podem ser usados juntos em qualquer opção.
                 </p>
               </div>
 

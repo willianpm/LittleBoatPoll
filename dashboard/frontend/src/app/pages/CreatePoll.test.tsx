@@ -132,14 +132,14 @@ describe('CreatePoll', () => {
     fireEvent.change(channelSelect as HTMLSelectElement, { target: { value: 'channel-1' } });
   };
 
-  const selectEmojiForOption = async (optionIndex: number, identifier: string) => {
-    const serverEmojiSelects = (await screen.findAllByRole('combobox')).filter((element) =>
-      Array.from(element.querySelectorAll('option')).some((option) => option.value === identifier),
+  const selectEmojiForOption = async (optionIndex: number, value: string) => {
+    const emojiSelects = (await screen.findAllByRole('combobox')).filter((element) =>
+      Array.from(element.querySelectorAll('option')).some((option) => option.value === value),
     );
 
-    expect(serverEmojiSelects.length).toBeGreaterThan(optionIndex);
-    fireEvent.change(serverEmojiSelects[optionIndex] as HTMLSelectElement, {
-      target: { value: identifier },
+    expect(emojiSelects.length).toBeGreaterThan(optionIndex);
+    fireEvent.change(emojiSelects[optionIndex] as HTMLSelectElement, {
+      target: { value },
     });
   };
 
@@ -163,7 +163,7 @@ describe('CreatePoll', () => {
       target: { value: 'Opção A' },
     });
 
-    await selectEmojiForOption(1, '<:livro:123456789012345678>');
+    await selectEmojiForOption(1, '😀');
     fireEvent.change(screen.getByPlaceholderText('Opção 2'), {
       target: { value: 'Opção B' },
     });
@@ -176,11 +176,23 @@ describe('CreatePoll', () => {
           title: 'Nova enquete',
           options: [
             { text: 'Opção A', emoji: '<:livro:123456789012345678>' },
-            { text: 'Opção B', emoji: '<:livro:123456789012345678>' },
+            { text: 'Opção B', emoji: '😀' },
           ],
         }),
       );
     });
+  });
+
+  it('mantém emojis customizados e padrão disponíveis no mesmo seletor', async () => {
+    render(<CreatePoll />);
+
+    const emojiSelects = await screen.findAllByRole('combobox');
+    const pollEmojiSelect = emojiSelects.find((element) => {
+      const values = Array.from(element.querySelectorAll('option')).map((option) => option.value);
+      return values.includes('<:livro:123456789012345678>') && values.includes('😀');
+    });
+
+    expect(pollEmojiSelect).toBeTruthy();
   });
 
   it('rejeita envio quando faltar seleção de emoji', async () => {
