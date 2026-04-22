@@ -99,14 +99,46 @@ jest.mock('sonner', () => ({
 
 jest.mock('emoji-picker-react', () => {
   const React = require('react');
-  function EmojiPicker() {
-    return React.createElement('div', { 'data-testid': 'emoji-picker-mock' });
+  function EmojiPicker({ onEmojiClick, customEmojis = [] }: any) {
+    const triggerEmoji = (emoji: string, isCustom = false) => {
+      onEmojiClick?.(
+        {
+          activeSkinTone: 'neutral',
+          unified: emoji,
+          unifiedWithoutSkinTone: emoji,
+          emoji,
+          names: [emoji],
+          imageUrl: '',
+          getImageUrl: () => '',
+          isCustom,
+        },
+        {},
+      );
+    };
+
+    return React.createElement(
+      'div',
+      { 'data-testid': 'emoji-picker-mock' },
+      React.createElement('button', { type: 'button', onClick: () => triggerEmoji('😀', false) }, '😀'),
+      ...customEmojis.map((emoji: any) =>
+        React.createElement(
+          'button',
+          { type: 'button', key: emoji.id, onClick: () => triggerEmoji(emoji.id, true) },
+          emoji.id,
+        ),
+      ),
+    );
   }
 
   return {
     __esModule: true,
     default: EmojiPicker,
+    EmojiStyle: {
+      NATIVE: 'native',
+    },
     Theme: {
+      AUTO: 'auto',
+      LIGHT: 'light',
       DARK: 'dark',
     },
   };
@@ -167,13 +199,25 @@ describe('PollDrafts', () => {
       expect(mockedGetGuildEmojis).toHaveBeenCalledWith('guild-1');
     });
 
-    const emojiSelects = await screen.findAllByRole('combobox');
-    const mergedEmojiSelect = emojiSelects.find((element) => {
-      const values = Array.from(element.querySelectorAll('option')).map((option) => option.value);
-      return values.includes('<:livro:123456789012345678>') && values.includes('😀');
+    fireEvent.click(await screen.findByRole('button', { name: 'Selecionar emoji da opção 1' }));
+
+    expect(await screen.findByRole('button', { name: '<:livro:123456789012345678>' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '😀' })).toBeInTheDocument();
+  });
+
+  it('renderiza emojis padrão sem duplicar o glyph no item do seletor', async () => {
+    render(<PollDrafts />);
+
+    const editButton = await screen.findByRole('button', { name: 'Editar' });
+    fireEvent.click(editButton);
+
+    await waitFor(() => {
+      expect(mockedGetGuildEmojis).toHaveBeenCalledWith('guild-1');
     });
 
-    expect(mergedEmojiSelect).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Selecionar emoji da opção 1' }));
+
+    expect(await screen.findByRole('button', { name: '😀' })).toBeInTheDocument();
   });
 
   it('preserva emojis selecionados de origens diferentes ao salvar edição', async () => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { CreatePoll } from './CreatePoll';
+import { getAvailableEmojis } from '../lib/emoji-merge';
 import { createDraft, getGuildChannels, getGuildEmojis, getGuilds } from '../lib/dashboard-api';
 
 jest.mock('../lib/dashboard-api', () => ({
@@ -86,14 +87,46 @@ jest.mock('sonner', () => ({
 
 jest.mock('emoji-picker-react', () => {
   const React = require('react');
-  function EmojiPicker() {
-    return React.createElement('div', { 'data-testid': 'emoji-picker-mock' });
+  function EmojiPicker({ onEmojiClick, customEmojis = [] }: any) {
+    const triggerEmoji = (emoji: string, isCustom = false) => {
+      onEmojiClick?.(
+        {
+          activeSkinTone: 'neutral',
+          unified: emoji,
+          unifiedWithoutSkinTone: emoji,
+          emoji,
+          names: [emoji],
+          imageUrl: '',
+          getImageUrl: () => '',
+          isCustom,
+        },
+        {},
+      );
+    };
+
+    return React.createElement(
+      'div',
+      { 'data-testid': 'emoji-picker-mock' },
+      React.createElement('button', { type: 'button', onClick: () => triggerEmoji('😀', false) }, '😀'),
+      ...customEmojis.map((emoji: any) =>
+        React.createElement(
+          'button',
+          { type: 'button', key: emoji.id, onClick: () => triggerEmoji(emoji.id, true) },
+          emoji.id,
+        ),
+      ),
+    );
   }
 
   return {
     __esModule: true,
     default: EmojiPicker,
+    EmojiStyle: {
+      NATIVE: 'native',
+    },
     Theme: {
+      AUTO: 'auto',
+      LIGHT: 'light',
       DARK: 'dark',
     },
   };
@@ -133,14 +166,11 @@ describe('CreatePoll', () => {
   };
 
   const selectEmojiForOption = async (optionIndex: number, value: string) => {
-    const emojiSelects = (await screen.findAllByRole('combobox')).filter((element) =>
-      Array.from(element.querySelectorAll('option')).some((option) => option.value === value),
-    );
+    const trigger = await screen.findByRole('button', { name: `Selecionar emoji da opção ${optionIndex + 1}` });
+    fireEvent.click(trigger);
 
-    expect(emojiSelects.length).toBeGreaterThan(optionIndex);
-    fireEvent.change(emojiSelects[optionIndex] as HTMLSelectElement, {
-      target: { value },
-    });
+    const emojiButton = await screen.findByRole('button', { name: value });
+    fireEvent.click(emojiButton);
   };
 
   it('envia rascunho com pelo menos 2 opções válidas incluindo emoji unicode e customizado', async () => {
@@ -186,13 +216,22 @@ describe('CreatePoll', () => {
   it('mantém emojis customizados e padrão disponíveis no mesmo seletor', async () => {
     render(<CreatePoll />);
 
-    const emojiSelects = await screen.findAllByRole('combobox');
-    const pollEmojiSelect = emojiSelects.find((element) => {
-      const values = Array.from(element.querySelectorAll('option')).map((option) => option.value);
-      return values.includes('<:livro:123456789012345678>') && values.includes('😀');
-    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Selecionar emoji da opção 1' }));
 
-    expect(pollEmojiSelect).toBeTruthy();
+    expect(await screen.findByRole('button', { name: '<:livro:123456789012345678>' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '😀' })).toBeInTheDocument();
+  });
+
+  it('usa a lista curada de emojis padrão e renderiza cada item com um único emoji', async () => {
+    const defaultEmojis = getAvailableEmojis([]).filter((emoji) => !emoji.isCustom);
+
+    expect(defaultEmojis.length).toBeGreaterThanOrEqual(35);
+
+    const grinningFace = defaultEmojis.find((emoji) => emoji.value === '😀');
+    expect(grinningFace).toBeTruthy();
+    expect(grinningFace?.name).toBe('Smiling');
+    expect(grinningFace?.unicode).toBe('😀');
+    expect(grinningFace?.name).not.toBe(grinningFace?.unicode);
   });
 
   it('rejeita envio quando faltar seleção de emoji', async () => {

@@ -4,7 +4,8 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, X, Sparkles, Smile } from 'lucide-react';
+import { Plus, X, Sparkles } from 'lucide-react';
+import { PollEmojiPickerField } from '../components/PollEmojiPickerField';
 import { toast } from 'sonner';
 import {
   createDraft,
@@ -16,7 +17,7 @@ import {
   type DashboardGuildEmoji,
 } from '../lib/dashboard-api';
 import { isValidDiscordCustomEmoji, isValidDiscordEmoji } from '../lib/emoji-validation';
-import { buildEmojiLookupByValue, getAvailableEmojis } from '../lib/emoji-merge';
+import { getAvailableEmojis } from '../lib/emoji-merge';
 
 type PollFormOption = {
   id: string;
@@ -31,10 +32,6 @@ function createEmptyOption(id: string): PollFormOption {
     emoji: '',
   };
 }
-
-const NO_SERVER_EMOJI_VALUE = '__no_server_emoji__';
-const CUSTOM_EMOJIS_HEADER_VALUE = '__custom_emojis_header__';
-const DEFAULT_EMOJIS_HEADER_VALUE = '__default_emojis_header__';
 
 export function CreatePoll() {
   const [title, setTitle] = useState('');
@@ -194,12 +191,6 @@ export function CreatePoll() {
 
     return [...merged, ...selectedEntries];
   }, [options, serverEmojis]);
-
-  const customMergedEmojis = useMemo(() => mergedEmojis.filter((emoji) => emoji.isCustom), [mergedEmojis]);
-
-  const defaultMergedEmojis = useMemo(() => mergedEmojis.filter((emoji) => !emoji.isCustom), [mergedEmojis]);
-
-  const mergedEmojiByValue = useMemo(() => buildEmojiLookupByValue(mergedEmojis), [mergedEmojis]);
 
   const addOption = () => {
     if (options.length < 20) {
@@ -442,93 +433,14 @@ export function CreatePoll() {
               <div key={option.id} className="space-y-1">
                 <div className="flex items-center gap-2 md:gap-3">
                   <div className="w-24 md:w-28 shrink-0">
-                    <Select
+                    <PollEmojiPickerField
                       value={option.emoji}
+                      emojis={mergedEmojis}
                       disabled={loadingGuildEmojis}
-                      onValueChange={(value) => {
-                        if (
-                          value === NO_SERVER_EMOJI_VALUE ||
-                          value === CUSTOM_EMOJIS_HEADER_VALUE ||
-                          value === DEFAULT_EMOJIS_HEADER_VALUE
-                        ) {
-                          return;
-                        }
-
-                        updateOption(option.id, 'emoji', value);
-                      }}
-                    >
-                      <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white px-2">
-                        {(() => {
-                          const selectedEmoji = mergedEmojiByValue.get(option.emoji);
-                          if (selectedEmoji?.isCustom && selectedEmoji.url) {
-                            return (
-                              <img
-                                src={selectedEmoji.url}
-                                alt={`Emoji ${selectedEmoji.name}`}
-                                className="size-5 object-contain"
-                                loading="lazy"
-                              />
-                            );
-                          }
-
-                          if (selectedEmoji?.unicode) {
-                            return (
-                              <span className="text-base leading-none" aria-hidden="true">
-                                {selectedEmoji.unicode}
-                              </span>
-                            );
-                          }
-
-                          return <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />;
-                        })()}
-                        <SelectValue placeholder="Selecionar emoji" className="sr-only" />
-                      </SelectTrigger>
-                      <SelectContent className="min-w-[250px]">
-                        {loadingGuildEmojis && (
-                          <SelectItem value="__loading_server_emojis__" disabled>
-                            Carregando emojis...
-                          </SelectItem>
-                        )}
-
-                        <SelectItem value={CUSTOM_EMOJIS_HEADER_VALUE} disabled>
-                          Emojis do servidor
-                        </SelectItem>
-                        {customMergedEmojis.length === 0 && (
-                          <SelectItem value={NO_SERVER_EMOJI_VALUE} disabled>
-                            Nenhum emoji customizado
-                          </SelectItem>
-                        )}
-                        {customMergedEmojis.map((emoji) => (
-                          <SelectItem key={emoji.key} value={emoji.value}>
-                            <span className="flex items-center gap-2">
-                              {emoji.url && (
-                                <img
-                                  src={emoji.url}
-                                  alt={`Emoji ${emoji.name}`}
-                                  className="size-5 object-contain"
-                                  loading="lazy"
-                                />
-                              )}
-                              <span className="truncate">:{emoji.name}: (custom)</span>
-                            </span>
-                          </SelectItem>
-                        ))}
-
-                        <SelectItem value={DEFAULT_EMOJIS_HEADER_VALUE} disabled>
-                          Emojis padrão
-                        </SelectItem>
-                        {defaultMergedEmojis.map((emoji) => (
-                          <SelectItem key={emoji.key} value={emoji.value}>
-                            <span className="flex items-center gap-2">
-                              <span className="text-base leading-none" aria-hidden="true">
-                                {emoji.unicode}
-                              </span>
-                              <span className="truncate">{emoji.name} (padrão)</span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      loading={loadingGuildEmojis}
+                      ariaLabel={`Selecionar emoji da opção ${index + 1}`}
+                      onValueChange={(value) => updateOption(option.id, 'emoji', value)}
+                    />
                   </div>
                   <div className="flex-1">
                     <Input
