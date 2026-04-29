@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -169,11 +169,20 @@ export function CreatePoll() {
     [guildEmojis, selectedGuild],
   );
 
+  const selectedEmojiSignature = useMemo(
+    () =>
+      options
+        .map((option) => {
+          const emoji = option.emoji.trim();
+          return emoji && !isValidDiscordCustomEmoji(emoji) ? emoji : '';
+        })
+        .join('\u0001'),
+    [options],
+  );
+
   const mergedEmojis = useMemo(() => {
     const merged = getAvailableEmojis(serverEmojis);
-    const selectedUnicode = options
-      .map((option) => option.emoji.trim())
-      .filter((emoji) => emoji && !isValidDiscordCustomEmoji(emoji));
+    const selectedUnicode = selectedEmojiSignature ? selectedEmojiSignature.split('\u0001').filter(Boolean) : [];
 
     if (selectedUnicode.length === 0) return merged;
 
@@ -190,29 +199,31 @@ export function CreatePoll() {
       }));
 
     return [...merged, ...selectedEntries];
-  }, [options, serverEmojis]);
+  }, [selectedEmojiSignature, serverEmojis]);
 
-  const addOption = () => {
-    if (options.length < 20) {
-      setOptions([...options, createEmptyOption(Date.now().toString())]);
-    }
-  };
+  const addOption = useCallback(() => {
+    setOptions((current) => {
+      if (current.length >= 20) return current;
+      return [...current, createEmptyOption(Date.now().toString())];
+    });
+  }, []);
 
-  const removeOption = (id: string) => {
-    if (options.length > 2) {
-      setOptions(options.filter((opt) => opt.id !== id));
-    }
-  };
+  const removeOption = useCallback((id: string) => {
+    setOptions((current) => {
+      if (current.length <= 2) return current;
+      return current.filter((opt) => opt.id !== id);
+    });
+  }, []);
 
-  const updateOption = (id: string, field: 'text' | 'emoji', value: string) => {
-    setOptions(options.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)));
+  const updateOption = useCallback((id: string, field: 'text' | 'emoji', value: string) => {
+    setOptions((current) => current.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)));
     setOptionErrors((current) => {
       if (!current[id]) return current;
       const next = { ...current };
       delete next[id];
       return next;
     });
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

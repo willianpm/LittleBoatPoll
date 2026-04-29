@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -189,25 +189,29 @@ export function PollDrafts() {
     setIsEditOpen(true);
   };
 
-  const addEditOption = () => {
-    if (editOptions.length >= 20) {
-      toast.error('Limite de 20 opções por enquete');
-      return;
-    }
+  const addEditOption = useCallback(() => {
+    setEditOptions((current) => {
+      if (current.length >= 20) {
+        toast.error('Limite de 20 opções por enquete');
+        return current;
+      }
 
-    setEditOptions((current) => [...current, { id: Date.now().toString(), text: '', emoji: '' }]);
-  };
+      return [...current, { id: Date.now().toString(), text: '', emoji: '' }];
+    });
+  }, []);
 
-  const removeEditOption = (id: string) => {
-    if (editOptions.length <= 2) {
-      toast.error('A enquete precisa ter pelo menos 2 opções');
-      return;
-    }
+  const removeEditOption = useCallback((id: string) => {
+    setEditOptions((current) => {
+      if (current.length <= 2) {
+        toast.error('A enquete precisa ter pelo menos 2 opções');
+        return current;
+      }
 
-    setEditOptions((current) => current.filter((option) => option.id !== id));
-  };
+      return current.filter((option) => option.id !== id);
+    });
+  }, []);
 
-  const updateEditOption = (id: string, field: 'text' | 'emoji', value: string) => {
+  const updateEditOption = useCallback((id: string, field: 'text' | 'emoji', value: string) => {
     setEditOptions((current) => current.map((option) => (option.id === id ? { ...option, [field]: value } : option)));
     setEditOptionErrors((current) => {
       if (!current[id]) return current;
@@ -215,7 +219,7 @@ export function PollDrafts() {
       delete next[id];
       return next;
     });
-  };
+  }, []);
 
   const selectedDraftGuild = useMemo(() => {
     if (!editingDraft?.guildId) return null;
@@ -227,11 +231,20 @@ export function PollDrafts() {
     [editingDraftGuildEmojis, selectedDraftGuild],
   );
 
+  const selectedEmojiSignature = useMemo(
+    () =>
+      editOptions
+        .map((option) => {
+          const emoji = option.emoji.trim();
+          return emoji && !isValidDiscordCustomEmoji(emoji) ? emoji : '';
+        })
+        .join('\u0001'),
+    [editOptions],
+  );
+
   const mergedDraftEmojis = useMemo(() => {
     const merged = getAvailableEmojis(draftEmojis);
-    const selectedUnicode = editOptions
-      .map((option) => option.emoji.trim())
-      .filter((emoji) => emoji && !isValidDiscordCustomEmoji(emoji));
+    const selectedUnicode = selectedEmojiSignature ? selectedEmojiSignature.split('\u0001').filter(Boolean) : [];
 
     if (selectedUnicode.length === 0) return merged;
 
@@ -248,7 +261,7 @@ export function PollDrafts() {
       }));
 
     return [...merged, ...selectedEntries];
-  }, [draftEmojis, editOptions]);
+  }, [draftEmojis, selectedEmojiSignature]);
 
   const handleSaveEdit = async () => {
     if (!editingDraft) return;
