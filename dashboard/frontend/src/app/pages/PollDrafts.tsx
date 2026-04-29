@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -44,6 +44,10 @@ export function PollDrafts() {
   const [editDurationKey, setEditDurationKey] = useState<'1h' | '6h' | '12h' | '24h' | '3d' | '7d'>('24h');
   const [editingDraftGuildEmojis, setEditingDraftGuildEmojis] = useState<DashboardGuildEmoji[]>([]);
   const [loadingEditingDraftGuildEmojis, setLoadingEditingDraftGuildEmojis] = useState(false);
+  const editEmojiPickerContainerRef = useRef<HTMLDivElement | null>(null);
+  const setEditEmojiPickerContainer = useCallback((node: HTMLDivElement | null) => {
+    editEmojiPickerContainerRef.current = node;
+  }, []);
 
   const sortedDrafts = useMemo(
     () => [...drafts].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))),
@@ -500,7 +504,7 @@ export function PollDrafts() {
               <DialogTitle className="dark:text-white">Editar Rascunho</DialogTitle>
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+            <div ref={setEditEmojiPickerContainer} className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
               <div>
                 <Label htmlFor="edit-title" className="dark:text-gray-200">
                   Título
@@ -539,6 +543,7 @@ export function PollDrafts() {
                             disabled={loadingEditingDraftGuildEmojis}
                             loading={loadingEditingDraftGuildEmojis}
                             ariaLabel={`Selecionar emoji da opção ${index + 1}`}
+                            portalContainer={editEmojiPickerContainerRef.current}
                             onValueChange={(value) => updateEditOption(option.id, 'emoji', value)}
                           />
                         </div>

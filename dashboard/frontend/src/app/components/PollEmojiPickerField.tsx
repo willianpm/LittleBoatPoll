@@ -18,6 +18,7 @@ interface PollEmojiPickerFieldProps {
   loading?: boolean;
   onValueChange: (value: string) => void;
   ariaLabel?: string;
+  portalContainer?: HTMLElement | null;
 }
 
 export const PollEmojiPickerField = memo(
@@ -28,6 +29,7 @@ export const PollEmojiPickerField = memo(
     loading = false,
     onValueChange,
     ariaLabel,
+    portalContainer,
   }: PollEmojiPickerFieldProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [pickerEmojis, setPickerEmojis] = useState<UnifiedEmoji[]>([]);
@@ -104,7 +106,7 @@ export const PollEmojiPickerField = memo(
             {!selectedEmoji && <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />}
           </Button>
         </PopoverTrigger>
-        <PopoverContent side="bottom" align="start" className="w-[330px] p-2">
+        <PopoverContent side="bottom" align="start" portalContainer={portalContainer} className="w-[330px] p-2">
           {loading && <p className="px-2 pb-2 text-xs text-gray-600 dark:text-gray-300">Carregando emojis...</p>}
           <EmojiPicker
             onEmojiClick={handleEmojiClick}
