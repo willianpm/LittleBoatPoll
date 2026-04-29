@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
 import { closePoll, getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
 import { ArrowLeft, Calendar, Clock, Hash, Trophy } from 'lucide-react';
+import EmojiRenderer from '../components/EmojiRenderer';
 import {
   PieChart,
   Pie,
@@ -23,6 +24,65 @@ type ParsedDescription = {
   intro: string;
   options: string[];
 };
+
+type InlineEmojiToken = {
+  type: 'text' | 'emoji';
+  value: string;
+  animated?: boolean;
+  emojiId?: string;
+};
+
+function parseInlineEmojiTokens(value: string | null | undefined): InlineEmojiToken[] {
+  if (!value) return [];
+
+  const tokens: InlineEmojiToken[] = [];
+  const emojiPattern = /<(?:(a):)?([a-zA-Z0-9_]{2,32}):(\d{17,20})>/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = emojiPattern.exec(value)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: 'text', value: value.slice(lastIndex, match.index) });
+    }
+
+    tokens.push({
+      type: 'emoji',
+      value: match[0],
+      emojiId: match[3],
+      animated: match[1] === 'a',
+    });
+
+    lastIndex = emojiPattern.lastIndex;
+  }
+
+  if (lastIndex < value.length) {
+    tokens.push({ type: 'text', value: value.slice(lastIndex) });
+  }
+
+  return tokens;
+}
+
+function renderInlineEmojiText(value: string | null | undefined) {
+  const tokens = parseInlineEmojiTokens(value);
+
+  if (tokens.length === 0) return null;
+
+  return tokens.map((token, index) => {
+    if (token.type === 'emoji' && token.emojiId) {
+      return (
+        <EmojiRenderer
+          key={`${token.value}-${index}`}
+          emoji={token.value}
+          emojiId={token.emojiId}
+          emojiAnimated={token.animated}
+          className="inline-block align-middle size-4 md:size-5 object-contain"
+        />
+      );
+    }
+
+    return <span key={`${token.value}-${index}`}>{token.value}</span>;
+  });
+}
 
 function parsePollDescription(description: string | null | undefined): ParsedDescription {
   if (!description) {
@@ -173,12 +233,14 @@ export function PollDetail() {
               <div className="flex-1">
                 <h1 className="text-xl md:text-2xl mb-2 dark:text-white">{poll.title}</h1>
                 <div className="mb-4">
-                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">{parsedDescription.intro}</p>
+                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+                    {renderInlineEmojiText(parsedDescription.intro) || parsedDescription.intro}
+                  </p>
                   {parsedDescription.options.length > 0 && (
                     <ul className="mt-2 space-y-1 text-sm md:text-base text-gray-600 dark:text-gray-300">
                       {parsedDescription.options.map((option, index) => (
                         <li key={`${option}-${index}`} className="leading-relaxed break-words">
-                          {option}
+                          {renderInlineEmojiText(option) || option}
                         </li>
                       ))}
                     </ul>
@@ -245,7 +307,12 @@ export function PollDetail() {
                   >
                     <div className="flex items-center justify-between mb-2 gap-2">
                       <span className="flex items-center gap-2 flex-1 min-w-0">
-                        {option.emoji && <span className="text-lg md:text-xl shrink-0">{option.emoji}</span>}
+                        <EmojiRenderer
+                          emoji={option.emoji}
+                          emojiId={(option as any).emojiId}
+                          emojiAnimated={(option as any).emojiAnimated}
+                          className="size-4 md:size-5 shrink-0 object-contain"
+                        />
                         <span className="text-base md:text-lg dark:text-white truncate">{option.text}</span>
                         {isTop && <Trophy className="size-4 md:size-5 text-[#5865F2] shrink-0" />}
                       </span>

@@ -3,6 +3,8 @@ export interface DashboardPollOption {
   text: string;
   votes: number;
   emoji?: string | null;
+  emojiId?: string | null;
+  emojiAnimated?: boolean | null;
 }
 
 export interface DashboardDraftOption {
