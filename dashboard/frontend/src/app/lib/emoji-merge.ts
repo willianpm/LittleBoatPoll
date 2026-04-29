@@ -16,46 +16,29 @@ export interface UnifiedEmoji {
   url?: string;
 }
 
+/** Default Discord emojis available in the standard reaction picker */
 const DEFAULT_SYSTEM_EMOJI_ENTRIES: ReadonlyArray<{ emoji: string; label: string }> = [
+  // Face & emotion reactions
   { emoji: '😀', label: 'Smiling' },
   { emoji: '😂', label: 'Laughing' },
-  { emoji: '❤️', label: 'Love' },
   { emoji: '😍', label: 'Loving' },
   { emoji: '🤔', label: 'Thinking' },
+  { emoji: '😲', label: 'Shocked' },
+  // Heart reactions
+  { emoji: '❤️', label: 'Love' },
+  // Hand reactions
   { emoji: '👍', label: 'Approval' },
   { emoji: '👎', label: 'Disapproval' },
-  { emoji: '🎉', label: 'Celebration' },
-  { emoji: '🔥', label: 'Hot' },
-  { emoji: '✨', label: 'Sparkles' },
   { emoji: '👏', label: 'Clapping' },
   { emoji: '🙏', label: 'Thanks' },
-  { emoji: '👌', label: 'Perfect' },
   { emoji: '✋', label: 'Stop' },
-  { emoji: '👋', label: 'Wave' },
+  // Celebration & success
+  { emoji: '🎉', label: 'Celebration' },
   { emoji: '✅', label: 'Approved' },
   { emoji: '❌', label: 'Rejected' },
-  { emoji: '☑️', label: 'Checked' },
-  { emoji: '⭕', label: 'Circle' },
-  { emoji: '❓', label: 'Question' },
-  { emoji: '❗', label: 'Important' },
+  // Other common reactions
   { emoji: '⭐', label: 'Star' },
-  { emoji: '🌟', label: 'Glowing Star' },
-  { emoji: '💯', label: 'Perfect Score' },
-  { emoji: '🚀', label: 'Launch' },
-  { emoji: '💪', label: 'Strong' },
-  { emoji: '🎯', label: 'Target' },
-  { emoji: '📊', label: 'Statistics' },
-  { emoji: '📈', label: 'Growth' },
-  { emoji: '🎲', label: 'Random' },
-  { emoji: '🎪', label: 'Entertainment' },
-  { emoji: '📝', label: 'Document' },
-  { emoji: '🏆', label: 'Trophy' },
-  { emoji: '🥇', label: 'Champion' },
-  { emoji: '😲', label: 'Shocked' },
-  { emoji: '🤷', label: 'Unsure' },
-  { emoji: '😴', label: 'Tired' },
-  { emoji: '🎭', label: 'Theater' },
-  { emoji: '📢', label: 'Announcement' },
+  { emoji: '🔥', label: 'Hot' },
 ];
 
 export const DEFAULT_SYSTEM_EMOJIS = DEFAULT_SYSTEM_EMOJI_ENTRIES.map((entry) => entry.emoji);

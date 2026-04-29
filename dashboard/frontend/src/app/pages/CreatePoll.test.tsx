@@ -225,7 +225,7 @@ describe('CreatePoll', () => {
   it('usa a lista curada de emojis padrão e renderiza cada item com um único emoji', async () => {
     const defaultEmojis = getAvailableEmojis([]).filter((emoji) => !emoji.isCustom);
 
-    expect(defaultEmojis.length).toBeGreaterThanOrEqual(35);
+    expect(defaultEmojis.length).toBe(16);
 
     const grinningFace = defaultEmojis.find((emoji) => emoji.value === '😀');
     expect(grinningFace).toBeTruthy();
