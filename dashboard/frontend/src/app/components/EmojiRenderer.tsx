@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getDiscordEmojiUrlFromEmoji } from '../lib/emoji-merge';
 
 interface Props {
@@ -17,17 +17,29 @@ function parseDiscordIdentifier(identifier: string | null | undefined) {
 }
 
 export function EmojiRenderer({ emoji, emojiId, emojiAnimated, className = '', alt = '' }: Props) {
+  const [imageFailed, setImageFailed] = useState(false);
+
   // Prefer explicit id/animated provided by the API
   if (emojiId) {
     const url = getDiscordEmojiUrlFromEmoji({ id: emojiId, animated: Boolean(emojiAnimated) } as any);
-    return <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" />;
+
+    if (!imageFailed) {
+      return (
+        <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
+      );
+    }
   }
 
   // Try to parse the stored identifier string
   const parsed = parseDiscordIdentifier(emoji);
   if (parsed) {
     const url = getDiscordEmojiUrlFromEmoji({ id: parsed.id, animated: parsed.animated } as any);
-    return <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" />;
+
+    if (!imageFailed) {
+      return (
+        <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
+      );
+    }
   }
 
   // Fallback to rendering the emoji as text (unicode)
