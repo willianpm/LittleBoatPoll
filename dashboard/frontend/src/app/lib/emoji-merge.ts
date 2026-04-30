@@ -46,7 +46,7 @@ export const DEFAULT_SYSTEM_EMOJIS = DEFAULT_SYSTEM_EMOJI_ENTRIES.map((entry) =>
 const DEFAULT_SYSTEM_EMOJI_LABELS = new Map(DEFAULT_SYSTEM_EMOJI_ENTRIES.map((entry) => [entry.emoji, entry.label]));
 
 export function getDiscordEmojiUrlFromEmoji(emoji: DashboardGuildEmoji): string {
-  const extension = emoji.animated ? 'gif' : 'png';
+  const extension = emoji.animated ? 'gif' : 'webp';
   return `https://cdn.discordapp.com/emojis/${emoji.id}.${extension}?size=64&quality=lossless`;
 }
 
