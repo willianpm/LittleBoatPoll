@@ -182,6 +182,54 @@ describe('Dashboard Polls API', () => {
     );
   });
 
+  it('should normalize custom emojis embedded in poll option text', async () => {
+    loadVotacoes.mockReturnValue([
+      {
+        id: 'history-emoji',
+        titulo: 'Enquete com emoji custom',
+        guildId: 'guild-1',
+        guildName: 'Guild One',
+        channelId: 'channel-1',
+        channelName: 'geral',
+        status: 'ended',
+        dataCriacao: '2026-04-01T10:00:00Z',
+        dataFinalizacao: '2026-04-02T10:00:00Z',
+        resultados: [
+          { id: 'opt-1', text: '<:livro:123456789012345678> Opção A', pontos: 1 },
+          { id: 'opt-2', text: '<a:animado:123456789012345679> Opção B', pontos: 2 },
+        ],
+        participantes: 3,
+        maxVotos: 1,
+        allowMultipleChoices: false,
+        anonymous: false,
+      },
+    ]);
+
+    const res = await request(app).get('/api/polls/history-emoji').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.poll).toEqual(
+      expect.objectContaining({
+        id: 'history-emoji',
+        options: expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Opção A',
+            emoji: '<:livro:123456789012345678>',
+            emojiId: '123456789012345678',
+            emojiAnimated: false,
+          }),
+          expect.objectContaining({
+            text: 'Opção B',
+            emoji: '<a:animado:123456789012345679>',
+            emojiId: '123456789012345679',
+            emojiAnimated: true,
+          }),
+        ]),
+      }),
+    );
+  });
+
   it('should return 404 for missing poll detail', async () => {
     const res = await request(app).get('/api/polls/missing-id').set('Authorization', 'Bearer fake');
 
