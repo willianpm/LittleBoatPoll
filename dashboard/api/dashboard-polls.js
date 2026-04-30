@@ -15,24 +15,58 @@ function computeTotalVotes(options) {
   return safeArray(options).reduce((sum, option) => sum + (Number(option?.votes || option?.pontos || 0) || 0), 0);
 }
 
+function parseCustomEmoji(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const match = value.match(/^<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/);
+  if (!match) return null;
+
+  return {
+    identifier: match[0],
+    emojiId: match[3],
+    animated: match[1] === 'a',
+  };
+}
+
+function extractFirstCustomEmoji(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const match = value.match(/<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>/);
+  if (!match) return null;
+
+  return {
+    identifier: match[0],
+    emojiId: match[3],
+    animated: match[1] === 'a',
+  };
+}
+
+function stripCustomEmojiFromText(value) {
+  if (!value || typeof value !== 'string') return '';
+
+  const cleaned = value
+    .replace(/<(?:a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned;
+}
+
 function normalizeOption(option, index = 0) {
   if (!option) return null;
 
-  const emojiValue = option.emoji || null;
-
-  // Parse Discord custom emoji identifier like <a:name:123456789012345678>
-  const customEmojiMatch =
-    typeof emojiValue === 'string' && emojiValue.match(/^<(?:(a):)?([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/);
-  const emojiId = customEmojiMatch ? customEmojiMatch[3] : null;
-  const emojiAnimated = Boolean(customEmojiMatch && customEmojiMatch[1] === 'a');
+  const explicitEmoji = parseCustomEmoji(option.emoji) || extractFirstCustomEmoji(option.emoji);
+  const textSource = option.text || option.opcao || option.name || '';
+  const textEmoji = extractFirstCustomEmoji(textSource);
+  const emojiValue = explicitEmoji?.identifier || textEmoji?.identifier || option.emoji || null;
+  const emojiMeta = parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue);
 
   return {
     id: option.id || option.opcao || `option-${index}`,
-    text: option.text || option.opcao || option.name || '',
+    text: stripCustomEmojiFromText(textSource),
     votes: Number(option.votes ?? option.pontos ?? 0) || 0,
     emoji: emojiValue,
-    emojiId: emojiId,
-    emojiAnimated: emojiId ? emojiAnimated : null,
+    emojiId: emojiMeta?.emojiId || null,
+    emojiAnimated: emojiMeta ? emojiMeta.animated : null,
   };
 }
 
@@ -98,19 +132,19 @@ function normalizePollFromActive(entry) {
       const reactions = safeArray(voteEntry?.reacoes);
       return reactions.includes(emoji) ? sum + (Number(voteEntry?.peso || 1) || 1) : sum;
     }, 0);
-
-    // Try to parse custom emoji identifier
-    const customEmojiMatch = typeof emoji === 'string' && emoji.match(/^<(?:(a):)?([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/);
-    const emojiId = customEmojiMatch ? customEmojiMatch[3] : null;
-    const emojiAnimated = Boolean(customEmojiMatch && customEmojiMatch[1] === 'a');
+    const explicitEmoji = parseCustomEmoji(emoji) || extractFirstCustomEmoji(emoji);
+    const optionText = typeof option === 'string' ? option : option?.text || option?.opcao || option?.name || '';
+    const textEmoji = extractFirstCustomEmoji(optionText);
+    const emojiValue = explicitEmoji?.identifier || textEmoji?.identifier || emoji || null;
+    const emojiMeta = parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue);
 
     return {
       id: option?.id || `active-${index}`,
-      text: option || '',
+      text: stripCustomEmojiFromText(optionText),
       votes: votesForOption,
-      emoji,
-      emojiId: emojiId,
-      emojiAnimated: emojiId ? emojiAnimated : null,
+      emoji: emojiValue,
+      emojiId: emojiMeta?.emojiId || null,
+      emojiAnimated: emojiMeta ? emojiMeta.animated : null,
     };
   });
 
