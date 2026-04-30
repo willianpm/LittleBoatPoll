@@ -260,24 +260,24 @@ function loadDraftPolls() {
       const normalizedDrafts = draftsFiltrados.map((draft) => {
         const normalizedOptions = Array.isArray(draft.opcoes)
           ? draft.opcoes
-              .map((option) => {
-                if (typeof option === 'string') {
-                  const text = option.trim();
-                  if (!text) return null;
-                  return { text, emoji: null };
-                }
-
-                if (!option || typeof option !== 'object') {
-                  return null;
-                }
-
-                const text = typeof option.text === 'string' ? option.text.trim() : '';
-                const emoji = typeof option.emoji === 'string' ? option.emoji.trim() : null;
-
+            .map((option) => {
+              if (typeof option === 'string') {
+                const text = option.trim();
                 if (!text) return null;
-                return { text, emoji: emoji || null };
-              })
-              .filter(Boolean)
+                return { text, emoji: null };
+              }
+
+              if (!option || typeof option !== 'object') {
+                return null;
+              }
+
+              const text = typeof option.text === 'string' ? option.text.trim() : '';
+              const emoji = typeof option.emoji === 'string' ? option.emoji.trim() : null;
+
+              if (!text) return null;
+              return { text, emoji: emoji || null };
+            })
+            .filter(Boolean)
           : [];
 
         return [
