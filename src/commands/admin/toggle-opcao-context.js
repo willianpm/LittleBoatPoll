@@ -3,6 +3,7 @@ const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permission
 const { getLatestUserDraft } = require('../../utils/draft-handler');
 const { COLORS } = require('../../utils/constants');
 const logger = require('../../utils/logger');
+const { draftOptionText, normalizeDraftOption } = require('../../utils/draft-option-normalizer');
 
 module.exports = {
   data: new ContextMenuCommandBuilder().setName('Adicionar/Remover da enquete').setType(ApplicationCommandType.Message),
@@ -73,7 +74,9 @@ module.exports = {
       }
 
       // Verifica se a opção já existe (case-insensitive)
-      const opcaoExistente = rascunho.opcoes.findIndex((op) => op.toLowerCase() === textoSelecionado.toLowerCase());
+      const opcaoExistente = rascunho.opcoes.findIndex(
+        (op) => draftOptionText(op).toLowerCase() === textoSelecionado.toLowerCase(),
+      );
 
       let acao = '';
       let cor = '';
@@ -106,7 +109,7 @@ module.exports = {
           });
         }
 
-        rascunho.opcoes.push(textoSelecionado);
+        rascunho.opcoes.push(normalizeDraftOption(textoSelecionado));
         acao = 'ADICIONADA';
         cor = COLORS.SUCCESS;
       }
