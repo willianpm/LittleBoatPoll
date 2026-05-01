@@ -28,6 +28,19 @@ function parseCustomEmoji(value) {
   };
 }
 
+function parseLegacyEmojiId(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const normalized = value.trim();
+  if (!/^\d{17,20}$/.test(normalized)) return null;
+
+  return {
+    identifier: `<:emoji:${normalized}>`,
+    emojiId: normalized,
+    animated: null,
+  };
+}
+
 function extractFirstCustomEmoji(value) {
   if (!value || typeof value !== 'string') return null;
 
@@ -54,11 +67,15 @@ function stripCustomEmojiFromText(value) {
 function normalizeOption(option, index = 0) {
   if (!option) return null;
 
-  const explicitEmoji = parseCustomEmoji(option.emoji) || extractFirstCustomEmoji(option.emoji);
+  const explicitEmoji =
+    parseCustomEmoji(option.emoji) || extractFirstCustomEmoji(option.emoji) || parseLegacyEmojiId(option.emoji);
   const textSource = option.text || option.opcao || option.name || '';
   const textEmoji = extractFirstCustomEmoji(textSource);
-  const emojiValue = explicitEmoji?.identifier || textEmoji?.identifier || option.emoji || null;
-  const emojiMeta = parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue);
+  const emojiFromLegacyId = parseLegacyEmojiId(textSource);
+  const emojiValue =
+    explicitEmoji?.identifier || textEmoji?.identifier || emojiFromLegacyId?.identifier || option.emoji || null;
+  const emojiMeta =
+    parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue) || parseLegacyEmojiId(emojiValue);
 
   return {
     id: option.id || option.opcao || `option-${index}`,
@@ -132,11 +149,14 @@ function normalizePollFromActive(entry) {
       const reactions = safeArray(voteEntry?.reacoes);
       return reactions.includes(emoji) ? sum + (Number(voteEntry?.peso || 1) || 1) : sum;
     }, 0);
-    const explicitEmoji = parseCustomEmoji(emoji) || extractFirstCustomEmoji(emoji);
+    const explicitEmoji = parseCustomEmoji(emoji) || extractFirstCustomEmoji(emoji) || parseLegacyEmojiId(emoji);
     const optionText = typeof option === 'string' ? option : option?.text || option?.opcao || option?.name || '';
     const textEmoji = extractFirstCustomEmoji(optionText);
-    const emojiValue = explicitEmoji?.identifier || textEmoji?.identifier || emoji || null;
-    const emojiMeta = parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue);
+    const emojiFromLegacyId = parseLegacyEmojiId(option?.emoji);
+    const emojiValue =
+      explicitEmoji?.identifier || textEmoji?.identifier || emojiFromLegacyId?.identifier || emoji || null;
+    const emojiMeta =
+      parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue) || parseLegacyEmojiId(emojiValue);
 
     return {
       id: option?.id || `active-${index}`,

@@ -16,6 +16,15 @@ function parseDiscordIdentifier(identifier: string | null | undefined) {
   return { id: m[3], animated: Boolean(m[1] === 'a') };
 }
 
+function parseLegacyEmojiId(identifier: string | null | undefined) {
+  if (!identifier || typeof identifier !== 'string') return null;
+
+  const trimmed = identifier.trim();
+  if (!/^\d{17,20}$/.test(trimmed)) return null;
+
+  return { id: trimmed, animated: false };
+}
+
 export function EmojiRenderer({ emoji, emojiId, emojiAnimated, className = '', alt = '' }: Props) {
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -42,8 +51,19 @@ export function EmojiRenderer({ emoji, emojiId, emojiAnimated, className = '', a
     }
   }
 
+  const legacyParsed = parseLegacyEmojiId(emoji);
+  if (legacyParsed) {
+    const url = getDiscordEmojiUrlFromEmoji({ id: legacyParsed.id, animated: legacyParsed.animated } as any);
+
+    if (!imageFailed) {
+      return (
+        <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
+      );
+    }
+  }
+
   // Fallback to rendering the emoji as text (unicode)
-  if (emoji) {
+  if (emoji && !/^\d{17,20}$/.test(emoji.trim())) {
     return (
       <span className={className} aria-hidden="true">
         {emoji}

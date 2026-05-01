@@ -134,6 +134,19 @@ function buildResultEmbed(poll, resultados, empate, mensalistasList, reason) {
   return resultEmbed;
 }
 
+function parseCustomEmoji(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const match = value.match(/^<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/);
+  if (!match) return null;
+
+  return {
+    identifier: match[0],
+    emojiId: match[3],
+    animated: match[1] === 'a',
+  };
+}
+
 async function closePollByMessageId({ client, messageId, interaction = null, reason = 'manual' }) {
   const poll = client.activePolls.get(messageId);
   let removedFromActive = false;
@@ -167,14 +180,25 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
     client.saveActivePolls();
 
     const historicoData = loadVotacoes();
-    const normalizedOptions = normalizeDraftOptions(poll.opcoes);
+    const normalizedOptions = normalizeDraftOptions(poll.opcoes).map((option, index) => {
+      const pollEmoji = poll.emojiNumeros?.[index] || null;
+      const emojiMeta = parseCustomEmoji(option.emoji || pollEmoji);
+
+      return {
+        id: option.id || `option-${index}`,
+        text: option.text,
+        emoji: emojiMeta?.identifier || pollEmoji || option.emoji || null,
+        emojiId: emojiMeta?.emojiId || null,
+        emojiAnimated: emojiMeta ? emojiMeta.animated : null,
+      };
+    });
     historicoData.push({
       id: messageId,
       titulo: poll.titulo,
       description:
         `Selecione até ${poll.maxVotos} opç${poll.maxVotos > 1 ? 'ões' : 'ão'}:\n\n` +
         normalizedOptions
-          .map((opcao, index) => `**${poll.emojiNumeros[index]} ${draftOptionText(opcao)}**`)
+          .map((opcao, index) => `**${opcao.emoji || poll.emojiNumeros[index] || ''} ${draftOptionText(opcao)}**`)
           .join('\n\n'),
       guildId: poll.guildId || interaction?.guildId || null,
       guildName: interaction?.guild?.name || poll.guildName || null,
