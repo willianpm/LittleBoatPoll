@@ -8,6 +8,8 @@ const router = express.Router();
 
 const DISCORD_API_BASE = 'https://discord.com/api';
 const DEFAULT_SCOPES = ['identify'];
+const GUILD_EMOJI_CACHE_TTL_MS = 5 * 60 * 1000;
+const guildEmojiCache = new Map();
 
 function getOAuthConfig() {
   return {
@@ -143,6 +145,12 @@ function getDiscordGuildIconUrl(guild) {
   return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
 }
 
+function getDiscordEmojiUrl(emojiId, animated = false) {
+  if (!emojiId) return null;
+  const extension = animated ? 'gif' : 'webp';
+  return `https://cdn.discordapp.com/emojis/${emojiId}.${extension}?size=64&quality=lossless`;
+}
+
 function formatGuildEmoji(emoji) {
   if (!emoji?.id || !emoji?.name) return null;
 
@@ -152,13 +160,50 @@ function formatGuildEmoji(emoji) {
     name: emoji.name,
     animated,
     identifier: `<${animated ? 'a' : ''}:${emoji.name}:${emoji.id}>`,
+    url: getDiscordEmojiUrl(emoji.id, animated),
   };
+}
+
+function readCachedGuildEmojis(guildId) {
+  const cached = guildEmojiCache.get(guildId);
+  if (!cached) return null;
+
+  if (cached.expiresAt <= Date.now()) {
+    guildEmojiCache.delete(guildId);
+    return null;
+  }
+
+  return cached.emojis;
+}
+
+function storeCachedGuildEmojis(guildId, emojis) {
+  guildEmojiCache.set(guildId, {
+    expiresAt: Date.now() + GUILD_EMOJI_CACHE_TTL_MS,
+    emojis,
+  });
+}
+
+function clearGuildEmojiCache(guildId = null) {
+  if (guildId) {
+    guildEmojiCache.delete(guildId);
+    return;
+  }
+
+  guildEmojiCache.clear();
 }
 
 async function getGuildEmojis(guild, options = {}) {
   const { forceRefresh = false } = options;
 
   if (!guild) return [];
+
+  const guildId = guild.id || null;
+  if (guildId && !forceRefresh) {
+    const cached = readCachedGuildEmojis(guildId);
+    if (cached) {
+      return cached;
+    }
+  }
 
   const hydratedGuild = typeof guild.fetch === 'function' ? await guild.fetch().catch(() => guild) : guild;
   const emojiManager = hydratedGuild?.emojis || guild.emojis;
@@ -181,6 +226,10 @@ async function getGuildEmojis(guild, options = {}) {
     .map((emoji) => formatGuildEmoji(emoji))
     .filter(Boolean)
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+
+  if (guildId) {
+    storeCachedGuildEmojis(guildId, emojis);
+  }
 
   return emojis;
 }
@@ -451,6 +500,7 @@ router.get('/guilds/:guildId/channels', validateDashboardToken, async (req, res)
 router.get('/guilds/:guildId/emojis', validateDashboardToken, async (req, res) => {
   try {
     const { guildId } = req.params;
+    const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';
 
     if (!req.dashboardAuth.accessibleGuildIds.includes(guildId)) {
       return res.status(403).json({ error: 'Acesso negado para a guild informada' });
@@ -461,7 +511,7 @@ router.get('/guilds/:guildId/emojis', validateDashboardToken, async (req, res) =
       return res.status(404).json({ error: 'Guild não encontrada' });
     }
 
-    const emojis = await getGuildEmojis(guild, { forceRefresh: true });
+    const emojis = await getGuildEmojis(guild, { forceRefresh });
     return res.json({ emojis });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -533,4 +583,5 @@ module.exports = {
   validateDashboardToken,
   isValidDashboardToken,
   refreshDashboardAccess,
+  clearGuildEmojiCache,
 };

@@ -41,6 +41,13 @@ function parseLegacyEmojiId(value) {
   };
 }
 
+function buildDiscordEmojiUrl(emojiId, animated = false) {
+  if (!emojiId) return null;
+
+  const extension = animated ? 'gif' : 'webp';
+  return `https://cdn.discordapp.com/emojis/${emojiId}.${extension}?size=64&quality=lossless`;
+}
+
 function extractFirstCustomEmoji(value) {
   if (!value || typeof value !== 'string') return null;
 
@@ -84,6 +91,7 @@ function normalizeOption(option, index = 0) {
     emoji: emojiValue,
     emojiId: emojiMeta?.emojiId || null,
     emojiAnimated: emojiMeta ? emojiMeta.animated : null,
+    emojiUrl: buildDiscordEmojiUrl(emojiMeta?.emojiId, Boolean(emojiMeta?.animated)),
   };
 }
 
@@ -165,6 +173,7 @@ function normalizePollFromActive(entry) {
       emoji: emojiValue,
       emojiId: emojiMeta?.emojiId || null,
       emojiAnimated: emojiMeta ? emojiMeta.animated : null,
+      emojiUrl: buildDiscordEmojiUrl(emojiMeta?.emojiId, Boolean(emojiMeta?.animated)),
     };
   });
 

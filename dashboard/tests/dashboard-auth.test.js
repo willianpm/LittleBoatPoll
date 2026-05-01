@@ -14,7 +14,11 @@ jest.mock('../../src/utils/file-handler', () => ({
 
 const { client } = require('../../src/core/client');
 const { loadCriadores } = require('../../src/utils/file-handler');
-const { authRouter } = require('../api/auth');
+const { authRouter, clearGuildEmojiCache } = require('../api/auth');
+
+afterEach(() => {
+  clearGuildEmojiCache();
+});
 
 beforeEach(() => {
   loadCriadores.mockReturnValue({
@@ -174,6 +178,7 @@ describe('Dashboard Auth API - guild selectors', () => {
             name: 'livro',
             animated: false,
             identifier: '<:livro:emoji-1>',
+            url: 'https://cdn.discordapp.com/emojis/emoji-1.webp?size=64&quality=lossless',
           },
         ],
       }),
@@ -198,19 +203,33 @@ describe('Dashboard Auth API - guild selectors', () => {
     ]);
   });
 
-  it('should return refreshed emojis for selected guild', async () => {
+  it('should return cached emojis for selected guild by default', async () => {
     const res = await request(app).get('/api/auth/guilds/guild-1/emojis');
 
     expect(res.statusCode).toBe(200);
-    expect(guildOneEmojiFetch).toHaveBeenCalled();
+    expect(guildOneEmojiFetch).not.toHaveBeenCalled();
     expect(res.body.emojis).toEqual([
       {
-        id: 'emoji-2',
-        name: 'foguete',
+        id: 'emoji-1',
+        name: 'livro',
         animated: false,
-        identifier: '<:foguete:emoji-2>',
+        identifier: '<:livro:emoji-1>',
+        url: 'https://cdn.discordapp.com/emojis/emoji-1.webp?size=64&quality=lossless',
       },
     ]);
+  });
+
+  it('should reuse cached emojis until refresh is requested', async () => {
+    const firstResponse = await request(app).get('/api/auth/guilds/guild-1/emojis');
+    const secondResponse = await request(app).get('/api/auth/guilds/guild-1/emojis');
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(secondResponse.statusCode).toBe(200);
+    expect(guildOneEmojiFetch).toHaveBeenCalledTimes(0);
+
+    const refreshedResponse = await request(app).get('/api/auth/guilds/guild-1/emojis?refresh=true');
+    expect(refreshedResponse.statusCode).toBe(200);
+    expect(guildOneEmojiFetch).toHaveBeenCalledTimes(1);
   });
 });
 
