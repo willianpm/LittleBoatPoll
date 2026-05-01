@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { loadVotacoes, saveVotacoes } = require('../utils/file-handler');
 const logger = require('../utils/logger');
-const { draftOptionText } = require('../utils/draft-option-normalizer');
+const { draftOptionText, normalizeDraftOptions } = require('../utils/draft-option-normalizer');
 
 async function buildMensalistasList(client, poll) {
   let mensalistasList = '(nenhum)';
@@ -167,17 +167,20 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
     client.saveActivePolls();
 
     const historicoData = loadVotacoes();
+    const normalizedOptions = normalizeDraftOptions(poll.opcoes);
     historicoData.push({
       id: messageId,
       titulo: poll.titulo,
       description:
         `Selecione até ${poll.maxVotos} opç${poll.maxVotos > 1 ? 'ões' : 'ão'}:\n\n` +
-        poll.opcoes.map((opcao, index) => `**${poll.emojiNumeros[index]} ${draftOptionText(opcao)}**`).join('\n\n'),
+        normalizedOptions
+          .map((opcao, index) => `**${poll.emojiNumeros[index]} ${draftOptionText(opcao)}**`)
+          .join('\n\n'),
       guildId: poll.guildId || interaction?.guildId || null,
       guildName: interaction?.guild?.name || poll.guildName || null,
       channelId: poll.channelId || interaction?.channelId || null,
       channelName: interaction?.channel?.name || poll.channelName || null,
-      opcoes: poll.opcoes.map(draftOptionText),
+      opcoes: normalizedOptions,
       maxVotos: poll.maxVotos,
       usarPesoMensalista: poll.usarPesoMensalista,
       allowMultipleChoices: poll.maxVotos > 1,

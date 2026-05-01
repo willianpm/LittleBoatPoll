@@ -168,7 +168,7 @@ async function getGuildEmojis(guild, options = {}) {
 
   if ((!emojiCollection || emojiCollection.size === 0) && typeof emojiManager.fetch === 'function') {
     const fetchedEmojis = await emojiManager.fetch().catch(() => null);
-    if (fetchedEmojis?.size) {
+    if (fetchedEmojis !== null && fetchedEmojis !== undefined) {
       emojiCollection = fetchedEmojis;
     }
   }

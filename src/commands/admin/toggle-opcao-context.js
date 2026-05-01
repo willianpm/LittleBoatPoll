@@ -74,8 +74,16 @@ module.exports = {
       }
 
       // Verifica se a opção já existe (case-insensitive)
+      const normalizedTextoSelecionado = normalizeDraftOption(textoSelecionado);
+      if (!normalizedTextoSelecionado) {
+        return await interaction.reply({
+          content: '❌ A mensagem selecionada não contém texto de opção válido.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
       const opcaoExistente = rascunho.opcoes.findIndex(
-        (op) => draftOptionText(op).toLowerCase() === textoSelecionado.toLowerCase(),
+        (op) => draftOptionText(op).toLowerCase() === normalizedTextoSelecionado.text.toLowerCase(),
       );
 
       let acao = '';
@@ -109,7 +117,7 @@ module.exports = {
           });
         }
 
-        rascunho.opcoes.push(normalizeDraftOption(textoSelecionado));
+        rascunho.opcoes.push(normalizedTextoSelecionado);
         acao = 'ADICIONADA';
         cor = COLORS.SUCCESS;
       }

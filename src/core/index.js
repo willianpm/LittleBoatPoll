@@ -17,6 +17,7 @@ const { closePollByMessageId } = require('./poll-close-service');
 const { closeExpiredPolls } = require('./poll-autoclose');
 const { ensureMensalistaRoleBinding } = require('../utils/mensalista-binding');
 const { DEFAULT_DURATION_KEY, calculateEndsAt, isValidDurationKey } = require('../utils/poll-duration');
+const { normalizeDraftOptions } = require('../utils/draft-option-normalizer');
 
 // Exibe configuração na inicialização
 config.logConfig();
@@ -258,27 +259,7 @@ function loadDraftPolls() {
 
       // Normaliza os dados
       const normalizedDrafts = draftsFiltrados.map((draft) => {
-        const normalizedOptions = Array.isArray(draft.opcoes)
-          ? draft.opcoes
-              .map((option) => {
-                if (typeof option === 'string') {
-                  const text = option.trim();
-                  if (!text) return null;
-                  return { text, emoji: null };
-                }
-
-                if (!option || typeof option !== 'object') {
-                  return null;
-                }
-
-                const text = typeof option.text === 'string' ? option.text.trim() : '';
-                const emoji = typeof option.emoji === 'string' ? option.emoji.trim() : null;
-
-                if (!text) return null;
-                return { text, emoji: emoji || null };
-              })
-              .filter(Boolean)
-          : [];
+        const normalizedOptions = normalizeDraftOptions(draft.opcoes);
 
         return [
           draft.id,
