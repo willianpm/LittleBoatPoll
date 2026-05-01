@@ -202,8 +202,9 @@ export function PollHistory() {
                       <p className="mb-1 dark:text-white text-sm md:text-base">
                         <EmojiRenderer
                           emoji={topOption.emoji}
-                          emojiId={(topOption as any).emojiId}
-                          emojiAnimated={(topOption as any).emojiAnimated}
+                          emojiId={topOption.emojiId}
+                          emojiAnimated={topOption.emojiAnimated}
+                          emojiUrl={topOption.emojiUrl}
                           className="inline-block align-middle size-4 md:size-5 mr-2 object-contain"
                         />
                         {topOption.text}

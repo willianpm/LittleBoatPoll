@@ -22,71 +22,11 @@ import {
 
 type ParsedDescription = {
   intro: string;
-  options: string[];
 };
-
-type InlineEmojiToken = {
-  type: 'text' | 'emoji';
-  value: string;
-  animated?: boolean;
-  emojiId?: string;
-};
-
-function parseInlineEmojiTokens(value: string | null | undefined): InlineEmojiToken[] {
-  if (!value) return [];
-
-  const tokens: InlineEmojiToken[] = [];
-  const emojiPattern = /<(?:(a):)?([a-zA-Z0-9_]{2,32}):(\d{17,20})>/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = emojiPattern.exec(value)) !== null) {
-    if (match.index > lastIndex) {
-      tokens.push({ type: 'text', value: value.slice(lastIndex, match.index) });
-    }
-
-    tokens.push({
-      type: 'emoji',
-      value: match[0],
-      emojiId: match[3],
-      animated: match[1] === 'a',
-    });
-
-    lastIndex = emojiPattern.lastIndex;
-  }
-
-  if (lastIndex < value.length) {
-    tokens.push({ type: 'text', value: value.slice(lastIndex) });
-  }
-
-  return tokens;
-}
-
-function renderInlineEmojiText(value: string | null | undefined) {
-  const tokens = parseInlineEmojiTokens(value);
-
-  if (tokens.length === 0) return null;
-
-  return tokens.map((token, index) => {
-    if (token.type === 'emoji' && token.emojiId) {
-      return (
-        <EmojiRenderer
-          key={`${token.value}-${index}`}
-          emoji={token.value}
-          emojiId={token.emojiId}
-          emojiAnimated={token.animated}
-          className="inline-block align-middle size-4 md:size-5 object-contain"
-        />
-      );
-    }
-
-    return <span key={`${token.value}-${index}`}>{token.value}</span>;
-  });
-}
 
 function parsePollDescription(description: string | null | undefined): ParsedDescription {
   if (!description) {
-    return { intro: 'Sem descrição', options: [] };
+    return { intro: 'Sem descrição' };
   }
 
   const normalized = description.trim();
@@ -97,13 +37,11 @@ function parsePollDescription(description: string | null | undefined): ParsedDes
 
     return {
       intro: intro || 'Selecione uma opção:',
-      options: boldMatches,
     };
   }
 
   return {
     intro: normalized.replace(/\s+/g, ' '),
-    options: [],
   };
 }
 
@@ -186,7 +124,7 @@ export function PollDetail() {
   }));
 
   const barChartData = poll.options.map((opt) => ({
-    name: opt.emoji ? `${opt.emoji} ${opt.text}` : opt.text,
+    name: opt.text,
     votes: opt.votes,
   }));
 
@@ -233,14 +171,19 @@ export function PollDetail() {
               <div className="flex-1">
                 <h1 className="text-xl md:text-2xl mb-2 dark:text-white">{poll.title}</h1>
                 <div className="mb-4">
-                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-                    {renderInlineEmojiText(parsedDescription.intro) || parsedDescription.intro}
-                  </p>
-                  {parsedDescription.options.length > 0 && (
+                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">{parsedDescription.intro}</p>
+                  {poll.options.length > 0 && (
                     <ul className="mt-2 space-y-1 text-sm md:text-base text-gray-600 dark:text-gray-300">
-                      {parsedDescription.options.map((option, index) => (
-                        <li key={`${option}-${index}`} className="leading-relaxed break-words">
-                          {renderInlineEmojiText(option) || option}
+                      {poll.options.map((option) => (
+                        <li key={option.id} className="leading-relaxed break-words flex items-center gap-2">
+                          <EmojiRenderer
+                            emoji={option.emoji}
+                            emojiId={option.emojiId}
+                            emojiAnimated={option.emojiAnimated}
+                            emojiUrl={option.emojiUrl}
+                            className="size-4 md:size-5 shrink-0 object-contain"
+                          />
+                          <span>{option.text}</span>
                         </li>
                       ))}
                     </ul>
@@ -309,8 +252,9 @@ export function PollDetail() {
                       <span className="flex items-center gap-2 flex-1 min-w-0">
                         <EmojiRenderer
                           emoji={option.emoji}
-                          emojiId={(option as any).emojiId}
-                          emojiAnimated={(option as any).emojiAnimated}
+                          emojiId={option.emojiId}
+                          emojiAnimated={option.emojiAnimated}
+                          emojiUrl={option.emojiUrl}
                           className="size-4 md:size-5 shrink-0 object-contain"
                         />
                         <span className="text-base md:text-lg dark:text-white truncate">{option.text}</span>

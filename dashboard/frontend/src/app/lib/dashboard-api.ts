@@ -5,6 +5,7 @@ export interface DashboardPollOption {
   emoji?: string | null;
   emojiId?: string | null;
   emojiAnimated?: boolean | null;
+  emojiUrl?: string | null;
 }
 
 export interface DashboardDraftOption {
@@ -17,6 +18,7 @@ export interface DashboardGuildEmoji {
   name: string;
   animated: boolean;
   identifier: string;
+  url?: string | null;
 }
 
 export type DurationKey = '1h' | '6h' | '12h' | '24h' | '3d' | '7d';

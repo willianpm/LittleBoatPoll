@@ -159,8 +159,9 @@ export function ActivePolls() {
                             <span className="flex items-center gap-2 truncate">
                               <EmojiRenderer
                                 emoji={option.emoji}
-                                emojiId={(option as any).emojiId}
-                                emojiAnimated={(option as any).emojiAnimated}
+                                emojiId={option.emojiId}
+                                emojiAnimated={option.emojiAnimated}
+                                emojiUrl={option.emojiUrl}
                                 className="size-4 md:size-5 shrink-0 object-contain"
                               />
                               <span className="dark:text-gray-200">{option.text}</span>
@@ -182,8 +183,9 @@ export function ActivePolls() {
                         <span className="text-gray-900 dark:text-gray-200">
                           <EmojiRenderer
                             emoji={topOption.emoji}
-                            emojiId={(topOption as any).emojiId}
-                            emojiAnimated={(topOption as any).emojiAnimated}
+                            emojiId={topOption.emojiId}
+                            emojiAnimated={topOption.emojiAnimated}
+                            emojiUrl={topOption.emojiUrl}
                             className="inline-block align-middle size-4 md:size-5 mr-2 object-contain"
                           />
                           {topOption.text}

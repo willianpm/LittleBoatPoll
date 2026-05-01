@@ -5,6 +5,7 @@ interface Props {
   emoji?: string | null;
   emojiId?: string | null;
   emojiAnimated?: boolean | null;
+  emojiUrl?: string | null;
   className?: string;
   alt?: string;
 }
@@ -25,18 +26,45 @@ function parseLegacyEmojiId(identifier: string | null | undefined) {
   return { id: trimmed, animated: false };
 }
 
-export function EmojiRenderer({ emoji, emojiId, emojiAnimated, className = '', alt = '' }: Props) {
+function renderCustomEmojiFallback(className: string, alt: string) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center ${className}`}
+      title={alt || 'emoji indisponível'}
+      aria-label={alt || 'emoji indisponível'}
+    >
+      ◻
+    </span>
+  );
+}
+
+export function EmojiRenderer({ emoji, emojiId, emojiAnimated, emojiUrl, className = '', alt = '' }: Props) {
   const [imageFailed, setImageFailed] = useState(false);
+  const fallbackAlt = alt || 'emoji indisponível';
 
-  // Prefer explicit id/animated provided by the API
-  if (emojiId) {
-    const url = getDiscordEmojiUrlFromEmoji({ id: emojiId, animated: Boolean(emojiAnimated) } as any);
+  // Prefer explicit URL/id metadata provided by the API.
+  const resolvedEmojiId = emojiId || parseDiscordIdentifier(emoji)?.id || parseLegacyEmojiId(emoji)?.id || null;
+  const resolvedAnimated = Boolean(
+    emojiAnimated ?? parseDiscordIdentifier(emoji)?.animated ?? parseLegacyEmojiId(emoji)?.animated ?? false,
+  );
+  const resolvedCustomEmojiUrl =
+    emojiUrl ||
+    (resolvedEmojiId ? getDiscordEmojiUrlFromEmoji({ id: resolvedEmojiId, animated: resolvedAnimated } as any) : null);
 
+  if (resolvedCustomEmojiUrl) {
     if (!imageFailed) {
       return (
-        <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
+        <img
+          src={resolvedCustomEmojiUrl}
+          alt={alt || 'emoji'}
+          className={className}
+          loading="lazy"
+          onError={() => setImageFailed(true)}
+        />
       );
     }
+
+    return renderCustomEmojiFallback(className, fallbackAlt);
   }
 
   // Try to parse the stored identifier string
@@ -49,6 +77,8 @@ export function EmojiRenderer({ emoji, emojiId, emojiAnimated, className = '', a
         <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
       );
     }
+
+    return renderCustomEmojiFallback(className, fallbackAlt);
   }
 
   const legacyParsed = parseLegacyEmojiId(emoji);
@@ -60,6 +90,8 @@ export function EmojiRenderer({ emoji, emojiId, emojiAnimated, className = '', a
         <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
       );
     }
+
+    return renderCustomEmojiFallback(className, fallbackAlt);
   }
 
   // Fallback to rendering the emoji as text (unicode)
