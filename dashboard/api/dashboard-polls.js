@@ -122,7 +122,7 @@ function hasExpired(endsAt) {
 function normalizePollFromHistory(record, index = 0) {
   const createdAt = record?.createdAt || record?.dataCriacao || record?.criadoEm || record?.created_at || null;
   const endsAt = record?.endsAt || record?.dataFinalizacao || record?.finalizadaEm || null;
-  const optionsSource = safeArray(record?.options || record?.opcoes || record?.resultados);
+  const optionsSource = safeArray(record?.options || record?.resultados || record?.opcoes);
   const options = optionsSource.map((option, optionIndex) => normalizeOption(option, optionIndex)).filter(Boolean);
   const computedTotalVotes = computeTotalVotes(options);
   const totalVotes = Number(record?.totalVotes || computedTotalVotes || record?.participantes || 0) || 0;

@@ -232,6 +232,50 @@ describe('Dashboard Polls API', () => {
     );
   });
 
+  it('should prefer resultados with votes over opcoes without votes for ended polls', async () => {
+    loadVotacoes.mockReturnValue([
+      {
+        id: 'history-priority',
+        titulo: 'Enquete encerrada com schema misto',
+        description: 'Descrição encerrada',
+        guildId: 'guild-1',
+        guildName: 'Guild One',
+        channelId: 'channel-1',
+        channelName: 'geral',
+        status: 'ended',
+        dataCriacao: '2026-04-01T10:00:00Z',
+        dataFinalizacao: '2026-04-02T10:00:00Z',
+        opcoes: [
+          { id: 'opt-1', text: 'Voto A', emoji: '1️⃣' },
+          { id: 'opt-2', text: 'Voto B', emoji: '2️⃣' },
+        ],
+        resultados: [
+          { id: 'opt-1', text: 'Voto A', pontos: 4, emoji: '1️⃣' },
+          { id: 'opt-2', text: 'Voto B', pontos: 2, emoji: '2️⃣' },
+        ],
+        participantes: 3,
+        maxVotos: 1,
+        allowMultipleChoices: false,
+        anonymous: false,
+      },
+    ]);
+
+    const res = await request(app).get('/api/polls/history-priority').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.poll).toEqual(
+      expect.objectContaining({
+        id: 'history-priority',
+        totalVotes: 6,
+        options: expect.arrayContaining([
+          expect.objectContaining({ text: 'Voto A', votes: 4 }),
+          expect.objectContaining({ text: 'Voto B', votes: 2 }),
+        ]),
+      }),
+    );
+  });
+
   it('should return 404 for missing poll detail', async () => {
     const res = await request(app).get('/api/polls/missing-id').set('Authorization', 'Bearer fake');
 
