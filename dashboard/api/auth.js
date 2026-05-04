@@ -212,13 +212,16 @@ async function getGuildEmojis(guild, options = {}) {
   let emojiCollection = forceRefresh ? null : emojiManager.cache;
 
   if ((!emojiCollection || emojiCollection.size === 0) && typeof emojiManager.fetch === 'function') {
-    const fetchedEmojis = await emojiManager.fetch().catch(() => null);
+    const fetchedEmojis = await emojiManager.fetch().catch((error) => {
+      if (forceRefresh) throw error;
+      return null;
+    });
     if (fetchedEmojis !== null && fetchedEmojis !== undefined) {
       emojiCollection = fetchedEmojis;
     }
   }
 
-  if ((!emojiCollection || emojiCollection.size === 0) && emojiManager.cache?.size) {
+  if (!forceRefresh && (!emojiCollection || emojiCollection.size === 0) && emojiManager.cache?.size) {
     emojiCollection = emojiManager.cache;
   }
 
