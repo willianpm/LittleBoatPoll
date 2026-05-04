@@ -64,6 +64,10 @@ function extractFirstCustomEmoji(value) {
 function stripCustomEmojiFromText(value) {
   if (!value || typeof value !== 'string') return '';
 
+  if (parseLegacyEmojiId(value.trim())) {
+    return '';
+  }
+
   const cleaned = value
     .replace(/<(?:a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>/g, ' ')
     .replace(/\s+/g, ' ')
@@ -160,9 +164,15 @@ function normalizePollFromActive(entry) {
     const explicitEmoji = parseCustomEmoji(emoji) || extractFirstCustomEmoji(emoji) || parseLegacyEmojiId(emoji);
     const optionText = typeof option === 'string' ? option : option?.text || option?.opcao || option?.name || '';
     const textEmoji = extractFirstCustomEmoji(optionText);
+    const legacyEmojiFromText = parseLegacyEmojiId(optionText);
     const emojiFromLegacyId = parseLegacyEmojiId(option?.emoji);
     const emojiValue =
-      explicitEmoji?.identifier || textEmoji?.identifier || emojiFromLegacyId?.identifier || emoji || null;
+      explicitEmoji?.identifier ||
+      textEmoji?.identifier ||
+      legacyEmojiFromText?.identifier ||
+      emojiFromLegacyId?.identifier ||
+      emoji ||
+      null;
     const emojiMeta =
       parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue) || parseLegacyEmojiId(emojiValue);
 

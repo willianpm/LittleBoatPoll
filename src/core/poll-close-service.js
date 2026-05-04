@@ -187,7 +187,7 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
       return {
         id: option.id || `option-${index}`,
         text: option.text,
-        emoji: emojiMeta?.identifier || pollEmoji || option.emoji || null,
+        emoji: emojiMeta?.identifier || option.emoji || pollEmoji || null,
         emojiId: emojiMeta?.emojiId || null,
         emojiAnimated: emojiMeta ? emojiMeta.animated : null,
       };
