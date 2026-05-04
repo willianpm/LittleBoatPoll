@@ -2,6 +2,8 @@ const {
   validatePollOptions,
   parseOptions,
   parseOptionsInput,
+  hasInvalidOptionsDelimiter,
+  getInvalidOptionsDelimiterError,
   isValidDiscordEmoji,
 } = require('../../../src/utils/validators');
 
@@ -119,17 +121,17 @@ describe('validators - validatePollOptions', () => {
 
 describe('validators - parseOptions', () => {
   test('deve parsear string com opções válidas', () => {
-    const result = parseOptions('Opção 1, Opção 2, Opção 3');
+    const result = parseOptions('Opção 1 | Opção 2 | Opção 3');
     expect(result).toEqual(['Opção 1', 'Opção 2', 'Opção 3']);
   });
 
   test('deve remover espaços em branco extras', () => {
-    const result = parseOptions('  A  ,  B  ,  C  ');
+    const result = parseOptions('  A  |  B  |  C  ');
     expect(result).toEqual(['A', 'B', 'C']);
   });
 
   test('deve filtrar opções vazias', () => {
-    const result = parseOptions('A, , B, ,C');
+    const result = parseOptions('A| |B||C');
     expect(result).toEqual(['A', 'B', 'C']);
   });
 
@@ -153,9 +155,14 @@ describe('validators - parseOptions', () => {
     expect(result).toEqual([]);
   });
 
-  test('deve lidar com opções com vírgulas no texto', () => {
-    const result = parseOptions('Livro A, Livro B');
-    expect(result).toHaveLength(2);
+  test('deve preservar vírgulas dentro da opção quando usar pipe', () => {
+    const result = parseOptions('O Bom, o Mau e o Feio | Clube da Luta | Interestelar');
+    expect(result).toEqual(['O Bom, o Mau e o Feio', 'Clube da Luta', 'Interestelar']);
+  });
+
+  test('não deve separar por vírgula', () => {
+    const result = parseOptions('Opção A, Opção B');
+    expect(result).toEqual(['Opção A, Opção B']);
   });
 });
 
@@ -169,9 +176,27 @@ describe('validators - parseOptionsInput', () => {
     ]);
   });
 
-  test('deve fazer fallback para parser legado com string CSV', () => {
-    const result = parseOptionsInput('Opção A, Opção B');
+  test('deve fazer fallback para parser com string separada por pipe', () => {
+    const result = parseOptionsInput('Opção A | Opção B');
     expect(result).toEqual(['Opção A', 'Opção B']);
+  });
+});
+
+describe('validators - hasInvalidOptionsDelimiter', () => {
+  test('deve identificar uso inválido de vírgula como delimitador', () => {
+    expect(hasInvalidOptionsDelimiter('A, B, C')).toBe(true);
+  });
+
+  test('não deve marcar input válido separado por pipe', () => {
+    expect(hasInvalidOptionsDelimiter('A | B | C')).toBe(false);
+  });
+
+  test('não deve marcar payload JSON', () => {
+    expect(hasInvalidOptionsDelimiter('[{"text":"A"},{"text":"B"}]')).toBe(false);
+  });
+
+  test('deve expor mensagem de erro padronizada', () => {
+    expect(getInvalidOptionsDelimiterError()).toContain('caractere "|"');
   });
 });
 

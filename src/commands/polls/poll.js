@@ -1,6 +1,11 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
-const { validatePollOptions, parseOptions } = require('../../utils/validators');
+const {
+  validatePollOptions,
+  parseOptions,
+  hasInvalidOptionsDelimiter,
+  getInvalidOptionsDelimiterError,
+} = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
 const logger = require('../../utils/logger');
 
@@ -10,7 +15,7 @@ const logger = require('../../utils/logger');
  *
  * Opções:
  * - titulo (obrigatório): Título da enquete
- * - opcoes (obrigatório): Opções separadas por vírgula
+ * - opcoes (obrigatório): Opções separadas por pipe
  * - max_votos (obrigatório): Número máximo de votos por pessoa
  * - peso_mensalista (obrigatório): Mensalistas têm peso duplo?
  */
@@ -24,7 +29,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName('opcoes')
-        .setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)')
+        .setDescription('Opções separadas por | (ex: Livro A | Livro B | Livro C)')
         .setRequired(true),
     )
     .addIntegerOption((option) =>
@@ -49,6 +54,12 @@ module.exports = {
       const maxVotos = interaction.options.getInteger('max_votos') || 1;
       const pesoMensalistaOption = interaction.options.getString('peso_mensalista');
       const usarPesoMensalista = pesoMensalistaOption === 'sim';
+
+      if (hasInvalidOptionsDelimiter(opcoesString)) {
+        return await interaction.editReply({
+          content: `❌ **Erro!** ${getInvalidOptionsDelimiterError()}`,
+        });
+      }
 
       // Processa as opções
       const opcoes = parseOptions(opcoesString);

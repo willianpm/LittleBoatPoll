@@ -25,8 +25,8 @@ describe('csvService.parseAndValidate', () => {
       'test.csv',
       [
         'nome-da-enquete;opções;max_votos;peso_mensalistas',
-        'Enquete 1;Opção A,Opção B;2;sim',
-        'Enquete 2;Opção X,Opção Y,Opção Z;1;nao',
+        'Enquete 1;Opção A|Opção B;2;sim',
+        'Enquete 2;Opção X|Opção Y|Opção Z;1;nao',
       ].join('\n'),
     );
 
@@ -57,7 +57,7 @@ describe('csvService.parseAndValidate', () => {
   it('deve retornar erro quando colunas obrigatórias estiverem incorretas', async () => {
     const invalidHeaderPath = await writeCsvFile(
       'invalid-header.csv',
-      ['nome-da-enquete;opções;max_votos', 'Enquete 1;A,B;1'].join('\n'),
+      ['nome-da-enquete;opções;max_votos', 'Enquete 1;A|B;1'].join('\n'),
     );
 
     const result = await parseAndValidate(invalidHeaderPath);
@@ -90,7 +90,7 @@ describe('csvService.parseAndValidate', () => {
   it('deve retornar erro por linha quando max_votos for inválido', async () => {
     const invalidVotesPath = await writeCsvFile(
       'invalid-votes.csv',
-      ['nome-da-enquete;opções;max_votos;peso_mensalistas', 'Enquete 1;A,B;abc;sim'].join('\n'),
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', 'Enquete 1;A|B;abc;sim'].join('\n'),
     );
 
     const result = await parseAndValidate(invalidVotesPath);
@@ -103,7 +103,7 @@ describe('csvService.parseAndValidate', () => {
   it('deve rejeitar CSV com tentativa de injeção (fórmula começando com =)', async () => {
     const injectionPath = await writeCsvFile(
       'injection-test.csv',
-      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '=SUM(A1:A2);A,B;1;sim'].join('\n'),
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '=SUM(A1:A2);A|B;1;sim'].join('\n'),
     );
 
     const result = await parseAndValidate(injectionPath);
@@ -128,7 +128,7 @@ describe('csvService.parseAndValidate', () => {
   it('deve rejeitar valores começando com - (CSV injection)', async () => {
     const injectionPath = await writeCsvFile(
       'injection-minus.csv',
-      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '-cmd;A,B;1;sim'].join('\n'),
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '-cmd;A|B;1;sim'].join('\n'),
     );
 
     const result = await parseAndValidate(injectionPath);
@@ -140,12 +140,39 @@ describe('csvService.parseAndValidate', () => {
   it('deve rejeitar valores começando com @ (CSV injection)', async () => {
     const injectionPath = await writeCsvFile(
       'injection-at.csv',
-      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '@SUM(1+1);A,B;1;sim'].join('\n'),
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', '@SUM(1+1);A|B;1;sim'].join('\n'),
     );
 
     const result = await parseAndValidate(injectionPath);
 
     expect(result.valid).toBe(false);
     expect(result.error).toContain('valor suspeito detectado');
+  });
+
+  it('deve preservar vírgula dentro da opção quando separada por pipe', async () => {
+    const csvPath = await writeCsvFile(
+      'quoted-commas.csv',
+      [
+        'nome-da-enquete;opções;max_votos;peso_mensalistas',
+        'Filmes;"O Bom, o Mau e o Feio|Clube da Luta|Interestelar";2;sim',
+      ].join('\n'),
+    );
+
+    const result = await parseAndValidate(csvPath);
+
+    expect(result.valid).toBe(true);
+    expect(result.data[0].opcoes).toEqual(['O Bom, o Mau e o Feio', 'Clube da Luta', 'Interestelar']);
+  });
+
+  it('deve rejeitar uso de vírgula como separador de opções', async () => {
+    const invalidDelimiterPath = await writeCsvFile(
+      'invalid-delimiter.csv',
+      ['nome-da-enquete;opções;max_votos;peso_mensalistas', 'Enquete 1;A,B,C;1;sim'].join('\n'),
+    );
+
+    const result = await parseAndValidate(invalidDelimiterPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Use o caractere "|"');
   });
 });

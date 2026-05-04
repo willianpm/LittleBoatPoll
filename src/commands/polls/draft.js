@@ -1,7 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const crypto = require('crypto');
-const { validatePollOptions, parseOptionsInput } = require('../../utils/validators');
+const {
+  validatePollOptions,
+  parseOptionsInput,
+  hasInvalidOptionsDelimiter,
+  getInvalidOptionsDelimiterError,
+} = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS } = require('../../utils/constants');
 const { DEFAULT_DURATION_KEY, calculateEndsAt, isValidDurationKey } = require('../../utils/poll-duration');
 const logger = require('../../utils/logger');
@@ -92,7 +97,7 @@ module.exports = {
         .addStringOption((option) =>
           option
             .setName('opcoes')
-            .setDescription('Opções separadas por vírgula (ex: Livro A, Livro B, Livro C)')
+            .setDescription('Opções separadas por | (ex: Livro A | Livro B | Livro C)')
             .setRequired(true),
         )
         .addIntegerOption((option) =>
@@ -168,7 +173,7 @@ module.exports = {
         .addStringOption((option) =>
           option
             .setName('opcoes')
-            .setDescription('Novas opções separadas por vírgula (ex: Livro D, Livro E)')
+            .setDescription('Novas opções separadas por | (ex: Livro D | Livro E)')
             .setRequired(true),
         ),
     )
@@ -263,6 +268,13 @@ async function handleCriar(interaction, client) {
   const durationKeyRaw = interaction.options.getString('duracao');
   const durationKey = isValidDurationKey(durationKeyRaw) ? durationKeyRaw : DEFAULT_DURATION_KEY;
   const usarPesoMensalista = pesoMensalistaOption === 'sim';
+
+  if (hasInvalidOptionsDelimiter(opcoesRaw)) {
+    return await interaction.reply({
+      content: `❌ **Erro!** ${getInvalidOptionsDelimiterError()}`,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 
   // Processa as opções
   const opcoesInput = parseOptionsInput(opcoesRaw);
@@ -375,6 +387,13 @@ async function handleEditar(interaction, client) {
 
   // Atualiza as opções se fornecidas
   if (novasOpcoesString) {
+    if (hasInvalidOptionsDelimiter(novasOpcoesString)) {
+      return await interaction.reply({
+        content: `❌ **Erro!** ${getInvalidOptionsDelimiterError()}`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     const novasOpcoesInput = parseOptionsInput(novasOpcoesString);
     const requireEmoji =
       interaction.dashboardSource === 'dashboard-create' || interaction.dashboardSource === 'dashboard-drafts';
@@ -727,6 +746,13 @@ async function handleDeletar(interaction, client) {
 async function handleAdicionarOpcao(interaction, client) {
   const draftId = interaction.options.getString('id');
   const novasOpcoesString = interaction.options.getString('opcoes');
+
+  if (hasInvalidOptionsDelimiter(novasOpcoesString)) {
+    return await interaction.reply({
+      content: `❌ **Erro!** ${getInvalidOptionsDelimiterError()}`,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
