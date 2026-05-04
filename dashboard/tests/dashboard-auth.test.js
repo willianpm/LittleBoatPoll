@@ -14,7 +14,11 @@ jest.mock('../../src/utils/file-handler', () => ({
 
 const { client } = require('../../src/core/client');
 const { loadCriadores } = require('../../src/utils/file-handler');
-const { authRouter } = require('../api/auth');
+const { authRouter, clearGuildEmojiCache } = require('../api/auth');
+
+afterEach(() => {
+  clearGuildEmojiCache();
+});
 
 beforeEach(() => {
   loadCriadores.mockReturnValue({
@@ -30,6 +34,7 @@ beforeEach(() => {
 
 describe('Dashboard Auth API - guild selectors', () => {
   let app;
+  let guildOneEmojiFetch;
 
   beforeAll(() => {
     app = express();
@@ -78,6 +83,20 @@ describe('Dashboard Auth API - guild selectors', () => {
       ],
     ]);
 
+    guildOneEmojiFetch = jest.fn(
+      async () =>
+        new Map([
+          [
+            'emoji-2',
+            {
+              id: 'emoji-2',
+              name: 'foguete',
+              animated: false,
+            },
+          ],
+        ]),
+    );
+
     client.guilds.cache = new Map([
       [
         'guild-1',
@@ -85,6 +104,19 @@ describe('Dashboard Auth API - guild selectors', () => {
           id: 'guild-1',
           name: 'Guild One',
           icon: null,
+          emojis: {
+            cache: new Map([
+              [
+                'emoji-1',
+                {
+                  id: 'emoji-1',
+                  name: 'livro',
+                  animated: false,
+                },
+              ],
+            ]),
+            fetch: guildOneEmojiFetch,
+          },
           members: {
             cache: membersCache,
             fetch: jest.fn(async () => membersCache),
@@ -101,6 +133,10 @@ describe('Dashboard Auth API - guild selectors', () => {
           id: 'guild-2',
           name: 'Guild Two',
           icon: null,
+          emojis: {
+            cache: new Map(),
+            fetch: jest.fn(async () => null),
+          },
           members: {
             cache: membersCache,
             fetch: jest.fn(async () => membersCache),
@@ -136,6 +172,15 @@ describe('Dashboard Auth API - guild selectors', () => {
       expect.objectContaining({
         id: 'guild-1',
         name: 'Guild One',
+        emojis: [
+          {
+            id: 'emoji-1',
+            name: 'livro',
+            animated: false,
+            identifier: '<:livro:emoji-1>',
+            url: 'https://cdn.discordapp.com/emojis/emoji-1.webp?size=64&quality=lossless',
+          },
+        ],
       }),
     );
   });
@@ -156,6 +201,35 @@ describe('Dashboard Auth API - guild selectors', () => {
         name: 'geral',
       }),
     ]);
+  });
+
+  it('should return cached emojis for selected guild by default', async () => {
+    const res = await request(app).get('/api/auth/guilds/guild-1/emojis');
+
+    expect(res.statusCode).toBe(200);
+    expect(guildOneEmojiFetch).not.toHaveBeenCalled();
+    expect(res.body.emojis).toEqual([
+      {
+        id: 'emoji-1',
+        name: 'livro',
+        animated: false,
+        identifier: '<:livro:emoji-1>',
+        url: 'https://cdn.discordapp.com/emojis/emoji-1.webp?size=64&quality=lossless',
+      },
+    ]);
+  });
+
+  it('should reuse cached emojis until refresh is requested', async () => {
+    const firstResponse = await request(app).get('/api/auth/guilds/guild-1/emojis');
+    const secondResponse = await request(app).get('/api/auth/guilds/guild-1/emojis');
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(secondResponse.statusCode).toBe(200);
+    expect(guildOneEmojiFetch).toHaveBeenCalledTimes(0);
+
+    const refreshedResponse = await request(app).get('/api/auth/guilds/guild-1/emojis?refresh=true');
+    expect(refreshedResponse.statusCode).toBe(200);
+    expect(guildOneEmojiFetch).toHaveBeenCalledTimes(1);
   });
 });
 

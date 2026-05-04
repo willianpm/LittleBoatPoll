@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Clock, Users, Hash } from 'lucide-react';
 import { getPollHistory, type DashboardPoll } from '../lib/dashboard-api';
+import EmojiRenderer from '../components/EmojiRenderer';
 
 export function ActivePolls() {
   const [polls, setPolls] = useState<DashboardPoll[]>([]);
@@ -156,7 +157,14 @@ export function ActivePolls() {
                         <div key={option.id}>
                           <div className="flex items-center justify-between mb-1 text-xs md:text-sm">
                             <span className="flex items-center gap-2 truncate">
-                              {option.emoji && <span>{option.emoji}</span>}
+                              <EmojiRenderer
+                                emoji={option.emoji}
+                                emojiId={option.emojiId}
+                                emojiAnimated={option.emojiAnimated}
+                                emojiUrl={option.emojiUrl}
+                                alt={`Emoji da opção: ${option.text}`}
+                                className="size-4 md:size-5 shrink-0 object-contain"
+                              />
                               <span className="dark:text-gray-200">{option.text}</span>
                             </span>
                             <span className="text-gray-600 dark:text-gray-400 shrink-0 ml-2">
@@ -174,7 +182,15 @@ export function ActivePolls() {
                       <p className="text-xs text-gray-600 dark:text-gray-400">
                         Liderando:{' '}
                         <span className="text-gray-900 dark:text-gray-200">
-                          {topOption.emoji} {topOption.text}
+                          <EmojiRenderer
+                            emoji={topOption.emoji}
+                            emojiId={topOption.emojiId}
+                            emojiAnimated={topOption.emojiAnimated}
+                            emojiUrl={topOption.emojiUrl}
+                            alt={`Emoji da opção líder: ${topOption.text}`}
+                            className="inline-block align-middle size-4 md:size-5 mr-2 object-contain"
+                          />
+                          {topOption.text}
                         </span>
                       </p>
                     </div>

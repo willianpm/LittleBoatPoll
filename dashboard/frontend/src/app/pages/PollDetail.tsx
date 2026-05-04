@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
 import { closePoll, getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
 import { ArrowLeft, Calendar, Clock, Hash, Trophy } from 'lucide-react';
+import EmojiRenderer from '../components/EmojiRenderer';
 import {
   PieChart,
   Pie,
@@ -21,12 +22,11 @@ import {
 
 type ParsedDescription = {
   intro: string;
-  options: string[];
 };
 
 function parsePollDescription(description: string | null | undefined): ParsedDescription {
   if (!description) {
-    return { intro: 'Sem descrição', options: [] };
+    return { intro: 'Sem descrição' };
   }
 
   const normalized = description.trim();
@@ -37,13 +37,11 @@ function parsePollDescription(description: string | null | undefined): ParsedDes
 
     return {
       intro: intro || 'Selecione uma opção:',
-      options: boldMatches,
     };
   }
 
   return {
     intro: normalized.replace(/\s+/g, ' '),
-    options: [],
   };
 }
 
@@ -126,7 +124,7 @@ export function PollDetail() {
   }));
 
   const barChartData = poll.options.map((opt) => ({
-    name: opt.emoji ? `${opt.emoji} ${opt.text}` : opt.text,
+    name: opt.text,
     votes: opt.votes,
   }));
 
@@ -174,11 +172,19 @@ export function PollDetail() {
                 <h1 className="text-xl md:text-2xl mb-2 dark:text-white">{poll.title}</h1>
                 <div className="mb-4">
                   <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">{parsedDescription.intro}</p>
-                  {parsedDescription.options.length > 0 && (
+                  {poll.options.length > 0 && (
                     <ul className="mt-2 space-y-1 text-sm md:text-base text-gray-600 dark:text-gray-300">
-                      {parsedDescription.options.map((option, index) => (
-                        <li key={`${option}-${index}`} className="leading-relaxed break-words">
-                          {option}
+                      {poll.options.map((option) => (
+                        <li key={option.id} className="leading-relaxed break-words flex items-center gap-2">
+                          <EmojiRenderer
+                            emoji={option.emoji}
+                            emojiId={option.emojiId}
+                            emojiAnimated={option.emojiAnimated}
+                            emojiUrl={option.emojiUrl}
+                            alt={`Emoji da opção: ${option.text}`}
+                            className="size-4 md:size-5 shrink-0 object-contain"
+                          />
+                          <span>{option.text}</span>
                         </li>
                       ))}
                     </ul>
@@ -245,7 +251,14 @@ export function PollDetail() {
                   >
                     <div className="flex items-center justify-between mb-2 gap-2">
                       <span className="flex items-center gap-2 flex-1 min-w-0">
-                        {option.emoji && <span className="text-lg md:text-xl shrink-0">{option.emoji}</span>}
+                        <EmojiRenderer
+                          emoji={option.emoji}
+                          emojiId={option.emojiId}
+                          emojiAnimated={option.emojiAnimated}
+                          emojiUrl={option.emojiUrl}
+                          alt={`Emoji da opção: ${option.text}`}
+                          className="size-4 md:size-5 shrink-0 object-contain"
+                        />
                         <span className="text-base md:text-lg dark:text-white truncate">{option.text}</span>
                         {isTop && <Trophy className="size-4 md:size-5 text-[#5865F2] shrink-0" />}
                       </span>

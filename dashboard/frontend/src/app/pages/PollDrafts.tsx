@@ -1,36 +1,53 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Plus, Send, FileText, Trash2, Edit, X, Server, Hash } from 'lucide-react';
+import { PollEmojiPickerField } from '../components/PollEmojiPickerField';
 import { toast } from 'sonner';
 import {
   deleteDraft,
   editDraft,
   getDraftContextTargets,
+  getGuilds,
+  getGuildEmojis,
   publishDraft,
+  type DashboardGuild,
   type DashboardDraftContext,
+  type DashboardGuildEmoji,
 } from '../lib/dashboard-api';
+import { isValidDiscordCustomEmoji, isValidDiscordEmoji } from '../lib/emoji-validation';
+import { getAvailableEmojis } from '../lib/emoji-merge';
 
 type DraftItem = DashboardDraftContext;
+type DraftOptionRow = { id: string; text: string; emoji: string };
 const ALLOWED_DURATION_KEYS = new Set(['1h', '6h', '12h', '24h', '3d', '7d']);
 
 export function PollDrafts() {
   const navigate = useNavigate();
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
+  const [guilds, setGuilds] = useState<DashboardGuild[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDraft, setEditingDraft] = useState<DraftItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editOptions, setEditOptions] = useState<Array<{ id: string; text: string }>>([]);
+  const [editOptions, setEditOptions] = useState<DraftOptionRow[]>([]);
+  const [editOptionErrors, setEditOptionErrors] = useState<Record<string, string>>({});
   const [editMaxVotes, setEditMaxVotes] = useState(1);
   const [editSubscriberWeight, setEditSubscriberWeight] = useState<'sim' | 'nao'>('nao');
   const [editDurationKey, setEditDurationKey] = useState<'1h' | '6h' | '12h' | '24h' | '3d' | '7d'>('24h');
+  const [editingDraftGuildEmojis, setEditingDraftGuildEmojis] = useState<DashboardGuildEmoji[]>([]);
+  const [loadingEditingDraftGuildEmojis, setLoadingEditingDraftGuildEmojis] = useState(false);
+  const editEmojiPickerContainerRef = useRef<HTMLDivElement | null>(null);
+  const setEditEmojiPickerContainer = useCallback((node: HTMLDivElement | null) => {
+    editEmojiPickerContainerRef.current = node;
+  }, []);
 
   const sortedDrafts = useMemo(
     () => [...drafts].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))),
@@ -39,7 +56,17 @@ export function PollDrafts() {
 
   useEffect(() => {
     void loadDrafts();
+    void loadGuilds();
   }, []);
+
+  async function loadGuilds() {
+    try {
+      const data = await getGuilds();
+      setGuilds(data);
+    } catch {
+      setGuilds([]);
+    }
+  }
 
   async function loadDrafts() {
     setLoadingDrafts(true);
@@ -53,6 +80,40 @@ export function PollDrafts() {
       setLoadingDrafts(false);
     }
   }
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEditingDraftGuildEmojis() {
+      if (!editingDraft?.guildId) {
+        setEditingDraftGuildEmojis([]);
+        return;
+      }
+
+      setLoadingEditingDraftGuildEmojis(true);
+
+      try {
+        const emojis = await getGuildEmojis(editingDraft.guildId);
+        if (!isMounted) return;
+
+        setEditingDraftGuildEmojis(emojis);
+      } catch (error) {
+        if (!isMounted) return;
+        setEditingDraftGuildEmojis([]);
+        toast.error(error instanceof Error ? error.message : 'Falha ao carregar emojis do servidor');
+      } finally {
+        if (isMounted) {
+          setLoadingEditingDraftGuildEmojis(false);
+        }
+      }
+    }
+
+    loadEditingDraftGuildEmojis();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [editingDraft?.guildId]);
 
   const handlePublishDraft = async (id: string) => {
     const targetDraft = drafts.find((draft) => draft.id === id);
@@ -93,8 +154,18 @@ export function PollDrafts() {
   const openEditModal = (draft: DraftItem) => {
     const draftOptions = Array.isArray(draft.options) ? draft.options : [];
     const normalizedOptions = draftOptions
-      .filter((option) => typeof option === 'string')
-      .map((option, index) => ({ id: `${draft.id}-${index}`, text: option }));
+      .map((option, index) => {
+        if (typeof option === 'string') {
+          return { id: `${draft.id}-${index}`, text: option, emoji: '' };
+        }
+
+        return {
+          id: `${draft.id}-${index}`,
+          text: typeof option?.text === 'string' ? option.text : '',
+          emoji: typeof option?.emoji === 'string' ? option.emoji : '',
+        };
+      })
+      .filter((option) => option.text.trim().length > 0 || option.emoji.trim().length > 0);
 
     setEditingDraft(draft);
     setEditTitle(draft.title || '');
@@ -102,8 +173,12 @@ export function PollDrafts() {
       normalizedOptions.length >= 2
         ? normalizedOptions
         : [
-            { id: `${draft.id}-fallback-1`, text: normalizedOptions[0]?.text || '' },
-            { id: `${draft.id}-fallback-2`, text: '' },
+            {
+              id: `${draft.id}-fallback-1`,
+              text: normalizedOptions[0]?.text || '',
+              emoji: normalizedOptions[0]?.emoji || '',
+            },
+            { id: `${draft.id}-fallback-2`, text: '', emoji: '' },
           ],
     );
     const parsedMaxVotes = Number(draft.maxVotes ?? 1);
@@ -114,47 +189,136 @@ export function PollDrafts() {
     setEditMaxVotes(safeMaxVotes);
     setEditSubscriberWeight(draft.pesoMensalista === 'sim' ? 'sim' : 'nao');
     setEditDurationKey(normalizedDurationKey);
+    setEditOptionErrors({});
     setIsEditOpen(true);
   };
 
-  const addEditOption = () => {
-    if (editOptions.length >= 20) {
-      toast.error('Limite de 20 opções por enquete');
-      return;
-    }
+  const addEditOption = useCallback(() => {
+    setEditOptions((current) => {
+      if (current.length >= 20) {
+        toast.error('Limite de 20 opções por enquete');
+        return current;
+      }
 
-    setEditOptions((current) => [...current, { id: Date.now().toString(), text: '' }]);
-  };
+      return [...current, { id: Date.now().toString(), text: '', emoji: '' }];
+    });
+  }, []);
 
-  const removeEditOption = (id: string) => {
-    if (editOptions.length <= 2) {
-      toast.error('A enquete precisa ter pelo menos 2 opções');
-      return;
-    }
+  const removeEditOption = useCallback((id: string) => {
+    setEditOptions((current) => {
+      if (current.length <= 2) {
+        toast.error('A enquete precisa ter pelo menos 2 opções');
+        return current;
+      }
 
-    setEditOptions((current) => current.filter((option) => option.id !== id));
-  };
+      return current.filter((option) => option.id !== id);
+    });
+  }, []);
 
-  const updateEditOption = (id: string, value: string) => {
-    setEditOptions((current) => current.map((option) => (option.id === id ? { ...option, text: value } : option)));
-  };
+  const updateEditOption = useCallback((id: string, field: 'text' | 'emoji', value: string) => {
+    setEditOptions((current) => current.map((option) => (option.id === id ? { ...option, [field]: value } : option)));
+    setEditOptionErrors((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  }, []);
+
+  const selectedDraftGuild = useMemo(() => {
+    if (!editingDraft?.guildId) return null;
+    return guilds.find((guild) => guild.id === editingDraft.guildId) || null;
+  }, [editingDraft?.guildId, guilds]);
+
+  const draftEmojis = useMemo<DashboardGuildEmoji[]>(
+    () => (editingDraftGuildEmojis.length > 0 ? editingDraftGuildEmojis : selectedDraftGuild?.emojis || []),
+    [editingDraftGuildEmojis, selectedDraftGuild],
+  );
+
+  const selectedEmojiSignature = useMemo(
+    () =>
+      editOptions
+        .map((option) => {
+          const emoji = option.emoji.trim();
+          return emoji && !isValidDiscordCustomEmoji(emoji) ? emoji : '';
+        })
+        .join('\u0001'),
+    [editOptions],
+  );
+
+  const mergedDraftEmojis = useMemo(() => {
+    const merged = getAvailableEmojis(draftEmojis);
+    const selectedUnicode = selectedEmojiSignature ? selectedEmojiSignature.split('\u0001').filter(Boolean) : [];
+
+    if (selectedUnicode.length === 0) return merged;
+
+    const valueSet = new Set(merged.map((emoji) => emoji.value));
+    const selectedEntries = selectedUnicode
+      .filter((emoji) => !valueSet.has(emoji))
+      .map((emoji) => ({
+        key: `default:${emoji}`,
+        value: emoji,
+        name: emoji,
+        source: 'default' as const,
+        isCustom: false,
+        unicode: emoji,
+      }));
+
+    return [...merged, ...selectedEntries];
+  }, [draftEmojis, selectedEmojiSignature]);
 
   const handleSaveEdit = async () => {
     if (!editingDraft) return;
 
-    const normalizedOptions = editOptions.map((option) => option.text.trim()).filter(Boolean);
+    const normalizedOptions = editOptions
+      .map((option) => ({
+        id: option.id,
+        text: option.text.trim(),
+        emoji: option.emoji.trim(),
+      }))
+      .filter((option) => option.text.length > 0 || option.emoji.length > 0);
 
     if (!editTitle.trim()) {
       toast.error('Informe um título para o rascunho');
       return;
     }
 
-    if (normalizedOptions.length < 2) {
-      toast.error('A enquete precisa ter pelo menos 2 opções válidas');
+    const nextOptionErrors: Record<string, string> = {};
+    const validEmojiIdentifiers = new Set(draftEmojis.map((emoji) => emoji.identifier));
+
+    normalizedOptions.forEach((option, index) => {
+      if (!option.text) {
+        nextOptionErrors[option.id] = `Preencha o texto da opção ${index + 1}`;
+        return;
+      }
+
+      if (!option.emoji) {
+        nextOptionErrors[option.id] = `Selecione um emoji válido para a opção ${index + 1}`;
+        return;
+      }
+
+      if (!isValidDiscordEmoji(option.emoji)) {
+        nextOptionErrors[option.id] = `Selecione um emoji válido para a opção ${index + 1}`;
+        return;
+      }
+
+      if (isValidDiscordCustomEmoji(option.emoji) && !validEmojiIdentifiers.has(option.emoji)) {
+        nextOptionErrors[option.id] = 'Selecione um emoji da lista do servidor para esta opção.';
+      }
+    });
+
+    if (Object.keys(nextOptionErrors).length > 0) {
+      setEditOptionErrors(nextOptionErrors);
+      toast.error('Corrija os emojis e textos das opções antes de salvar.');
       return;
     }
 
-    const optionsLowerCase = normalizedOptions.map((option) => option.toLowerCase());
+    if (normalizedOptions.length < 2) {
+      toast.error('A enquete precisa ter pelo menos 2 opções válidas com emoji');
+      return;
+    }
+
+    const optionsLowerCase = normalizedOptions.map((option) => option.text.toLowerCase());
     const hasDuplicatedOptions = new Set(optionsLowerCase).size !== optionsLowerCase.length;
     if (hasDuplicatedOptions) {
       toast.error('As opções devem ser únicas');
@@ -166,7 +330,7 @@ export function PollDrafts() {
       const result = await editDraft({
         id: editingDraft.id,
         title: editTitle.trim(),
-        optionsCsv: normalizedOptions.join(', '),
+        options: normalizedOptions.map((option) => ({ text: option.text, emoji: option.emoji })),
         maxVotes: editMaxVotes,
         pesoMensalista: editSubscriberWeight,
         durationKey: editDurationKey,
@@ -340,7 +504,7 @@ export function PollDrafts() {
               <DialogTitle className="dark:text-white">Editar Rascunho</DialogTitle>
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+            <div ref={setEditEmojiPickerContainer} className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
               <div>
                 <Label htmlFor="edit-title" className="dark:text-gray-200">
                   Título
@@ -370,28 +534,44 @@ export function PollDrafts() {
                 </div>
                 <div className="mt-2 space-y-2">
                   {editOptions.map((option, index) => (
-                    <div key={option.id} className="flex items-center gap-2">
-                      <Input
-                        value={option.text}
-                        onChange={(e) => updateEditOption(option.id, e.target.value)}
-                        placeholder={`Opção ${index + 1}`}
-                        className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeEditOption(option.id)}
-                        disabled={editOptions.length <= 2}
-                        className="dark:hover:bg-gray-700 shrink-0"
-                      >
-                        <X className="size-4" />
-                      </Button>
+                    <div key={option.id} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 md:w-28 shrink-0">
+                          <PollEmojiPickerField
+                            value={option.emoji}
+                            emojis={mergedDraftEmojis}
+                            disabled={loadingEditingDraftGuildEmojis}
+                            loading={loadingEditingDraftGuildEmojis}
+                            ariaLabel={`Selecionar emoji da opção ${index + 1}`}
+                            portalContainer={editEmojiPickerContainerRef.current}
+                            onValueChange={(value) => updateEditOption(option.id, 'emoji', value)}
+                          />
+                        </div>
+                        <Input
+                          value={option.text}
+                          onChange={(e) => updateEditOption(option.id, 'text', e.target.value)}
+                          placeholder={`Opção ${index + 1}`}
+                          className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeEditOption(option.id)}
+                          disabled={editOptions.length <= 2}
+                          className="dark:hover:bg-gray-700 shrink-0"
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                      {editOptionErrors[option.id] && (
+                        <p className="text-xs text-red-600 dark:text-red-400">{editOptionErrors[option.id]}</p>
+                      )}
                     </div>
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Você pode editar as opções existentes e adicionar novas (mínimo 2, máximo 20).
+                  Emojis customizados do servidor e emojis padrão podem ser usados juntos em qualquer opção.
                 </p>
               </div>
 

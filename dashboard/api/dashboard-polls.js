@@ -15,14 +15,87 @@ function computeTotalVotes(options) {
   return safeArray(options).reduce((sum, option) => sum + (Number(option?.votes || option?.pontos || 0) || 0), 0);
 }
 
+function parseCustomEmoji(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const match = value.match(/^<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/);
+  if (!match) return null;
+
+  return {
+    identifier: match[0],
+    emojiId: match[3],
+    animated: match[1] === 'a',
+  };
+}
+
+function parseLegacyEmojiId(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const normalized = value.trim();
+  if (!/^\d{17,20}$/.test(normalized)) return null;
+
+  return {
+    identifier: `<:emoji:${normalized}>`,
+    emojiId: normalized,
+    animated: null,
+  };
+}
+
+function buildDiscordEmojiUrl(emojiId, animated = false) {
+  if (!emojiId) return null;
+
+  const extension = animated ? 'gif' : 'webp';
+  return `https://cdn.discordapp.com/emojis/${emojiId}.${extension}?size=64&quality=lossless`;
+}
+
+function extractFirstCustomEmoji(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const match = value.match(/<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>/);
+  if (!match) return null;
+
+  return {
+    identifier: match[0],
+    emojiId: match[3],
+    animated: match[1] === 'a',
+  };
+}
+
+function stripCustomEmojiFromText(value) {
+  if (!value || typeof value !== 'string') return '';
+
+  if (parseLegacyEmojiId(value.trim())) {
+    return '';
+  }
+
+  const cleaned = value
+    .replace(/<(?:a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned;
+}
+
 function normalizeOption(option, index = 0) {
   if (!option) return null;
 
+  const explicitEmoji =
+    parseCustomEmoji(option.emoji) || extractFirstCustomEmoji(option.emoji) || parseLegacyEmojiId(option.emoji);
+  const textSource = option.text || option.opcao || option.name || '';
+  const textEmoji = extractFirstCustomEmoji(textSource);
+  const emojiFromLegacyId = parseLegacyEmojiId(textSource);
+  const emojiValue =
+    explicitEmoji?.identifier || textEmoji?.identifier || emojiFromLegacyId?.identifier || option.emoji || null;
+  const emojiMeta =
+    parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue) || parseLegacyEmojiId(emojiValue);
+
   return {
     id: option.id || option.opcao || `option-${index}`,
-    text: option.text || option.opcao || option.name || '',
+    text: stripCustomEmojiFromText(textSource),
     votes: Number(option.votes ?? option.pontos ?? 0) || 0,
-    emoji: option.emoji || null,
+    emoji: emojiValue,
+    emojiId: emojiMeta?.emojiId || null,
+    emojiAnimated: emojiMeta ? emojiMeta.animated : null,
+    emojiUrl: buildDiscordEmojiUrl(emojiMeta?.emojiId, Boolean(emojiMeta?.animated)),
   };
 }
 
@@ -88,12 +161,29 @@ function normalizePollFromActive(entry) {
       const reactions = safeArray(voteEntry?.reacoes);
       return reactions.includes(emoji) ? sum + (Number(voteEntry?.peso || 1) || 1) : sum;
     }, 0);
+    const explicitEmoji = parseCustomEmoji(emoji) || extractFirstCustomEmoji(emoji) || parseLegacyEmojiId(emoji);
+    const optionText = typeof option === 'string' ? option : option?.text || option?.opcao || option?.name || '';
+    const textEmoji = extractFirstCustomEmoji(optionText);
+    const legacyEmojiFromText = parseLegacyEmojiId(optionText);
+    const emojiFromLegacyId = parseLegacyEmojiId(option?.emoji);
+    const emojiValue =
+      explicitEmoji?.identifier ||
+      textEmoji?.identifier ||
+      legacyEmojiFromText?.identifier ||
+      emojiFromLegacyId?.identifier ||
+      emoji ||
+      null;
+    const emojiMeta =
+      parseCustomEmoji(emojiValue) || extractFirstCustomEmoji(emojiValue) || parseLegacyEmojiId(emojiValue);
 
     return {
       id: option?.id || `active-${index}`,
-      text: option || '',
+      text: stripCustomEmojiFromText(optionText),
       votes: votesForOption,
-      emoji,
+      emoji: emojiValue,
+      emojiId: emojiMeta?.emojiId || null,
+      emojiAnimated: emojiMeta ? emojiMeta.animated : null,
+      emojiUrl: buildDiscordEmojiUrl(emojiMeta?.emojiId, Boolean(emojiMeta?.animated)),
     };
   });
 

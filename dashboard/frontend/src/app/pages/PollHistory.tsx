@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { getPollHistory, type DashboardPoll } from '../lib/dashboard-api';
 import { Search, Calendar, Users, Hash } from 'lucide-react';
+import EmojiRenderer from '../components/EmojiRenderer';
 
 export function PollHistory() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -199,7 +200,15 @@ export function PollHistory() {
                     <div className="md:text-right">
                       <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-1">Vencedor</p>
                       <p className="mb-1 dark:text-white text-sm md:text-base">
-                        {topOption.emoji} {topOption.text}
+                        <EmojiRenderer
+                          emoji={topOption.emoji}
+                          emojiId={topOption.emojiId}
+                          emojiAnimated={topOption.emojiAnimated}
+                          emojiUrl={topOption.emojiUrl}
+                          alt={`Emoji da opção: ${topOption.text}`}
+                          className="inline-block align-middle size-4 md:size-5 mr-2 object-contain"
+                        />
+                        {topOption.text}
                       </p>
                       <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                         {topOption.votes} votos ({topPercentage}%)

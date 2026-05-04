@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { loadVotacoes, saveVotacoes } = require('../utils/file-handler');
 const logger = require('../utils/logger');
+const { draftOptionText, normalizeDraftOptions } = require('../utils/draft-option-normalizer');
 
 async function buildMensalistasList(client, poll) {
   let mensalistasList = '(nenhum)';
@@ -39,7 +40,7 @@ async function buildMensalistasList(client, poll) {
 
 function computePollResults(poll) {
   const resultados = (poll.opcoes || []).map((opcao, index) => ({
-    opcao,
+    opcao: draftOptionText(opcao),
     emoji: poll.emojiNumeros[index],
     pontos: 0,
     votantes: [],
@@ -133,6 +134,19 @@ function buildResultEmbed(poll, resultados, empate, mensalistasList, reason) {
   return resultEmbed;
 }
 
+function parseCustomEmoji(value) {
+  if (!value || typeof value !== 'string') return null;
+
+  const match = value.match(/^<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/);
+  if (!match) return null;
+
+  return {
+    identifier: match[0],
+    emojiId: match[3],
+    animated: match[1] === 'a',
+  };
+}
+
 async function closePollByMessageId({ client, messageId, interaction = null, reason = 'manual' }) {
   const poll = client.activePolls.get(messageId);
   let removedFromActive = false;
@@ -166,17 +180,31 @@ async function closePollByMessageId({ client, messageId, interaction = null, rea
     client.saveActivePolls();
 
     const historicoData = loadVotacoes();
+    const normalizedOptions = normalizeDraftOptions(poll.opcoes).map((option, index) => {
+      const pollEmoji = poll.emojiNumeros?.[index] || null;
+      const emojiMeta = parseCustomEmoji(option.emoji || pollEmoji);
+
+      return {
+        id: option.id || `option-${index}`,
+        text: option.text,
+        emoji: emojiMeta?.identifier || option.emoji || pollEmoji || null,
+        emojiId: emojiMeta?.emojiId || null,
+        emojiAnimated: emojiMeta ? emojiMeta.animated : null,
+      };
+    });
     historicoData.push({
       id: messageId,
       titulo: poll.titulo,
       description:
         `Selecione até ${poll.maxVotos} opç${poll.maxVotos > 1 ? 'ões' : 'ão'}:\n\n` +
-        poll.opcoes.map((opcao, index) => `**${poll.emojiNumeros[index]} ${opcao}**`).join('\n\n'),
+        normalizedOptions
+          .map((opcao, index) => `**${opcao.emoji || poll.emojiNumeros[index] || ''} ${draftOptionText(opcao)}**`)
+          .join('\n\n'),
       guildId: poll.guildId || interaction?.guildId || null,
       guildName: interaction?.guild?.name || poll.guildName || null,
       channelId: poll.channelId || interaction?.channelId || null,
       channelName: interaction?.channel?.name || poll.channelName || null,
-      opcoes: poll.opcoes,
+      opcoes: normalizedOptions,
       maxVotos: poll.maxVotos,
       usarPesoMensalista: poll.usarPesoMensalista,
       allowMultipleChoices: poll.maxVotos > 1,

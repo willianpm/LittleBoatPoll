@@ -16,6 +16,6 @@
     "comma-dangle": ["warn", "always-multiline"],
     "max-len": ["warn", { "code": 120, "ignoreUrls": true, "ignoreTemplateLiterals": true, "ignoreStrings": true }],
     "no-trailing-spaces": "warn",
-    "indent": ["warn", 2]
+    "indent": "off"
   }
 }

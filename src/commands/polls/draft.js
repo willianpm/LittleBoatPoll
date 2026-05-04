@@ -1,10 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
 const crypto = require('crypto');
-const { validatePollOptions, parseOptions } = require('../../utils/validators');
+const { validatePollOptions, parseOptionsInput } = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS } = require('../../utils/constants');
 const { DEFAULT_DURATION_KEY, calculateEndsAt, isValidDurationKey } = require('../../utils/poll-duration');
 const logger = require('../../utils/logger');
+
+const DISCORD_CUSTOM_EMOJI_REGEX = /^<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/;
 
 const DURATION_LABELS = {
   '1h': '1 hora',
@@ -17,6 +19,51 @@ const DURATION_LABELS = {
 
 function formatDurationLabel(durationKey) {
   return DURATION_LABELS[durationKey] || DURATION_LABELS[DEFAULT_DURATION_KEY];
+}
+
+function normalizeDraftOption(option) {
+  if (typeof option === 'string') {
+    const text = option.trim();
+    if (!text) return null;
+    return { text, emoji: null };
+  }
+
+  if (!option || typeof option !== 'object') {
+    return null;
+  }
+
+  const text = typeof option.text === 'string' ? option.text.trim() : '';
+  const emoji = typeof option.emoji === 'string' ? option.emoji.trim() : null;
+
+  if (!text) return null;
+  return { text, emoji: emoji || null };
+}
+
+function normalizeDraftOptions(options) {
+  if (!Array.isArray(options)) return [];
+  return options.map((option) => normalizeDraftOption(option)).filter(Boolean);
+}
+
+function draftOptionText(option) {
+  return normalizeDraftOption(option)?.text || '';
+}
+
+function formatOptionsInline(options) {
+  return normalizeDraftOptions(options)
+    .map((option) => (option.emoji ? `${option.emoji} ${option.text}` : option.text))
+    .join(', ');
+}
+
+function toReactionEmoji(emoji) {
+  if (!emoji || typeof emoji !== 'string') return emoji;
+
+  const custom = DISCORD_CUSTOM_EMOJI_REGEX.exec(emoji.trim());
+  if (!custom) {
+    return emoji;
+  }
+
+  const [, , name, id] = custom;
+  return `${name}:${id}`;
 }
 
 /**
@@ -210,7 +257,7 @@ module.exports = {
 
 async function handleCriar(interaction, client) {
   const titulo = interaction.options.getString('titulo');
-  const opcoesString = interaction.options.getString('opcoes');
+  const opcoesRaw = interaction.options.getString('opcoes');
   const maxVotos = interaction.options.getInteger('max_votos') || 1;
   const pesoMensalistaOption = interaction.options.getString('peso_mensalista') || 'nao';
   const durationKeyRaw = interaction.options.getString('duracao');
@@ -218,10 +265,12 @@ async function handleCriar(interaction, client) {
   const usarPesoMensalista = pesoMensalistaOption === 'sim';
 
   // Processa as opções
-  const opcoes = parseOptions(opcoesString);
+  const opcoesInput = parseOptionsInput(opcoesRaw);
+  const requireEmoji =
+    interaction.dashboardSource === 'dashboard-create' || interaction.dashboardSource === 'dashboard-drafts';
 
   // Valida opções
-  const validation = validatePollOptions(opcoes, maxVotos);
+  const validation = validatePollOptions(opcoesInput, maxVotos, { requireEmoji });
   if (!validation.valid) {
     return await interaction.reply({
       content: `❌ **Erro!** ${validation.error}`,
@@ -236,7 +285,7 @@ async function handleCriar(interaction, client) {
   const draft = {
     id: draftId,
     titulo: titulo,
-    opcoes: opcoes,
+    opcoes: validation.normalizedOptions,
     maxVotos: maxVotos,
     usarPesoMensalista: usarPesoMensalista,
     durationKey,
@@ -263,7 +312,7 @@ async function handleCriar(interaction, client) {
     .addFields(
       { name: 'ID do Rascunho', value: `\`${draftId}\`` },
       { name: 'Título', value: titulo },
-      { name: 'Opções', value: opcoes.join(', ') },
+      { name: 'Opções', value: formatOptionsInline(draft.opcoes) },
       { name: 'Máximo de Votos', value: `${maxVotos}`, inline: true },
       { name: 'Peso Mensalista', value: usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true },
       { name: 'Duração', value: formatDurationLabel(durationKey), inline: true },
@@ -310,6 +359,8 @@ async function handleEditar(interaction, client) {
     });
   }
 
+  draft.opcoes = normalizeDraftOptions(draft.opcoes);
+
   // Coleta as edições
   const novoTitulo = interaction.options.getString('titulo');
   const novasOpcoesString = interaction.options.getString('opcoes');
@@ -324,26 +375,19 @@ async function handleEditar(interaction, client) {
 
   // Atualiza as opções se fornecidas
   if (novasOpcoesString) {
-    const novasOpcoes = novasOpcoesString
-      .split(',')
-      .map((op) => op.trim())
-      .filter((op) => op.length > 0);
+    const novasOpcoesInput = parseOptionsInput(novasOpcoesString);
+    const requireEmoji =
+      interaction.dashboardSource === 'dashboard-create' || interaction.dashboardSource === 'dashboard-drafts';
+    const optionsValidation = validatePollOptions(novasOpcoesInput, draft.maxVotos, { requireEmoji });
 
-    if (novasOpcoes.length < 2) {
+    if (!optionsValidation.valid) {
       return await interaction.reply({
-        content: '❌ **Erro!** A enquete precisa ter pelo menos 2 opções.',
+        content: `❌ **Erro!** ${optionsValidation.error}`,
         flags: MessageFlags.Ephemeral,
       });
     }
 
-    if (novasOpcoes.length > 20) {
-      return await interaction.reply({
-        content: '❌ **Erro!** O Discord limita a 20 reações por mensagem. Máximo: 20 opções por enquete.',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    draft.opcoes = novasOpcoes;
+    draft.opcoes = optionsValidation.normalizedOptions;
   }
 
   // Atualiza max_votos se fornecido
@@ -382,7 +426,7 @@ async function handleEditar(interaction, client) {
     .addFields(
       { name: 'ID', value: `\`${draftId}\`` },
       { name: 'Título', value: draft.titulo },
-      { name: 'Opções', value: draft.opcoes.join(', ') },
+      { name: 'Opções', value: formatOptionsInline(draft.opcoes) },
       { name: 'Máximo de Votos', value: `${draft.maxVotos}`, inline: true },
       { name: 'Peso Mensalista', value: draft.usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true },
       { name: 'Duração', value: formatDurationLabel(draft.durationKey || DEFAULT_DURATION_KEY), inline: true },
@@ -450,8 +494,8 @@ async function handleExibir(interaction, client) {
 
   // Constrói a descrição com as opções
   let descricao = 'Opções:\n\n';
-  draft.opcoes.forEach((opcao, index) => {
-    descricao += `**${index + 1}.** ${opcao}\n`;
+  normalizeDraftOptions(draft.opcoes).forEach((opcao, index) => {
+    descricao += `**${index + 1}.** ${opcao.emoji ? `${opcao.emoji} ` : ''}${opcao.text}\n`;
   });
 
   const pesoInfo = draft.usarPesoMensalista ? 'Mensalistas têm peso 2 nos votos' : 'Todos têm o mesmo peso';
@@ -508,13 +552,32 @@ async function handlePublicar(interaction, client) {
   try {
     // Define o canal (usado o escolhido ou o canal atual)
     const targetChannel = canalEscolhido || interaction.channel;
+    const normalizedOptions = normalizeDraftOptions(draft.opcoes);
+
+    if (normalizedOptions.length < 2) {
+      await interaction.editReply({
+        content: '❌ Rascunho inválido. Garanta pelo menos 2 opções antes de publicar.',
+      });
+      return;
+    }
+
+    const isDashboardDraft = draft.origem === 'dashboard-create';
+    const hasMissingEmoji = normalizedOptions.some((option) => !option.emoji);
+
+    if (isDashboardDraft && hasMissingEmoji) {
+      await interaction.editReply({
+        content: '❌ Todas as opções precisam de emoji válido antes de publicar este rascunho.',
+      });
+      return;
+    }
 
     // Emojis para as opções
-    const emojiNumeros = EMOJIS_DISPONIVEIS.slice(0, draft.opcoes.length);
+    const emojiNumeros = normalizedOptions.map((option, index) => option.emoji || EMOJIS_DISPONIVEIS[index]);
+    const opcoesTexto = normalizedOptions.map((option) => option.text);
 
     // Constrói a descrição com as opções
     let descricaoPoll = `Selecione até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}:\n\n`;
-    draft.opcoes.forEach((opcao, index) => {
+    opcoesTexto.forEach((opcao, index) => {
       descricaoPoll += `**${emojiNumeros[index]} ${opcao}**\n\n`;
     });
 
@@ -550,8 +613,8 @@ async function handlePublicar(interaction, client) {
     await msg.edit({ embeds: [updatedEmbed] });
 
     // Adiciona as reações
-    for (let i = 0; i < draft.opcoes.length; i++) {
-      await msg.react(emojiNumeros[i]);
+    for (let i = 0; i < opcoesTexto.length; i++) {
+      await msg.react(toReactionEmoji(emojiNumeros[i]));
     }
 
     const criadoEm = new Date().toISOString();
@@ -564,8 +627,8 @@ async function handlePublicar(interaction, client) {
       guildId: interaction.guildId || null,
       channelId: targetChannel.id,
       titulo: draft.titulo,
-      opcoes: draft.opcoes,
-      emojiNumeros: emojiNumeros.slice(0, draft.opcoes.length),
+      opcoes: opcoesTexto,
+      emojiNumeros: emojiNumeros.slice(0, opcoesTexto.length),
       maxVotos: draft.maxVotos,
       usarPesoMensalista: draft.usarPesoMensalista,
       durationKey,
@@ -684,11 +747,13 @@ async function handleAdicionarOpcao(interaction, client) {
     });
   }
 
+  draft.opcoes = normalizeDraftOptions(draft.opcoes);
+
   // Processa as novas opções
-  const novasOpcoes = novasOpcoesString
-    .split(',')
-    .map((op) => op.trim())
-    .filter((op) => op.length > 0);
+  const novasOpcoes = parseOptionsInput(novasOpcoesString)
+    .map((option) => normalizeDraftOption(option))
+    .filter(Boolean)
+    .map((option) => ({ text: option.text, emoji: null }));
 
   if (novasOpcoes.length === 0) {
     return await interaction.reply({
@@ -698,12 +763,14 @@ async function handleAdicionarOpcao(interaction, client) {
   }
 
   // Verifica duplicatas nas opções existentes
-  const opcoesExistentes = draft.opcoes.map((op) => op.toLowerCase());
-  const duplicatas = novasOpcoes.filter((op) => opcoesExistentes.includes(op.toLowerCase()));
+  const opcoesExistentes = draft.opcoes.map((op) => op.text.toLowerCase());
+  const duplicatas = novasOpcoes.filter((op) => opcoesExistentes.includes(op.text.toLowerCase()));
 
   if (duplicatas.length > 0) {
     return await interaction.reply({
-      content: `❌ **Erro!** As seguintes opções já existem no rascunho: ${duplicatas.join(', ')}`,
+      content:
+        '❌ **Erro!** As seguintes opções já existem no rascunho: ' +
+        duplicatas.map((option) => option.text).join(', '),
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -740,9 +807,9 @@ async function handleAdicionarOpcao(interaction, client) {
     .addFields(
       { name: 'ID', value: `\`${draftId}\`` },
       { name: 'Título', value: draft.titulo },
-      { name: 'Opções Adicionadas', value: novasOpcoes.join(', ') },
+      { name: 'Opções Adicionadas', value: novasOpcoes.map((option) => option.text).join(', ') },
       { name: 'Total de Opções', value: `${draft.opcoes.length}` },
-      { name: 'Todas as Opções', value: draft.opcoes.join(', ') },
+      { name: 'Todas as Opções', value: formatOptionsInline(draft.opcoes) },
     )
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();
@@ -752,7 +819,10 @@ async function handleAdicionarOpcao(interaction, client) {
     flags: MessageFlags.Ephemeral,
   });
 
-  logger.info(`Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | Novas: ${novasOpcoes.join(', ')}`);
+  logger.info(
+    `Opções adicionadas ao rascunho: ${draft.titulo} | ID: ${draftId} | ` +
+      `Novas: ${novasOpcoes.map((option) => option.text).join(', ')}`,
+  );
 }
 
 async function handleRemoverOpcao(interaction, client) {
@@ -778,6 +848,8 @@ async function handleRemoverOpcao(interaction, client) {
     });
   }
 
+  draft.opcoes = normalizeDraftOptions(draft.opcoes);
+
   // Tenta encontrar a opção por número ou texto
   let indexRemover = -1;
   let opcaoRemovida = '';
@@ -786,12 +858,12 @@ async function handleRemoverOpcao(interaction, client) {
   const numero = parseInt(opcaoParaRemover);
   if (!isNaN(numero) && numero >= 1 && numero <= draft.opcoes.length) {
     indexRemover = numero - 1;
-    opcaoRemovida = draft.opcoes[indexRemover];
+    opcaoRemovida = draftOptionText(draft.opcoes[indexRemover]);
   } else {
     // Procura por texto exato (case-insensitive)
-    indexRemover = draft.opcoes.findIndex((op) => op.toLowerCase() === opcaoParaRemover.toLowerCase());
+    indexRemover = draft.opcoes.findIndex((op) => draftOptionText(op).toLowerCase() === opcaoParaRemover.toLowerCase());
     if (indexRemover !== -1) {
-      opcaoRemovida = draft.opcoes[indexRemover];
+      opcaoRemovida = draftOptionText(draft.opcoes[indexRemover]);
     }
   }
 
@@ -799,7 +871,7 @@ async function handleRemoverOpcao(interaction, client) {
     return await interaction.reply({
       content:
         `❌ **Erro!** Opção '${opcaoParaRemover}' não encontrada.\n\n**Opções disponíveis:**\n` +
-        `${draft.opcoes.map((op, i) => `${i + 1}. ${op}`).join('\n')}`,
+        `${draft.opcoes.map((op, i) => `${i + 1}. ${draftOptionText(op)}`).join('\n')}`,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -836,7 +908,7 @@ async function handleRemoverOpcao(interaction, client) {
       { name: 'Título', value: draft.titulo },
       { name: 'Opção Removida', value: opcaoRemovida },
       { name: 'Total de Opções', value: `${draft.opcoes.length}` },
-      { name: 'Opções Restantes', value: draft.opcoes.join(', ') },
+      { name: 'Opções Restantes', value: formatOptionsInline(draft.opcoes) },
     )
     .setFooter({ text: 'Status: 📝 Rascunho' })
     .setTimestamp();

@@ -3,6 +3,22 @@ export interface DashboardPollOption {
   text: string;
   votes: number;
   emoji?: string | null;
+  emojiId?: string | null;
+  emojiAnimated?: boolean | null;
+  emojiUrl?: string | null;
+}
+
+export interface DashboardDraftOption {
+  text: string;
+  emoji?: string | null;
+}
+
+export interface DashboardGuildEmoji {
+  id: string;
+  name: string;
+  animated: boolean;
+  identifier: string;
+  url?: string | null;
 }
 
 export type DurationKey = '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
@@ -30,6 +46,7 @@ export interface DashboardGuild {
   name: string;
   icon?: string | null;
   isActive?: boolean;
+  emojis?: DashboardGuildEmoji[];
 }
 
 export interface DashboardChannel {
@@ -60,7 +77,7 @@ export interface DashboardDraftContext {
   optionsCount: number;
   creatorId?: string | null;
   creatorName?: string | null;
-  options?: string[];
+  options?: Array<string | DashboardDraftOption>;
   maxVotes?: number;
   pesoMensalista?: 'sim' | 'nao';
   durationKey?: DurationKey;
@@ -146,6 +163,13 @@ export async function getGuildChannels(guildId: string) {
   return Array.isArray(payload.channels) ? payload.channels : [];
 }
 
+export async function getGuildEmojis(guildId: string) {
+  const payload = await requestJson<{ emojis: DashboardGuildEmoji[] }>(
+    `/auth/guilds/${encodeURIComponent(guildId)}/emojis`,
+  );
+  return Array.isArray(payload.emojis) ? payload.emojis : [];
+}
+
 export async function getGuildMembers(guildId: string, query = '') {
   const params = new URLSearchParams();
   if (query.trim()) {
@@ -195,7 +219,7 @@ export async function createDraft(payload: {
   guildId: string;
   channelId: string;
   title: string;
-  optionsCsv: string;
+  options: DashboardDraftOption[];
   maxVotes: number;
   pesoMensalista: 'sim' | 'nao';
   durationKey?: DurationKey;
@@ -210,7 +234,7 @@ export async function createDraft(payload: {
       subcommand: 'criar',
       values: {
         titulo: payload.title,
-        opcoes: payload.optionsCsv,
+        opcoes: JSON.stringify(payload.options),
         max_votos: payload.maxVotes,
         peso_mensalista: payload.pesoMensalista,
         duracao: payload.durationKey || '24h',
@@ -222,20 +246,22 @@ export async function createDraft(payload: {
 export async function editDraft(payload: {
   id: string;
   title?: string;
-  optionsCsv?: string;
+  options?: DashboardDraftOption[];
   maxVotes?: number;
   pesoMensalista?: 'sim' | 'nao';
   durationKey?: DurationKey;
+  dashboardSource?: string;
 }) {
   const values: Record<string, unknown> = { id: payload.id };
   if (payload.title) values.titulo = payload.title;
-  if (payload.optionsCsv) values.opcoes = payload.optionsCsv;
+  if (payload.options) values.opcoes = JSON.stringify(payload.options);
   if (typeof payload.maxVotes === 'number') values.max_votos = payload.maxVotes;
   if (payload.pesoMensalista) values.peso_mensalista = payload.pesoMensalista;
   if (payload.durationKey) values.duracao = payload.durationKey;
 
   return executeDashboardCommand('rascunho', {
     commandType: 1,
+    dashboardSource: payload.dashboardSource || 'dashboard-drafts',
     options: {
       subcommand: 'editar',
       values,
