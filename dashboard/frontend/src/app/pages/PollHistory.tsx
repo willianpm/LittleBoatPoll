@@ -205,6 +205,7 @@ export function PollHistory() {
                           emojiId={topOption.emojiId}
                           emojiAnimated={topOption.emojiAnimated}
                           emojiUrl={topOption.emojiUrl}
+                          alt={`Emoji da opção: ${topOption.text}`}
                           className="inline-block align-middle size-4 md:size-5 mr-2 object-contain"
                         />
                         {topOption.text}

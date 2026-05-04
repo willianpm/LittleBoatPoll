@@ -181,6 +181,7 @@ export function PollDetail() {
                             emojiId={option.emojiId}
                             emojiAnimated={option.emojiAnimated}
                             emojiUrl={option.emojiUrl}
+                            alt={`Emoji da opção: ${option.text}`}
                             className="size-4 md:size-5 shrink-0 object-contain"
                           />
                           <span>{option.text}</span>
@@ -255,6 +256,7 @@ export function PollDetail() {
                           emojiId={option.emojiId}
                           emojiAnimated={option.emojiAnimated}
                           emojiUrl={option.emojiUrl}
+                          alt={`Emoji da opção: ${option.text}`}
                           className="size-4 md:size-5 shrink-0 object-contain"
                         />
                         <span className="text-base md:text-lg dark:text-white truncate">{option.text}</span>
