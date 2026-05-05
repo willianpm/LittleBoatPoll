@@ -75,8 +75,8 @@ Example:
 
 ```csv
 nome-da-enquete;opcoes;max_votos;peso_mensalistas
-Poll A;Option 1,Option 2;2;sim
-Poll B;Option X,Option Y,Option Z;1;nao
+Poll A;Option 1|Option 2;2;sim
+Poll B;Option X|Option Y|Option Z;1;nao
 ```
 
 ## Frontend
