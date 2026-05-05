@@ -5,6 +5,7 @@ const DISCORD_UNICODE_EMOJI_REGEX = new RegExp(
     '(?:\\u200D\\p{Extended_Pictographic}(?:\\uFE0F|\\uFE0E)?(?:\\p{Emoji_Modifier})?)*)$',
   'u',
 );
+const OPTIONS_DELIMITER = '|';
 
 function isValidDiscordCustomEmoji(value) {
   if (typeof value !== 'string') return false;
@@ -19,6 +20,19 @@ function isValidDiscordUnicodeEmoji(value) {
 function isValidDiscordEmoji(value) {
   if (typeof value !== 'string' || !value.trim()) return false;
   return isValidDiscordCustomEmoji(value) || isValidDiscordUnicodeEmoji(value);
+}
+
+function hasInvalidOptionsDelimiter(opcoesInput) {
+  if (typeof opcoesInput !== 'string') return false;
+
+  const input = opcoesInput.trim();
+  if (!input || input.startsWith('[')) return false;
+
+  return input.includes(',') && !input.includes(OPTIONS_DELIMITER);
+}
+
+function getInvalidOptionsDelimiterError() {
+  return 'Use o caractere "|" para separar as opções. A vírgula não é mais suportada como delimitador.';
 }
 
 function parseOptionsInput(opcoesInput) {
@@ -128,8 +142,8 @@ function validatePollOptions(opcoes, maxVotos, options = {}) {
 }
 
 /**
- * Processa e limpa string de opções (separa por vírgula)
- * @param {string} opcoesString - String com opções separadas por vírgula
+ * Processa e limpa string de opções (separa por pipe)
+ * @param {string} opcoesString - String com opções separadas por pipe
  * @returns {Array<string>} Array de opções limpas
  */
 function parseOptions(opcoesString) {
@@ -138,7 +152,7 @@ function parseOptions(opcoesString) {
   }
 
   return opcoesString
-    .split(',')
+    .split(OPTIONS_DELIMITER)
     .map((op) => op.trim())
     .filter((op) => op.length > 0);
 }
@@ -147,6 +161,8 @@ module.exports = {
   validatePollOptions,
   parseOptions,
   parseOptionsInput,
+  hasInvalidOptionsDelimiter,
+  getInvalidOptionsDelimiterError,
   isValidDiscordCustomEmoji,
   isValidDiscordUnicodeEmoji,
   isValidDiscordEmoji,

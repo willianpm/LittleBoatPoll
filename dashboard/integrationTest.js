@@ -20,7 +20,7 @@ const botService = useMock ? require('./services/botService.mock') : require('./
       const opcoesRaw = linha.opcoes || linha['opções'];
       const opcoes = Array.isArray(opcoesRaw)
         ? opcoesRaw
-        : parseOptions(Array.isArray(opcoesRaw) ? opcoesRaw.join(',') : opcoesRaw);
+        : parseOptions(Array.isArray(opcoesRaw) ? opcoesRaw.join(' | ') : opcoesRaw);
       const maxVotos = linha.maxVotos || linha['max_votos'];
       const validation = validatePollOptions(opcoes, maxVotos);
       if (!validation.valid) {

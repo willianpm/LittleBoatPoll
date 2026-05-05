@@ -296,7 +296,7 @@ Qual livro vamos ler em maio?;1984|Duna|Dom Casmurro|Capitães da Areia;2;sim`;
                 <p className="font-medium text-blue-900 dark:text-blue-300">Dicas importantes</p>
                 <ul className="space-y-1 text-blue-800 dark:text-blue-400">
                   <li>• Use ; para separar colunas do CSV</li>
-                  <li>• Separe opções com vírgula, barra (/) ou pipe (|)</li>
+                  <li>• Separe opções com pipe (|)</li>
                   <li>• Máximo de 20 opções por enquete</li>
                   <li>• Codificação UTF-8 recomendada</li>
                   <li>• Baixe o template para facilitar</li>

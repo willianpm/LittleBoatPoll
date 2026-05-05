@@ -20,7 +20,7 @@ Use this guide to validate:
 ```text
 /rascunho criar
 titulo: "Book Selection Vote"
-opcoes: "Book A, Book B, Book C"
+opcoes: "Book A | Book B | Book C"
 max_votos: 2
 peso_mensalista: No
 ```
@@ -32,7 +32,7 @@ peso_mensalista: No
 ```text
 /rascunho adicionar-opcao
 id: ABC12345
-opcoes: Book D, Book E
+opcoes: Book D | Book E
 ```
 
 Expected result:

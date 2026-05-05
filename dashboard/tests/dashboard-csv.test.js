@@ -30,7 +30,7 @@ describe('Dashboard CSV Upload API', () => {
     app.use('/api/csv', dashboardCsvRouter);
 
     // Criar arquivo CSV de teste
-    const csvContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\nTestPoll;A,B;1;sim\n';
+    const csvContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\nTestPoll;A|B;1;sim\n';
     fs.writeFileSync(testCsvPath, csvContent);
   });
 
@@ -136,7 +136,7 @@ describe('Dashboard CSV Upload API', () => {
   });
 
   it('should reject upload with wrong field name with status 400', async () => {
-    const csvBuffer = Buffer.from('nome-da-enquete;opções\nTestPoll;A,B\n');
+    const csvBuffer = Buffer.from('nome-da-enquete;opções\nTestPoll;A|B\n');
 
     const res = await request(app)
       .post('/api/csv/upload')
@@ -161,7 +161,7 @@ describe('Dashboard CSV Upload API', () => {
 
   it('should reject CSV with injection attempt (formula starting with =)', async () => {
     const injectionCsvPath = path.join(__dirname, 'injection-test.csv');
-    const injectionContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\n=SUM(A1:A2);A,B;1;sim\n';
+    const injectionContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\n=SUM(A1:A2);A|B;1;sim\n';
 
     try {
       fs.writeFileSync(injectionCsvPath, injectionContent);
@@ -190,7 +190,7 @@ describe('Dashboard CSV Upload API', () => {
 
   it('should reject CSV with injection attempt (formula starting with =)', async () => {
     const injectionCsvPath = path.join(__dirname, 'injection-test.csv');
-    const injectionContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\n=SUM(A1:A2);A,B;1;sim\n';
+    const injectionContent = 'nome-da-enquete;opções;max_votos;peso_mensalistas\n=SUM(A1:A2);A|B;1;sim\n';
 
     try {
       fs.writeFileSync(injectionCsvPath, injectionContent);

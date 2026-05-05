@@ -4,7 +4,11 @@
 const fs = require('fs/promises');
 const csv = require('csv-parse/sync');
 const crypto = require('crypto');
-const { validatePollOptions } = require('../../src/utils/validators');
+const {
+  validatePollOptions,
+  hasInvalidOptionsDelimiter,
+  getInvalidOptionsDelimiterError,
+} = require('../../src/utils/validators');
 
 /**
  * Verifica se um valor começa com caracteres perigosos (CSV Injection)
@@ -92,11 +96,15 @@ async function parseAndValidate(filePath, context = {}) {
       }
       // Converte maxVotos para número antes de validar com regras compartilhadas
       const maxVotos = Number(maxVotosRaw);
-      // opções separadas por vírgula, barra ou pipe
+      if (!Array.isArray(opcoesRaw) && hasInvalidOptionsDelimiter(String(opcoesRaw))) {
+        return { valid: false, error: `Linha ${i + 2}: ${getInvalidOptionsDelimiterError()}` };
+      }
+
+      // Opções separadas por pipe
       let opcoes = Array.isArray(opcoesRaw)
         ? opcoesRaw
         : String(opcoesRaw)
-            .split(/[,\|/]/)
+            .split('|')
             .map((op) => op.trim())
             .filter((op) => op.length > 0);
 
