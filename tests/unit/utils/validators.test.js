@@ -5,6 +5,8 @@ const {
   hasInvalidOptionsDelimiter,
   getInvalidOptionsDelimiterError,
   isValidDiscordEmoji,
+  isValidDiscordCustomEmoji,
+  isValidDiscordUnicodeEmoji,
 } = require('../../../src/utils/validators');
 
 describe('validators - validatePollOptions', () => {
@@ -12,6 +14,10 @@ describe('validators - validatePollOptions', () => {
     const result = validatePollOptions(['Opção 1', 'Opção 2'], 1);
     expect(result.valid).toBe(true);
     expect(result.error).toBeUndefined();
+    expect(result.normalizedOptions).toEqual([
+      { text: 'Opção 1', emoji: null },
+      { text: 'Opção 2', emoji: null },
+    ]);
   });
 
   test('deve validar opções válidas com maxVotos igual ao número de opções', () => {
@@ -117,6 +123,13 @@ describe('validators - validatePollOptions', () => {
     expect(result.valid).toBe(false);
     expect(result.error).toContain('precisa de um emoji válido');
   });
+
+  test('deve rejeitar opções apenas com texto vazio após normalização', () => {
+    const result = validatePollOptions(['   ', { text: '' }], 1);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Nenhuma opção válida');
+  });
 });
 
 describe('validators - parseOptions', () => {
@@ -180,6 +193,23 @@ describe('validators - parseOptionsInput', () => {
     const result = parseOptionsInput('Opção A | Opção B');
     expect(result).toEqual(['Opção A', 'Opção B']);
   });
+
+  test('deve retornar array recebido sem alteração', () => {
+    const input = [{ text: 'A', emoji: '😀' }];
+    expect(parseOptionsInput(input)).toBe(input);
+  });
+
+  test('deve retornar array vazio para JSON inválido', () => {
+    expect(parseOptionsInput('[{"text":"A"')).toEqual([]);
+  });
+
+  test('faz fallback para parseOptions quando JSON não começa com array', () => {
+    expect(parseOptionsInput('{"text":"A"}')).toEqual(['{"text":"A"}']);
+  });
+
+  test('deve retornar array vazio para tipos não suportados', () => {
+    expect(parseOptionsInput(42)).toEqual([]);
+  });
 });
 
 describe('validators - hasInvalidOptionsDelimiter', () => {
@@ -198,6 +228,15 @@ describe('validators - hasInvalidOptionsDelimiter', () => {
   test('deve expor mensagem de erro padronizada', () => {
     expect(getInvalidOptionsDelimiterError()).toContain('caractere "|"');
   });
+
+  test('não marca inválido quando string usa pipe e vírgula juntos', () => {
+    expect(hasInvalidOptionsDelimiter('A, B | C')).toBe(false);
+  });
+
+  test('retorna false para entrada vazia ou não textual', () => {
+    expect(hasInvalidOptionsDelimiter('')).toBe(false);
+    expect(hasInvalidOptionsDelimiter(null)).toBe(false);
+  });
 });
 
 describe('validators - isValidDiscordEmoji', () => {
@@ -212,5 +251,30 @@ describe('validators - isValidDiscordEmoji', () => {
 
   test('rejeita valor inválido', () => {
     expect(isValidDiscordEmoji('abc')).toBe(false);
+    expect(isValidDiscordEmoji('')).toBe(false);
+    expect(isValidDiscordEmoji('   ')).toBe(false);
+  });
+});
+
+describe('validators - isValidDiscordCustomEmoji', () => {
+  test('valida formatos estáticos e animados', () => {
+    expect(isValidDiscordCustomEmoji('<:livro:123456789012345678>')).toBe(true);
+    expect(isValidDiscordCustomEmoji('<a:livro:123456789012345678>')).toBe(true);
+  });
+
+  test('rejeita formatos inválidos', () => {
+    expect(isValidDiscordCustomEmoji(':livro:123')).toBe(false);
+    expect(isValidDiscordCustomEmoji(null)).toBe(false);
+  });
+});
+
+describe('validators - isValidDiscordUnicodeEmoji', () => {
+  test('valida emoji unicode suportado', () => {
+    expect(isValidDiscordUnicodeEmoji('😀')).toBe(true);
+    expect(isValidDiscordUnicodeEmoji('🇧🇷')).toBe(true);
+  });
+
+  test('rejeita texto comum', () => {
+    expect(isValidDiscordUnicodeEmoji('abc')).toBe(false);
   });
 });

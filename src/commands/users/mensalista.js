@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { isCriador } = require('../../utils/permissions');
 const { loadMensalistas, saveMensalistas } = require('../../utils/file-handler');
+const { buildMensalistaToggleEmbed, replyPermissionDenied, replyEphemeral } = require('../../utils/response-builders');
+const { handleCommandError } = require('../../utils/error-handler');
 const logger = require('../../utils/logger');
 
 /**
@@ -43,10 +45,7 @@ module.exports = {
       // Apenas usuários com o cargo Criador podem executar este comando
       // =====================================
       if (!isCriador(interaction.member, interaction.guildId)) {
-        return await interaction.reply({
-          content: MENSAGEM_PERMISSAO_NEGADA,
-          flags: MessageFlags.Ephemeral,
-        });
+        return await replyPermissionDenied(interaction);
       }
 
       // Lê o arquivo de mensalistas
@@ -75,19 +74,8 @@ module.exports = {
         });
         saveMensalistas(mensalistasData);
 
-        const addEmbed = new EmbedBuilder()
-          .setColor('#00FF00')
-          .setTitle('✅ MENSALISTA ADICIONADO')
-          .setDescription(`${usuario.username} foi adicionado à lista de mensalistas!`)
-          .addFields({
-            name: 'Benefício',
-            value: 'Seus votos agora contam como peso 2 (dobrado!) 📈',
-            inline: false,
-          })
-          .setFooter({ text: 'Parabéns! 🎉' })
-          .setTimestamp();
-
-        await interaction.reply({ embeds: [addEmbed], flags: MessageFlags.Ephemeral });
+        const addEmbed = buildMensalistaToggleEmbed({ username: usuario.username, added: true });
+        await replyEphemeral(interaction, { embeds: [addEmbed] });
         logger.info(`Mensalista adicionado: ${usuario.username} (${usuario.id})`);
       }
 
@@ -111,18 +99,8 @@ module.exports = {
         mensalistasData.mensalistas.splice(index, 1);
         saveMensalistas(mensalistasData);
 
-        const removeEmbed = new EmbedBuilder()
-          .setColor('#FF6600')
-          .setTitle('❌ MENSALISTA REMOVIDO')
-          .setDescription(`${usuario.username} foi removido da lista de mensalistas.`)
-          .addFields({
-            name: 'Mudança',
-            value: 'Seus futuros votos contarão como peso 1 novamente.',
-            inline: false,
-          })
-          .setTimestamp();
-
-        await interaction.reply({ embeds: [removeEmbed], flags: MessageFlags.Ephemeral });
+        const removeEmbed = buildMensalistaToggleEmbed({ username: usuario.username, added: false });
+        await replyEphemeral(interaction, { embeds: [removeEmbed] });
         logger.info(`Mensalista removido: ${usuario.username} (${usuario.id})`);
       }
 
@@ -170,11 +148,7 @@ module.exports = {
         logger.info(`Lista de mensalistas solicitada: ${mensalistasData.mensalistas.length} membros`);
       }
     } catch (error) {
-      logger.error(`Erro ao gerenciar mensalistas: ${error.message}`);
-      await interaction.reply({
-        content: '❌ Erro ao processar o comando!',
-        flags: MessageFlags.Ephemeral,
-      });
+      await handleCommandError(interaction, error, 'mensalista');
     }
   },
 };

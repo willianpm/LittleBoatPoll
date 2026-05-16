@@ -125,6 +125,22 @@ export function getAvailableEmojis(
   });
 }
 
+export function getSelectedUnicodeEmojisFromOptions(options: ReadonlyArray<{ emoji: string }>): string[] {
+  return options.map((option) => option.emoji.trim()).filter((emoji) => emoji && !isValidDiscordCustomEmoji(emoji));
+}
+
+export function getAvailableEmojisForPollOptions(
+  serverEmojis: DashboardGuildEmoji[],
+  options: ReadonlyArray<{ emoji: string }>,
+  defaultEmojis: readonly string[] = DEFAULT_SYSTEM_EMOJIS,
+): UnifiedEmoji[] {
+  return mergeUnifiedEmojis({
+    customEmojis: serverEmojis,
+    defaultEmojis,
+    selectedValues: getSelectedUnicodeEmojisFromOptions(options),
+  });
+}
+
 export function buildEmojiLookupByValue(emojis: UnifiedEmoji[]): Map<string, UnifiedEmoji> {
   return new Map(emojis.map((emoji) => [emoji.value, emoji]));
 }

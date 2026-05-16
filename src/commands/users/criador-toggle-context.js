@@ -1,6 +1,8 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { isCriador } = require('../../utils/permissions');
 const { loadCriadores, saveCriadores } = require('../../utils/file-handler');
+const { replyPermissionDenied } = require('../../utils/response-builders');
+const { handleCommandError } = require('../../utils/error-handler');
 const logger = require('../../utils/logger');
 
 /**
@@ -26,10 +28,7 @@ module.exports = {
       // Apenas Criadores, Administradores ou dono do servidor
       // =====================================
       if (!isCriador(interaction.member, interaction.guildId)) {
-        return await interaction.reply({
-          content: MENSAGEM_PERMISSAO_NEGADA,
-          flags: MessageFlags.Ephemeral,
-        });
+        return await replyPermissionDenied(interaction);
       }
 
       const targetUser = interaction.targetUser;
@@ -99,13 +98,7 @@ module.exports = {
         logger.info(`Criador adicionado (contexto): ${targetUser.username} (${targetUser.id})`);
       }
     } catch (error) {
-      logger.error(`Erro ao alternar Criador de Enquetes (contexto): ${error.message}`);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ Erro ao processar o comando.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+      await handleCommandError(interaction, error, 'criador-toggle-context');
     }
   },
 };

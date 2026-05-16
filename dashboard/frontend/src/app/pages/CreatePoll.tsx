@@ -16,8 +16,8 @@ import {
   type DashboardGuild,
   type DashboardGuildEmoji,
 } from '../lib/dashboard-api';
-import { isValidDiscordCustomEmoji, isValidDiscordEmoji } from '../lib/emoji-validation';
-import { getAvailableEmojis } from '../lib/emoji-merge';
+import { usePollEmojiOptions } from '../lib/usePollEmojiOptions';
+import { validatePollFormOptions } from '../lib/poll-option-validation';
 
 type PollFormOption = {
   id: string;
@@ -169,37 +169,7 @@ export function CreatePoll() {
     [guildEmojis, selectedGuild],
   );
 
-  const selectedEmojiSignature = useMemo(
-    () =>
-      options
-        .map((option) => {
-          const emoji = option.emoji.trim();
-          return emoji && !isValidDiscordCustomEmoji(emoji) ? emoji : '';
-        })
-        .join('\u0001'),
-    [options],
-  );
-
-  const mergedEmojis = useMemo(() => {
-    const merged = getAvailableEmojis(serverEmojis);
-    const selectedUnicode = selectedEmojiSignature ? selectedEmojiSignature.split('\u0001').filter(Boolean) : [];
-
-    if (selectedUnicode.length === 0) return merged;
-
-    const valueSet = new Set(merged.map((emoji) => emoji.value));
-    const selectedEntries = selectedUnicode
-      .filter((emoji) => !valueSet.has(emoji))
-      .map((emoji) => ({
-        key: `default:${emoji}`,
-        value: emoji,
-        name: emoji,
-        source: 'default' as const,
-        isCustom: false,
-        unicode: emoji,
-      }));
-
-    return [...merged, ...selectedEntries];
-  }, [selectedEmojiSignature, serverEmojis]);
+  const mergedEmojis = usePollEmojiOptions(serverEmojis, options);
 
   const addOption = useCallback(() => {
     setOptions((current) => {
@@ -244,38 +214,9 @@ export function CreatePoll() {
       return;
     }
 
-    const nextOptionErrors: Record<string, string> = {};
-    const validEmojiIdentifiers = new Set(serverEmojis.map((emoji) => emoji.identifier));
-    const normalizedOptions = options
-      .map((option) => ({
-        id: option.id,
-        text: option.text.trim(),
-        emoji: option.emoji.trim(),
-      }))
-      .filter((option) => option.text.length > 0 || option.emoji.length > 0);
+    const { errors: nextOptionErrors, normalizedOptions, hasErrors } = validatePollFormOptions(options, serverEmojis);
 
-    normalizedOptions.forEach((option, index) => {
-      if (!option.text) {
-        nextOptionErrors[option.id] = `Preencha o texto da opção ${index + 1}`;
-        return;
-      }
-
-      if (!option.emoji) {
-        nextOptionErrors[option.id] = `Selecione um emoji válido para a opção ${index + 1}`;
-        return;
-      }
-
-      if (!isValidDiscordEmoji(option.emoji)) {
-        nextOptionErrors[option.id] = `Selecione um emoji válido para a opção ${index + 1}`;
-        return;
-      }
-
-      if (isValidDiscordCustomEmoji(option.emoji) && !validEmojiIdentifiers.has(option.emoji)) {
-        nextOptionErrors[option.id] = 'Selecione um emoji da lista do servidor para esta opção.';
-      }
-    });
-
-    if (Object.keys(nextOptionErrors).length > 0) {
+    if (hasErrors) {
       setOptionErrors(nextOptionErrors);
       toast.error('Corrija os emojis e textos das opções antes de salvar.');
       return;

@@ -1,7 +1,14 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { ContextMenuCommandBuilder, ApplicationCommandType, MessageFlags } = require('discord.js');
+const { isCriador } = require('../../utils/permissions');
 const { getLatestUserDraft } = require('../../utils/draft-handler');
 const { COLORS } = require('../../utils/constants');
+const {
+  buildDraftOptionToggleEmbed,
+  replyPermissionDenied,
+  replyEphemeral,
+  replyToInteraction,
+} = require('../../utils/response-builders');
+const { logError } = require('../../utils/error-handler');
 const logger = require('../../utils/logger');
 const { draftOptionText, normalizeDraftOption } = require('../../utils/draft-option-normalizer');
 
@@ -15,10 +22,7 @@ module.exports = {
       // Apenas usuários com o cargo Criador podem executar este comando
       // =====================================
       if (!isCriador(interaction.member, interaction.guildId)) {
-        return await interaction.reply({
-          content: MENSAGEM_PERMISSAO_NEGADA,
-          flags: MessageFlags.Ephemeral,
-        });
+        return await replyPermissionDenied(interaction);
       }
 
       // Extrai o texto da mensagem selecionada
@@ -131,40 +135,23 @@ module.exports = {
         client.saveDraftPolls();
       }
 
-      // Resposta com embed
-      const embed = new EmbedBuilder()
-        .setColor(cor)
-        .setTitle(`✅ OPÇÃO ${acao}`)
-        .setDescription(`**"${textoSelecionado}"**`)
-        .addFields(
-          { name: '📋 Rascunho', value: rascunho.titulo, inline: true },
-          { name: '🔢 Total de Opções', value: `${rascunho.opcoes.length}/20`, inline: true },
-          { name: '🗳️ Máximo de Votos', value: `${rascunho.maxVotos}`, inline: true },
-        )
-        .setFooter({ text: `ID: ${rascunho.id}` })
-        .setTimestamp();
+      const embed = buildDraftOptionToggleEmbed({
+        acao,
+        textoSelecionado,
+        rascunho,
+        cor,
+      });
 
-      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+      await replyEphemeral(interaction, { embeds: [embed] });
 
       logger.info(`Opção ${acao.toLowerCase()} via context menu: "${textoSelecionado}" (Rascunho: ${rascunho.id})`);
     } catch (error) {
-      logger.error(`Erro ao processar toggle de opção (context menu): ${error.message}`);
-      logger.error(`Stack trace: ${error.stack}`);
-
-      try {
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({
-            content: '❌ Erro ao processar o comando. Detalhes registrados no log.',
-            flags: MessageFlags.Ephemeral,
-          });
-        } else if (interaction.deferred) {
-          await interaction.editReply({
-            content: '❌ Erro ao processar o comando. Detalhes registrados no log.',
-          });
-        }
-      } catch (replyError) {
-        logger.error(`Erro ao enviar mensagem de erro: ${replyError.message}`);
-      }
+      logError('toggle-opcao-context', error, error.stack);
+      await replyToInteraction(
+        interaction,
+        { content: '❌ Erro ao processar o comando. Detalhes registrados no log.' },
+        { ephemeral: true, edit: interaction.deferred },
+      );
     }
   },
 };

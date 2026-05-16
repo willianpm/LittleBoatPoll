@@ -35,7 +35,20 @@ function logError(context, error, details = '') {
   logger.error(log);
 }
 
+/**
+ * Loga o erro e responde à interação com mensagem padrão
+ * @param {Interaction} interaction
+ * @param {Error} error
+ * @param {string} context
+ * @param {string} [message]
+ */
+async function handleCommandError(interaction, error, context, message = '❌ Erro ao processar o comando!') {
+  logError(context, error);
+  await replyError(interaction, message);
+}
+
 module.exports = {
   replyError,
   logError,
+  handleCommandError,
 };
