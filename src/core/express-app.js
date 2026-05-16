@@ -43,7 +43,7 @@ function createExpressApp() {
   app.use(
     session({
       name: 'dashboard.sid',
-    secret: sessionSecret || 'dashboard-dev-secret-change-me',
+      secret: sessionSecret || 'dashboard-dev-secret-change-me',
       resave: false,
       saveUninitialized: false,
       store: sessionStore,
