@@ -17,9 +17,14 @@ async function replyError(interaction, message = '❌ Erro ao processar o comand
       });
     } else if (interaction.deferred && !interaction.replied) {
       return await interaction.editReply({ content: message });
+      } else {
+        return await interaction.followUp({
+          content: message,
+          flags: MessageFlags.Ephemeral,
+        });
     }
   } catch (error) {
-    logger.error(`Erro ao enviar resposta de erro: ${error.message}`);
+      logger.error(`Erro ao enviar resposta de erro: ${error && (error.stack || error.message)}`);
   }
 }
 

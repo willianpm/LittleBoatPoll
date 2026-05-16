@@ -57,7 +57,7 @@ describe('poll-persistence', () => {
   });
 
   describe('init', () => {
-    it('garante arquivos e carrega polls quando existem', () => {
+    it('garante arquivos, carrega polls e normaliza status quando existem', () => {
       fs.existsSync.mockReturnValue(true);
       loadJsonFile.mockImplementation((filePath) => {
         if (filePath.includes('active')) {

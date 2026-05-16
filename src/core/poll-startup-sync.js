@@ -203,22 +203,31 @@ async function enforceVoteLimits() {
           const reacoesParaRemover = userVotes.reacoes.slice(-votosParaRemover);
 
           try {
+            const removidasComSucesso = [];
             for (const emoji of reacoesParaRemover) {
               const reaction = message.reactions.cache.find((r) => getReactionEmojiKey(r) === emoji);
               if (reaction) {
-                await reaction.users.remove(userId).catch((err) => {
-                  if (err.code === 50013) {
+                try {
+                  await reaction.users.remove(userId);
+                  removidasComSucesso.push(emoji);
+                } catch (err) {
+                  if (err && err.code === 50013) {
                     logger.error(
                       `Sem permissão para remover reação de ${userVotes.usuario}. O bot precisa de "Gerenciar Mensagens"`,
                     );
                   } else {
-                    logger.error(`Erro ao remover reação: ${err.message}`);
+                    logger.error(`Erro ao remover reação: ${err && err.message}`);
                   }
-                });
+                }
               }
             }
 
-            userVotes.reacoes = userVotes.reacoes.slice(0, poll.maxVotos);
+            if (removidasComSucesso.length > 0) {
+              userVotes.reacoes = userVotes.reacoes.filter((emoji) => !removidasComSucesso.includes(emoji));
+            }
+            if (userVotes.reacoes.length > poll.maxVotos) {
+              userVotes.reacoes = userVotes.reacoes.slice(0, poll.maxVotos);
+            }
 
             try {
               const user = await client.users.fetch(userId).catch(() => null);

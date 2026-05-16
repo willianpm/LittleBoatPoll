@@ -49,33 +49,38 @@ function startAutoCloseScheduler(client) {
 
 function registerBootstrapHandlers({ client, startKeepAlive, port }) {
   client.once('clientReady', async () => {
-    logger.info(`${client.user.tag} está ONLINE`);
-    client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
+    try {
+      logger.info(`${client.user.tag} está ONLINE`);
+      client.user.setActivity('📚 Clube do Livro', { type: ActivityType.Watching });
 
-    await bindMensalistasRolesOnStartup();
+      await bindMensalistasRolesOnStartup();
 
-    if (config.DEPLOY) {
-      logger.info('Registrando comandos...');
-      const deploySuccess = await deployCommands();
-      if (deploySuccess) {
-        logger.info('Deploy concluído com sucesso');
-        if (process.argv.includes('--deploy')) {
-          process.exit(0);
-        }
-      } else {
-        logger.error('Deploy falhou');
-        if (process.argv.includes('--deploy')) {
-          process.exit(1);
+      if (config.DEPLOY) {
+        logger.info('Registrando comandos...');
+        const deploySuccess = await deployCommands();
+        if (deploySuccess) {
+          logger.info('Deploy concluído com sucesso');
+          if (process.argv.includes('--deploy')) {
+            process.exit(0);
+          }
+        } else {
+          logger.error('Deploy falhou');
+          if (process.argv.includes('--deploy')) {
+            process.exit(1);
+          }
         }
       }
-    }
 
-    await syncPollReactions();
-    await enforceVoteLimits();
-    await runAutoCloseSweep(client);
-    startAutoCloseScheduler(client);
-    startKeepAlive();
-    logger.info(`Keep-alive rodando na porta ${port}`);
+      await syncPollReactions();
+      await enforceVoteLimits();
+      await runAutoCloseSweep(client);
+      startAutoCloseScheduler(client);
+      startKeepAlive();
+      logger.info(`Keep-alive rodando na porta ${port}`);
+    } catch (error) {
+      logger.error(`Falha durante a inicialização: ${error && (error.stack || error.message)}`);
+      process.exit(1);
+    }
   });
 }
 

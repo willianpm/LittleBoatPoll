@@ -92,9 +92,7 @@ function registerReactionHandlers(client) {
       poll.votos[user.id].reacoes.push(emoji);
       saveActivePolls();
     } catch (error) {
-      if (DEBUG_MODE) {
-        logger.error(`Erro ao processar reação: ${error.message}`);
-      }
+      logger.error(`Erro ao processar reação: ${error && (error.stack || error.message)}`);
     }
   });
 
@@ -124,9 +122,7 @@ function registerReactionHandlers(client) {
 
       saveActivePolls();
     } catch (error) {
-      if (DEBUG_MODE) {
-        logger.error(`Erro ao remover reação: ${error.message}`);
-      }
+      logger.error(`Erro ao remover reação: ${error && (error.stack || error.message)}`);
     }
   });
 }

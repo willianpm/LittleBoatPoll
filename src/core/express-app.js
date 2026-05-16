@@ -13,6 +13,7 @@ function createExpressApp() {
   const dashboardFrontendDist = path.join(__dirname, '../../public');
   const isProductionEnv = config.APP_ENV === 'prod';
   const redisUrl = process.env.REDIS_URL;
+  const sessionSecret = process.env.DASHBOARD_SESSION_SECRET;
 
   let sessionStore;
   if (redisUrl) {
@@ -29,6 +30,11 @@ function createExpressApp() {
     logger.warn('REDIS_URL não configurado. Usando MemoryStore (apenas para desenvolvimento).');
   }
 
+  if (isProductionEnv && (!sessionSecret || sessionSecret === 'dashboard-dev-secret-change-me')) {
+    logger.error('Produção requer DASHBOARD_SESSION_SECRET configurado e diferente do valor padrão.');
+    process.exit(1);
+  }
+
   if (isProductionEnv) {
     app.set('trust proxy', 1);
   }
@@ -37,7 +43,7 @@ function createExpressApp() {
   app.use(
     session({
       name: 'dashboard.sid',
-      secret: process.env.DASHBOARD_SESSION_SECRET || 'dashboard-dev-secret-change-me',
+    secret: sessionSecret || 'dashboard-dev-secret-change-me',
       resave: false,
       saveUninitialized: false,
       store: sessionStore,
