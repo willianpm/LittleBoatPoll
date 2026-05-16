@@ -1,9 +1,6 @@
-const config = require('../utils/config');
 const logger = require('../utils/logger');
 const { saveActivePolls } = require('./poll-persistence');
 const { isUserMensalista } = require('./mensalista-runtime');
-
-const DEBUG_MODE = config.DEBUG_MODE;
 
 function normalizePollMaxVotos(poll) {
   const maxVotos = Number(poll.maxVotos);
