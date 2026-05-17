@@ -79,7 +79,11 @@ function registerBootstrapHandlers({ client, startKeepAlive, port }) {
       logger.info(`Keep-alive rodando na porta ${port}`);
     } catch (error) {
       logger.error(`Falha durante a inicialização: ${error && (error.stack || error.message)}`);
-      process.exit(1);
+      // Do not exit the process for transient startup errors (rate limits,
+      // partial network failures, or single-step failures). Keep the bot
+      // running so non-critical services can recover. If a caller needs a
+      // hard failure (e.g. --deploy flow), that path should call process.exit
+      // explicitly where appropriate.
     }
   });
 }
