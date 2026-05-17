@@ -189,4 +189,4 @@ The poll detail payload may include analytics fields for active and ended polls:
 - `totalParticipants`: integer, the number of unique userIds who voted in the poll.
 - `totalMensalistas`: integer, the number of mensalistas among participants.
 
-Note: For polls marked `anonymous`, participant names are redacted according to privacy flags. Large polls may omit full `participants` lists and provide only `totalParticipants` to avoid large payloads; the dashboard will paginate or request partial lists when necessary.
+Note: For polls marked `anonymous`, participant names are redacted according to privacy flags. The API exposes `participants`, `totalParticipants` and `totalMensalistas` when available; when enrichment is not possible the endpoint may return an empty `participants` array and appropriate totals according to stored data.
