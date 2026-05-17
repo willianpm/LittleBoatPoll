@@ -1,23 +1,26 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { SlashCommandBuilder } = require('discord.js');
+const { isCriador } = require('../../utils/permissions');
 const {
   validatePollOptions,
   parseOptions,
   hasInvalidOptionsDelimiter,
   getInvalidOptionsDelimiterError,
 } = require('../../utils/validators');
-const { EMOJIS_DISPONIVEIS, COLORS, LIMITS } = require('../../utils/constants');
+const { EMOJIS_DISPONIVEIS, LIMITS } = require('../../utils/constants');
+const {
+  buildActivePollEmbed,
+  embedWithMessageId,
+  formatDiscordMaxOptionsError,
+  replyPermissionDenied,
+  replyValidationError,
+  replyToInteraction,
+} = require('../../utils/response-builders');
+const { handleCommandError } = require('../../utils/error-handler');
 const logger = require('../../utils/logger');
 
 /**
  * COMANDO: /enquete
  * Cria uma nova enquete para votação do Clube do Livro
- *
- * Opções:
- * - titulo (obrigatório): Título da enquete
- * - opcoes (obrigatório): Opções separadas por pipe
- * - max_votos (obrigatório): Número máximo de votos por pessoa
- * - peso_mensalista (obrigatório): Mensalistas têm peso duplo?
  */
 module.exports = {
   data: new SlashCommandBuilder()
@@ -44,11 +47,9 @@ module.exports = {
     ),
 
   async execute(interaction, client) {
-    // Defer reply IMEDIATAMENTE para evitar timeout (3s do Discord)
     await interaction.deferReply();
 
     try {
-      // Coleta as informações
       const titulo = interaction.options.getString('nome-da-enquete');
       const opcoesString = interaction.options.getString('opcoes');
       const maxVotos = interaction.options.getInteger('max_votos') || 1;
@@ -56,87 +57,47 @@ module.exports = {
       const usarPesoMensalista = pesoMensalistaOption === 'sim';
 
       if (hasInvalidOptionsDelimiter(opcoesString)) {
-        return await interaction.editReply({
-          content: `❌ **Erro!** ${getInvalidOptionsDelimiterError()}`,
+        return await replyValidationError(interaction, getInvalidOptionsDelimiterError(), {
+          ephemeral: false,
+          edit: true,
         });
       }
 
-      // Processa as opções
       const opcoes = parseOptions(opcoesString);
 
-      // Valida opções
       const validation = validatePollOptions(opcoes, maxVotos);
       if (!validation.valid) {
-        return await interaction.editReply({
-          content: `❌ **Erro!** ${validation.error}`,
-        });
+        return await replyValidationError(interaction, validation.error, { ephemeral: false, edit: true });
       }
 
-      // =====================================
-      // VERIFICAÇÃO DE PERMISSÕES - SISTEMA BINÁRIO
-      // Apenas usuários com o cargo Criador podem executar este comando
-      // =====================================
       if (!isCriador(interaction.member, interaction.guildId)) {
-        return await interaction.editReply({
-          content: MENSAGEM_PERMISSAO_NEGADA,
-        });
+        return await replyPermissionDenied(interaction, { ephemeral: false, edit: true });
       }
 
-      // Emojis para as opções (letras circuladas)
-      // Discord limita a 20 reações por mensagem
       const emojiNumeros = EMOJIS_DISPONIVEIS.slice(0, opcoes.length);
 
-      // Verifica se há emojis suficientes (limite do Discord: 20 reações)
       if (opcoes.length > LIMITS.MAX_OPTIONS) {
-        return await interaction.editReply({
-          content:
-            '❌ **Erro!** O Discord limita a 20 reações por mensagem. ' +
-            `Máximo: ${LIMITS.MAX_OPTIONS} opções por enquete.`,
-        });
+        return await replyToInteraction(interaction, { content: formatDiscordMaxOptionsError() }, { edit: true });
       }
 
-      // Constrói a descrição com as opções
-      let descricao = `Selecione até ${maxVotos} opç${maxVotos > 1 ? 'ões' : 'ão'}:\n\n`;
-      opcoes.forEach((opcao, index) => {
-        descricao += `**${emojiNumeros[index]} ${opcao}**\n\n`;
+      const pollEmbed = buildActivePollEmbed({
+        titulo,
+        opcoes,
+        emojiNumeros,
+        maxVotos,
+        usarPesoMensalista,
       });
 
-      // Cria um Embed bonito para a enquete
-      const pesoInfo = usarPesoMensalista ? 'Mensalistas têm peso 2 nos votos' : 'Todos têm o mesmo peso';
-      const pollEmbed = new EmbedBuilder()
-        .setColor(COLORS.GOLD)
-        .setTitle(`${titulo} `)
-        .setDescription(descricao)
-        .addFields(
-          { name: '\u200B', value: '\u200B', inline: false },
-          {
-            name: 'Regras 📊',
-            value: `• Você pode votar em até ${maxVotos} opç${maxVotos > 1 ? 'ões' : 'ão'}\n\n• ${pesoInfo}`,
-            inline: false,
-          },
-        )
-        .setFooter({ text: `${opcoes.length} opções disponíveis` })
-        .setTimestamp();
+      await interaction.editReply({ embeds: [pollEmbed] });
 
-      // Envia a mensagem com o embed (usando editReply porque já fizemos defer)
-      await interaction.editReply({
-        embeds: [pollEmbed],
-      });
-
-      // Busca a mensagem para obter o ID e poder adicionar reações
       const msg = await interaction.fetchReply();
-
-      // Atualiza o embed para incluir o ID
-      const updatedEmbed = EmbedBuilder.from(pollEmbed).addFields({ name: 'ID', value: `${msg.id}`, inline: false });
-
+      const updatedEmbed = embedWithMessageId(pollEmbed, msg.id);
       await interaction.editReply({ embeds: [updatedEmbed] });
 
-      // Adiciona as reações (apenas os emojis necessários)
       for (let i = 0; i < opcoes.length; i++) {
         await msg.react(emojiNumeros[i]);
       }
 
-      // Inicializa a votação ativa em memória
       client.activePolls.set(msg.id, {
         messageId: msg.id,
         guildId: interaction.guildId || null,
@@ -148,11 +109,10 @@ module.exports = {
         usarPesoMensalista: usarPesoMensalista,
         criadoEm: new Date(),
         criadoPor: interaction.user?.id || null,
-        votos: {}, // userId -> { reacoes: [emoji1, emoji2], peso: 2 ou 1 }
+        votos: {},
         status: 'ativa',
       });
 
-      // Salva as votações ativas em arquivo
       client.saveActivePolls();
 
       logger.info(
@@ -160,10 +120,7 @@ module.exports = {
           `Peso mensalista: ${usarPesoMensalista ? 'SIM' : 'NÃO'} | ID: ${msg.id}`,
       );
     } catch (error) {
-      logger.error(`Erro ao criar enquete: ${error.message}`);
-      await interaction.editReply({
-        content: '❌ Erro ao criar a enquete!',
-      });
+      await handleCommandError(interaction, error, 'enquete', '❌ Erro ao criar a enquete!');
     }
   },
 };

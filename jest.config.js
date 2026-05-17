@@ -6,7 +6,15 @@ module.exports = {
     '**/dashboard/controllers/*.test.js',
     '**/dashboard/tests/*.test.js',
   ],
-  collectCoverageFrom: ['src/utils/**/*.js', '!**/node_modules/**', '!**/docs/**', '!**/tests/**', '!**/dist/**'],
+  collectCoverageFrom: [
+    'src/utils/**/*.js',
+    'src/core/**/*.js',
+    '!src/core/client.js',
+    '!**/node_modules/**',
+    '!**/docs/**',
+    '!**/tests/**',
+    '!**/dist/**',
+  ],
   coverageThreshold: {
     global: {
       branches: 25,

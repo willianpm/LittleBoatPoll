@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { isCriador, MENSAGEM_PERMISSAO_NEGADA } = require('../../utils/permissions');
+const { isCriador } = require('../../utils/permissions');
 const crypto = require('crypto');
 const {
   validatePollOptions,
@@ -9,6 +9,17 @@ const {
 } = require('../../utils/validators');
 const { EMOJIS_DISPONIVEIS, COLORS } = require('../../utils/constants');
 const { DEFAULT_DURATION_KEY, calculateEndsAt, isValidDurationKey } = require('../../utils/poll-duration');
+const {
+  buildActivePollEmbed,
+  embedWithMessageId,
+  buildDraftCreatedEmbed,
+  buildDraftPublishedEmbed,
+  formatDraftNotFound,
+  replyPermissionDenied,
+  replyValidationError,
+  replyEphemeral,
+} = require('../../utils/response-builders');
+const { handleCommandError } = require('../../utils/error-handler');
 const logger = require('../../utils/logger');
 
 const DISCORD_CUSTOM_EMOJI_REGEX = /^<(a?):([a-zA-Z0-9_]{2,32}):(\d{17,20})>$/;
@@ -225,10 +236,7 @@ module.exports = {
 
     // Todos os subcomandos exigem cargo Criador
     if (!isCriador(interaction.member, interaction.guildId)) {
-      return await interaction.reply({
-        content: MENSAGEM_PERMISSAO_NEGADA,
-        flags: MessageFlags.Ephemeral,
-      });
+      return await replyPermissionDenied(interaction);
     }
 
     try {
@@ -241,17 +249,7 @@ module.exports = {
       else if (subcommand === 'publicar') await handlePublicar(interaction, client);
       else if (subcommand === 'deletar') await handleDeletar(interaction, client);
     } catch (error) {
-      logger.error(`Erro ao gerenciar rascunho: ${error.message}`);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ Erro ao processar o comando!',
-          flags: MessageFlags.Ephemeral,
-        });
-      } else if (interaction.deferred && !interaction.replied) {
-        await interaction.editReply({
-          content: '❌ Erro ao processar o comando!',
-        });
-      }
+      await handleCommandError(interaction, error, 'rascunho');
     }
   },
 };
@@ -270,10 +268,7 @@ async function handleCriar(interaction, client) {
   const usarPesoMensalista = pesoMensalistaOption === 'sim';
 
   if (hasInvalidOptionsDelimiter(opcoesRaw)) {
-    return await interaction.reply({
-      content: `❌ **Erro!** ${getInvalidOptionsDelimiterError()}`,
-      flags: MessageFlags.Ephemeral,
-    });
+    return await replyValidationError(interaction, getInvalidOptionsDelimiterError());
   }
 
   // Processa as opções
@@ -284,10 +279,7 @@ async function handleCriar(interaction, client) {
   // Valida opções
   const validation = validatePollOptions(opcoesInput, maxVotos, { requireEmoji });
   if (!validation.valid) {
-    return await interaction.reply({
-      content: `❌ **Erro!** ${validation.error}`,
-      flags: MessageFlags.Ephemeral,
-    });
+    return await replyValidationError(interaction, validation.error);
   }
 
   // Gera um ID único para o rascunho
@@ -317,33 +309,16 @@ async function handleCriar(interaction, client) {
   // Salva em arquivo
   client.saveDraftPolls();
 
-  // Cria o embed de confirmação
-  const confirmEmbed = new EmbedBuilder()
-    .setColor(COLORS.NEUTRAL)
-    .setTitle('✅ Rascunho Criado com Sucesso!')
-    .addFields(
-      { name: 'ID do Rascunho', value: `\`${draftId}\`` },
-      { name: 'Título', value: titulo },
-      { name: 'Opções', value: formatOptionsInline(draft.opcoes) },
-      { name: 'Máximo de Votos', value: `${maxVotos}`, inline: true },
-      { name: 'Peso Mensalista', value: usarPesoMensalista ? 'Sim (2x)' : 'Não (1x)', inline: true },
-      { name: 'Duração', value: formatDurationLabel(durationKey), inline: true },
-      {
-        name: 'Próximos Passos',
-        value: `
-- Use \`/rascunho editar\` para fazer alterações
-- Use \`/rascunho exibir\` para visualizar os detalhes
-- Use \`/rascunho publicar\` para ativar a enquete para votação
-        `,
-      },
-    )
-    .setFooter({ text: 'Status: 📝 Rascunho (não publicado)' })
-    .setTimestamp();
-
-  await interaction.reply({
-    embeds: [confirmEmbed],
-    flags: MessageFlags.Ephemeral,
+  const confirmEmbed = buildDraftCreatedEmbed({
+    draftId,
+    titulo,
+    opcoesInline: formatOptionsInline(draft.opcoes),
+    maxVotos,
+    usarPesoMensalista,
+    durationLabel: formatDurationLabel(durationKey),
   });
+
+  await replyEphemeral(interaction, { embeds: [confirmEmbed] });
 
   logger.info(`Rascunho criado: ${titulo} | ID: ${draftId} | Criador: ${interaction.user.tag}`);
 }
@@ -355,7 +330,7 @@ async function handleEditar(interaction, client) {
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
     return await interaction.reply({
-      content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
+      content: formatDraftNotFound(draftId),
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -506,7 +481,7 @@ async function handleExibir(interaction, client) {
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
     return await interaction.reply({
-      content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
+      content: formatDraftNotFound(draftId),
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -549,7 +524,7 @@ async function handlePublicar(interaction, client) {
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
     return await interaction.reply({
-      content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
+      content: formatDraftNotFound(draftId),
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -594,41 +569,19 @@ async function handlePublicar(interaction, client) {
     const emojiNumeros = normalizedOptions.map((option, index) => option.emoji || EMOJIS_DISPONIVEIS[index]);
     const opcoesTexto = normalizedOptions.map((option) => option.text);
 
-    // Constrói a descrição com as opções
-    let descricaoPoll = `Selecione até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}:\n\n`;
-    opcoesTexto.forEach((opcao, index) => {
-      descricaoPoll += `**${emojiNumeros[index]} ${opcao}**\n\n`;
+    const pollEmbed = buildActivePollEmbed({
+      titulo: draft.titulo,
+      opcoes: opcoesTexto,
+      emojiNumeros,
+      maxVotos: draft.maxVotos,
+      usarPesoMensalista: draft.usarPesoMensalista,
     });
 
-    // Cria o embed da enquete
-    const pesoInfo = draft.usarPesoMensalista ? 'Mensalistas têm peso 2 nos votos' : 'Todos têm o mesmo peso';
-    const pollEmbed = new EmbedBuilder()
-      .setColor(COLORS.GOLD)
-      .setTitle(`${draft.titulo} `)
-      .setDescription(descricaoPoll)
-      .addFields(
-        { name: '\u200B', value: '\u200B', inline: false },
-        {
-          name: 'Regras 📊',
-          value:
-            `• Você pode votar em até ${draft.maxVotos} opç${draft.maxVotos > 1 ? 'ões' : 'ão'}\n\n` + `• ${pesoInfo}`,
-          inline: false,
-        },
-      )
-      .setFooter({ text: `${draft.opcoes.length} opções disponíveis` })
-      .setTimestamp();
-
-    // Envia a mensagem no canal alvo
     const msg = await targetChannel.send({
       embeds: [pollEmbed],
     });
 
-    // Atualiza o embed para incluir o ID
-    const updatedEmbed = EmbedBuilder.from(pollEmbed).addFields({
-      name: 'ID',
-      value: `${msg.id}`,
-      inline: false,
-    });
+    const updatedEmbed = embedWithMessageId(pollEmbed, msg.id);
     await msg.edit({ embeds: [updatedEmbed] });
 
     // Adiciona as reações
@@ -667,21 +620,12 @@ async function handlePublicar(interaction, client) {
     // Salva os rascunhos (agora sem o publicado)
     client.saveDraftPolls();
 
-    // Confirmação
-    const publishEmbed = new EmbedBuilder()
-      .setColor(COLORS.SUCCESS)
-      .setTitle('Enquete Publicada com Sucesso!')
-      .addFields(
-        { name: 'Título', value: draft.titulo },
-        { name: 'Canal', value: `${targetChannel}` },
-        {
-          name: 'Link para Votação',
-          value:
-            '[Clique aqui](https://discord.com/channels/' + `${interaction.guildId}/${targetChannel.id}/${msg.id})`,
-        },
-      )
-      .setFooter({ text: 'A enquete está ativa e aceitando votos' })
-      .setTimestamp();
+    const publishEmbed = buildDraftPublishedEmbed({
+      titulo: draft.titulo,
+      targetChannel,
+      guildId: interaction.guildId,
+      messageId: msg.id,
+    });
 
     await interaction.editReply({
       embeds: [publishEmbed],
@@ -705,7 +649,7 @@ async function handleDeletar(interaction, client) {
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
     return await interaction.reply({
-      content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
+      content: formatDraftNotFound(draftId),
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -757,7 +701,7 @@ async function handleAdicionarOpcao(interaction, client) {
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
     return await interaction.reply({
-      content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
+      content: formatDraftNotFound(draftId),
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -858,7 +802,7 @@ async function handleRemoverOpcao(interaction, client) {
   const draft = client.draftPolls.get(draftId);
   if (!draft) {
     return await interaction.reply({
-      content: `❌ **Erro!** Rascunho com ID \`${draftId}\` não encontrado.`,
+      content: formatDraftNotFound(draftId),
       flags: MessageFlags.Ephemeral,
     });
   }
