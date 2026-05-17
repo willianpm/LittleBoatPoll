@@ -12,11 +12,6 @@ jest.mock('recharts', () => ({
   Cell: () => <div />,
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Tooltip: () => <div />,
-  BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Bar: () => <div />,
-  XAxis: () => <div />,
-  YAxis: () => <div />,
-  CartesianGrid: () => <div />,
 }));
 
 jest.mock('react-router', () => ({
@@ -72,5 +67,10 @@ describe('PollDetail', () => {
 
     expect(screen.getByText('Votos ponderados')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
+
+    expect(await screen.findByText('Participantes (2)')).toBeInTheDocument();
+    expect(screen.queryByText('Anônimo')).not.toBeInTheDocument();
+
+    expect(screen.queryByText('Comparação de Votos')).not.toBeInTheDocument();
   });
 });

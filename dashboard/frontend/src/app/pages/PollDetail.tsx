@@ -8,18 +8,7 @@ import { closePoll, getPollDetail, type DashboardPoll } from '../lib/dashboard-a
 import { ArrowLeft, Calendar, Clock, Hash, Trophy } from 'lucide-react';
 import EmojiRenderer from '../components/EmojiRenderer';
 import PollParticipants from '../components/PollParticipants';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 type ParsedDescription = {
   intro: string;
@@ -124,11 +113,6 @@ export function PollDetail() {
     value: opt.votes,
   }));
 
-  const barChartData = poll.options.map((opt) => ({
-    name: opt.text,
-    votes: opt.votes,
-  }));
-
   const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
   const parsedDescription = parsePollDescription(poll.description);
   const totalParticipants =
@@ -181,7 +165,7 @@ export function PollDetail() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-3">
               <div className="flex-1">
@@ -252,7 +236,7 @@ export function PollDetail() {
             </div>
 
             <div className="space-y-3 md:space-y-4">
-              {poll.options.map((option, index) => {
+              {poll.options.map((option) => {
                 const percentage = poll.totalVotes > 0 ? Math.round((option.votes / poll.totalVotes) * 100) : 0;
                 const isTop = topOption ? option.id === topOption.id : false;
 
@@ -288,6 +272,8 @@ export function PollDetail() {
               })}
             </div>
           </Card>
+
+          <PollParticipants participants={poll.participants} anonymous={poll.anonymous} />
         </div>
 
         <div className="space-y-4 md:space-y-6">
@@ -369,33 +355,8 @@ export function PollDetail() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Sem votos suficientes para exibir o gráfico.</p>
             )}
           </Card>
-          <PollParticipants participants={poll.participants} anonymous={poll.anonymous} />
         </div>
       </div>
-
-      <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
-        <h3 className="mb-4 md:mb-6 dark:text-white">Comparação de Votos</h3>
-        {barChartData.length > 0 ? (
-          <div className="aspect-video max-h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--background)',
-                    border: '1px solid var(--border)',
-                  }}
-                />
-                <Bar dataKey="votes" fill="#5865F2" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">Sem dados suficientes para exibir a comparação.</p>
-        )}
-      </Card>
     </div>
   );
 }
