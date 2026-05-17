@@ -76,4 +76,39 @@ describe('PollDetail', () => {
 
     expect(screen.queryByText('Comparação de Votos')).not.toBeInTheDocument();
   });
+
+  it('shows "Desconhecido" when analytics are missing', async () => {
+    getPollDetail.mockResolvedValueOnce({
+      id: 'poll-1',
+      title: 'Test Poll',
+      description: 'desc',
+      serverId: 'guild-1',
+      serverName: 'Guild',
+      channelId: 'channel-1',
+      channelName: 'geral',
+      createdAt: '2026-01-01T00:00:00Z',
+      endsAt: null,
+      durationKey: '24h',
+      status: 'ended',
+      totalVotes: 0,
+      options: [],
+      allowMultipleChoices: false,
+      anonymous: false,
+      // participants and analytics intentionally omitted to simulate missing analytics
+    });
+
+    render(<PollDetail />);
+
+    expect(getPollDetail).toHaveBeenCalledWith('poll-1');
+
+    expect(await screen.findByText('Participação')).toBeInTheDocument();
+    const participantsContainer = screen.getByText('Participantes únicos').closest('div');
+    expect(within(participantsContainer as HTMLElement).getByText('Desconhecido')).toBeInTheDocument();
+
+    const mensalistasContainer = screen.getByText('Mensalistas participantes').closest('div');
+    expect(within(mensalistasContainer as HTMLElement).getByText('Desconhecido')).toBeInTheDocument();
+
+    const registradosContainer = screen.getByText('Votos registrados').closest('div');
+    expect(within(registradosContainer as HTMLElement).getByText('Desconhecido')).toBeInTheDocument();
+  });
 });

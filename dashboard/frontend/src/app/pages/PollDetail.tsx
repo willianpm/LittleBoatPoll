@@ -115,21 +115,23 @@ export function PollDetail() {
 
   const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
   const parsedDescription = parsePollDescription(poll.description);
-  const totalParticipants =
+  const totalParticipants: number | undefined =
     typeof poll.totalParticipants === 'number'
       ? poll.totalParticipants
       : Array.isArray(poll.participants)
         ? poll.participants.length
-        : 0;
-  const totalMensalistas =
+        : undefined;
+  const totalMensalistas: number | undefined =
     typeof poll.totalMensalistas === 'number'
       ? poll.totalMensalistas
       : Array.isArray(poll.participants)
         ? poll.participants.filter((participant) => participant.isMensalista).length
-        : 0;
-  const registeredVotes = Array.isArray(poll.participants)
+        : undefined;
+  const registeredVotes: number | undefined = Array.isArray(poll.participants)
     ? poll.participants.reduce((sum, p) => sum + (Array.isArray(p.choices) ? p.choices.length : 0), 0)
-    : 0;
+    : undefined;
+
+  const renderMetric = (v?: number) => (v === undefined ? 'Desconhecido' : String(v));
 
   async function handleClosePoll() {
     if (!id || !poll || poll.status !== 'active' || isClosing) {
@@ -283,13 +285,13 @@ export function PollDetail() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Participantes únicos</span>
-                  <span className="text-lg md:text-xl dark:text-white">{totalParticipants}</span>
+                  <span className="text-lg md:text-xl dark:text-white">{renderMetric(totalParticipants)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">
                     Mensalistas participantes
                   </span>
-                  <span className="text-lg md:text-xl dark:text-white">{totalMensalistas}</span>
+                  <span className="text-lg md:text-xl dark:text-white">{renderMetric(totalMensalistas)}</span>
                 </div>
               </div>
             </Card>
@@ -299,7 +301,7 @@ export function PollDetail() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Votos registrados</span>
-                  <span className="text-lg md:text-xl dark:text-white">{registeredVotes}</span>
+                  <span className="text-lg md:text-xl dark:text-white">{renderMetric(registeredVotes)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Votos ponderados</span>
