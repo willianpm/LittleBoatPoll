@@ -7,6 +7,7 @@ import { Progress } from '../components/ui/progress';
 import { closePoll, getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
 import { ArrowLeft, Calendar, Clock, Hash, Trophy } from 'lucide-react';
 import EmojiRenderer from '../components/EmojiRenderer';
+import PollParticipants from '../components/PollParticipants';
 import {
   PieChart,
   Pie,
@@ -130,6 +131,18 @@ export function PollDetail() {
 
   const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
   const parsedDescription = parsePollDescription(poll.description);
+  const totalParticipants =
+    typeof poll.totalParticipants === 'number'
+      ? poll.totalParticipants
+      : Array.isArray(poll.participants)
+        ? poll.participants.length
+        : 0;
+  const totalMensalistas =
+    typeof poll.totalMensalistas === 'number'
+      ? poll.totalMensalistas
+      : Array.isArray(poll.participants)
+        ? poll.participants.filter((participant) => participant.isMensalista).length
+        : 0;
 
   async function handleClosePoll() {
     if (!id || !poll || poll.status !== 'active' || isClosing) {
@@ -283,12 +296,12 @@ export function PollDetail() {
                 <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Opções</span>
-                <span className="text-lg md:text-xl dark:text-white">{poll.options.length}</span>
+                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Participantes</span>
+                <span className="text-lg md:text-xl dark:text-white">{totalParticipants}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Taxa de Participação</span>
-                <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes > 0 ? '68%' : '0%'}</span>
+                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Mensalistas</span>
+                <span className="text-lg md:text-xl dark:text-white">{totalMensalistas}</span>
               </div>
             </div>
           </Card>
@@ -339,6 +352,7 @@ export function PollDetail() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Sem votos suficientes para exibir o gráfico.</p>
             )}
           </Card>
+          <PollParticipants participants={poll.participants} anonymous={poll.anonymous} />
         </div>
       </div>
 

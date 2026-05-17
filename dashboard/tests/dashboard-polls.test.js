@@ -31,8 +31,13 @@ jest.mock('../../src/utils/file-handler', () => ({
   loadVotacoes: jest.fn(),
 }));
 
+jest.mock('../../src/core/mensalista-runtime', () => ({
+  isUserMensalista: jest.fn(async () => false),
+}));
+
 const { client } = require('../../src/core/client');
 const { loadVotacoes } = require('../../src/utils/file-handler');
+const { isUserMensalista } = require('../../src/core/mensalista-runtime');
 const dashboardPollsRouter = require('../api/dashboard-polls');
 
 describe('Dashboard Polls API', () => {
@@ -45,6 +50,9 @@ describe('Dashboard Polls API', () => {
   });
 
   beforeEach(() => {
+    isUserMensalista.mockReset();
+    isUserMensalista.mockResolvedValue(false);
+
     client.guilds.cache = new Map([
       [
         'guild-1',
@@ -178,6 +186,85 @@ describe('Dashboard Polls API', () => {
           expect.objectContaining({ text: 'Voto A', votes: 4 }),
           expect.objectContaining({ text: 'Voto B', votes: 2 }),
         ]),
+      }),
+    );
+  });
+
+  it('should include participants for active polls when available', async () => {
+    const res = await request(app).get('/api/polls/active-1').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.poll).toHaveProperty('participants');
+    expect(Array.isArray(res.body.poll.participants)).toBe(true);
+    expect(res.body.poll.totalParticipants).toBe(1);
+    expect(res.body.poll.participants[0]).toEqual(expect.objectContaining({ userId: 'user-2' }));
+    expect(res.body.poll).toHaveProperty('totalMensalistas', 0);
+  });
+
+  it('should include participants for ended polls reconstructed from resultados', async () => {
+    loadVotacoes.mockReturnValue([
+      {
+        id: 'history-with-voters',
+        titulo: 'Enquete com votantes no histórico',
+        guildId: 'guild-1',
+        channelId: 'channel-1',
+        status: 'ended',
+        resultados: [
+          { id: 'opt-1', text: 'Voto A', pontos: 2, votantes: ['user-2', 'user-3'] },
+          { id: 'opt-2', text: 'Voto B', pontos: 1, votantes: ['user-2'] },
+        ],
+        participantes: 2,
+        anonymous: false,
+      },
+    ]);
+    isUserMensalista.mockImplementation(async (_guild, userId) => userId === 'user-2');
+
+    const res = await request(app).get('/api/polls/history-with-voters').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.poll.participants)).toBe(true);
+    expect(res.body.poll.totalParticipants).toBe(2);
+    expect(res.body.poll.totalMensalistas).toBe(1);
+    expect(res.body.poll.participants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ userId: 'user-2', isMensalista: true }),
+        expect.objectContaining({ userId: 'user-3', isMensalista: false }),
+      ]),
+    );
+  });
+
+  it('should redact participant names for anonymous polls', async () => {
+    client.activePolls = new Map([
+      [
+        'active-anon',
+        {
+          messageId: 'active-anon',
+          guildId: 'guild-1',
+          channelId: 'channel-1',
+          titulo: 'Enquete anônima',
+          opcoes: ['A'],
+          emojiNumeros: ['1️⃣'],
+          maxVotos: 1,
+          usarPesoMensalista: false,
+          anonymous: true,
+          votos: {
+            'user-2': { usuario: 'NomeReal', peso: 1, reacoes: ['1️⃣'] },
+          },
+        },
+      ],
+    ]);
+
+    const res = await request(app).get('/api/polls/active-anon').set('Authorization', 'Bearer fake');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.poll.participants[0]).toEqual(
+      expect.objectContaining({
+        userId: 'user-2',
+        username: null,
+        displayName: null,
       }),
     );
   });

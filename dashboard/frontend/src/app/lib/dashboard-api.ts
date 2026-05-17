@@ -8,6 +8,15 @@ export interface DashboardPollOption {
   emojiUrl?: string | null;
 }
 
+export interface PollParticipant {
+  userId: string;
+  username?: string | null;
+  displayName?: string | null;
+  isMensalista?: boolean;
+  choices?: string[];
+  timestamp?: string | null;
+}
+
 export interface DashboardDraftOption {
   text: string;
   emoji?: string | null;
@@ -39,6 +48,9 @@ export interface DashboardPoll {
   options: DashboardPollOption[];
   allowMultipleChoices: boolean;
   anonymous: boolean;
+  participants?: PollParticipant[];
+  totalParticipants?: number;
+  totalMensalistas?: number;
 }
 
 export interface DashboardGuild {
