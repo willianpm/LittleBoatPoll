@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { PollDetail } from './PollDetail';
 
 jest.mock('../lib/dashboard-api', () => ({
@@ -53,20 +53,23 @@ describe('PollDetail', () => {
 
     render(<PollDetail />);
 
-    expect(await screen.findByText('Participação')).toBeInTheDocument();
-    expect(screen.getByText('Participantes únicos')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // ensure component called API with route id
+    expect(getPollDetail).toHaveBeenCalledWith('poll-1');
 
-    expect(screen.getByText('Mensalistas participantes')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(await screen.findByText('Participação')).toBeInTheDocument();
+    const participantsContainer = screen.getByText('Participantes únicos').closest('div');
+    expect(within(participantsContainer as HTMLElement).getByText('2')).toBeInTheDocument();
+
+    const mensalistasContainer = screen.getByText('Mensalistas participantes').closest('div');
+    expect(within(mensalistasContainer as HTMLElement).getByText('1')).toBeInTheDocument();
 
     expect(screen.getByText('Votação')).toBeInTheDocument();
-    expect(screen.getByText('Votos registrados')).toBeInTheDocument();
+    const registradosContainer = screen.getByText('Votos registrados').closest('div');
     // registered votes = 1 + 2 = 3
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(within(registradosContainer as HTMLElement).getByText('3')).toBeInTheDocument();
 
-    expect(screen.getByText('Votos ponderados')).toBeInTheDocument();
-    expect(screen.getByText('4')).toBeInTheDocument();
+    const ponderadosContainer = screen.getByText('Votos ponderados').closest('div');
+    expect(within(ponderadosContainer as HTMLElement).getByText('4')).toBeInTheDocument();
 
     expect(await screen.findByText('Participantes (2)')).toBeInTheDocument();
     expect(screen.queryByText('Anônimo')).not.toBeInTheDocument();
