@@ -143,6 +143,9 @@ export function PollDetail() {
       : Array.isArray(poll.participants)
         ? poll.participants.filter((participant) => participant.isMensalista).length
         : 0;
+  const registeredVotes = Array.isArray(poll.participants)
+    ? poll.participants.reduce((sum, p) => sum + (Array.isArray(p.choices) ? p.choices.length : 0), 0)
+    : 0;
 
   async function handleClosePoll() {
     if (!id || !poll || poll.status !== 'active' || isClosing) {
@@ -288,23 +291,37 @@ export function PollDetail() {
         </div>
 
         <div className="space-y-4 md:space-y-6">
-          <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
-            <h3 className="mb-4 dark:text-white">Estatísticas</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Votos</span>
-                <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes}</span>
+          <div className="grid grid-cols-1 gap-4">
+            <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+              <h3 className="mb-4 dark:text-white">Participação</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Participantes únicos</span>
+                  <span className="text-lg md:text-xl dark:text-white">{totalParticipants}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+                    Mensalistas participantes
+                  </span>
+                  <span className="text-lg md:text-xl dark:text-white">{totalMensalistas}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Participantes</span>
-                <span className="text-lg md:text-xl dark:text-white">{totalParticipants}</span>
+            </Card>
+
+            <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+              <h3 className="mb-4 dark:text-white">Votação</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Votos registrados</span>
+                  <span className="text-lg md:text-xl dark:text-white">{registeredVotes}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Votos ponderados</span>
+                  <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Mensalistas</span>
-                <span className="text-lg md:text-xl dark:text-white">{totalMensalistas}</span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
 
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <h3 className="mb-4 dark:text-white">Ações</h3>
