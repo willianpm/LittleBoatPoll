@@ -9,22 +9,41 @@ const logger = require('./logger');
  */
 
 async function replyError(interaction, message = '❌ Erro ao processar o comando!') {
-  try {
-    if (!interaction.replied && !interaction.deferred) {
-      return await interaction.reply({
-        content: message,
-        flags: MessageFlags.Ephemeral,
-      });
-    } else if (interaction.deferred && !interaction.replied) {
-      return await interaction.editReply({ content: message });
-    } else {
-      return await interaction.followUp({
-        content: message,
-        flags: MessageFlags.Ephemeral,
-      });
+  // Try reply/editReply/followUp in sequence so a failure in one doesn't prevent fallbacks
+  if (!interaction.replied && !interaction.deferred) {
+    try {
+      return await interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
+    } catch (err) {
+      logger.error(`reply falhou: ${err && (err.stack || err.message)}`);
+      try {
+        return await interaction.followUp({ content: message, flags: MessageFlags.Ephemeral });
+      } catch (err2) {
+        logger.error(`followUp (fallback) falhou: ${err2 && (err2.stack || err2.message)}`);
+        return null;
+      }
     }
-  } catch (error) {
-    logger.error(`Erro ao enviar resposta de erro: ${error && (error.stack || error.message)}`);
+  }
+
+  if (interaction.deferred && !interaction.replied) {
+    try {
+      return await interaction.editReply({ content: message });
+    } catch (err) {
+      logger.error(`editReply falhou: ${err && (err.stack || err.message)}`);
+      try {
+        return await interaction.followUp({ content: message, flags: MessageFlags.Ephemeral });
+      } catch (err2) {
+        logger.error(`followUp (fallback) falhou: ${err2 && (err2.stack || err2.message)}`);
+        return null;
+      }
+    }
+  }
+
+  // interaction.replied === true
+  try {
+    return await interaction.followUp({ content: message, flags: MessageFlags.Ephemeral });
+  } catch (err) {
+    logger.error(`followUp falhou: ${err && (err.stack || err.message)}`);
+    return null;
   }
 }
 
