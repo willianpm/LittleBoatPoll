@@ -168,3 +168,25 @@ This document describes the HTTP API exposed by the LittleBoatPoll backend (bot 
 - `docs/development/SETUP.md` (environment and commands)
 - `docs/development/ARCHITECTURE.md` (overall architecture)
 - `dashboard/README.md` (dashboard domain details)
+
+## Poll detail extension
+
+- Method: `GET`
+- Path: `/api/polls/:pollId`
+- Auth: dashboard session
+- Response: `200` JSON `{ "success": true, "poll": { ... } }`
+
+The poll detail payload may include analytics fields for active and ended polls:
+
+- `participants`: an array of participant objects when available. Each participant object contains:
+  - `userId`: string
+  - `username`: string | null (may be null for anonymous votes)
+  - `displayName`: string | null (may be null for anonymous votes)
+  - `isMensalista`: boolean
+  - `choices`: string[] (list of emoji identifiers the user voted for)
+  - `timestamp`: ISO datetime string | null
+
+- `totalParticipants`: integer, the number of unique userIds who voted in the poll.
+- `totalMensalistas`: integer, the number of mensalistas among participants.
+
+Note: For polls marked `anonymous`, participant names are redacted according to privacy flags. The API exposes `participants`, `totalParticipants` and `totalMensalistas` when available; when enrichment is not possible the endpoint may return an empty `participants` array and appropriate totals according to stored data.

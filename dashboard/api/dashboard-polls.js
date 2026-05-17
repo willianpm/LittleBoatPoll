@@ -4,6 +4,7 @@ const { client } = require('../../src/core/client');
 const { loadVotacoes } = require('../../src/utils/file-handler');
 const { validateDashboardToken } = require('./auth');
 const { resolveGuildAndChannel } = require('./utils/guild-channel-resolver');
+const { isUserMensalista } = require('../../src/core/mensalista-runtime');
 
 const router = express.Router();
 
@@ -73,6 +74,32 @@ function stripCustomEmojiFromText(value) {
     .replace(/\s+/g, ' ')
     .trim();
   return cleaned;
+}
+
+// Simple concurrency limiter (lightweight pLimit replacement)
+function pLimit(concurrency) {
+  let active = 0;
+  const queue = [];
+
+  const next = () => {
+    if (queue.length === 0 || active >= concurrency) return;
+    active++;
+    const task = queue.shift();
+    Promise.resolve()
+      .then(task.fn)
+      .then((v) => task.resolve(v))
+      .catch((err) => task.reject(err))
+      .finally(() => {
+        active--;
+        next();
+      });
+  };
+
+  return (fn) =>
+    new Promise((resolve, reject) => {
+      queue.push({ fn, resolve, reject });
+      next();
+    });
 }
 
 function normalizeOption(option, index = 0) {
@@ -217,6 +244,199 @@ function getPollCollections() {
   });
 }
 
+function findActivePollById(pollId) {
+  const activeEntries = Array.from(client.activePolls?.entries?.() || []);
+  return (
+    activeEntries.find(([, p]) => {
+      const idCandidates = [p?.messageId, p?.id];
+      return idCandidates.some((c) => String(c) === String(pollId));
+    }) || null
+  );
+}
+
+function findHistoryPollById(pollId) {
+  const history = safeArray(loadVotacoes());
+  return (
+    history.find((record) => {
+      const idCandidates = [record?.id, record?.messageId, record?.pollId];
+      return idCandidates.some((c) => String(c) === String(pollId));
+    }) || null
+  );
+}
+
+async function resolveUserIdentity({ userId, guildId = null, fallbackName = null }) {
+  let username = fallbackName || null;
+  let displayName = fallbackName || null;
+
+  try {
+    const fetchedUser = await client.users?.fetch?.(String(userId)).catch(() => null);
+    if (fetchedUser?.username) {
+      username = fetchedUser.username;
+      displayName = displayName || fetchedUser.globalName || fetchedUser.username;
+    }
+  } catch {
+    // best-effort resolution; keep fallback
+  }
+
+  if (guildId) {
+    try {
+      const guild = client.guilds?.cache?.get?.(String(guildId)) || null;
+      const member =
+        guild?.members?.cache?.get?.(String(userId)) ||
+        (await guild?.members?.fetch?.(String(userId)).catch(() => null));
+      if (member) {
+        displayName = member.displayName || member.nickname || displayName || username;
+        if (!username && member.user?.username) {
+          username = member.user.username;
+        }
+      }
+    } catch {
+      // best-effort resolution; keep fallback
+    }
+  }
+
+  return {
+    username: username || `user-${String(userId)}`,
+    displayName: displayName || username || `Usuário ${String(userId)}`,
+  };
+}
+
+async function enrichActiveParticipants(rawPoll, normalizedPoll) {
+  const votos = rawPoll?.votos || {};
+  const participantEntries = Object.entries(votos || {});
+  const guild =
+    rawPoll?.guild || client.guilds?.cache?.get?.(String(rawPoll?.guildId || normalizedPoll?.serverId || '')) || null;
+
+  // Limit concurrent external Discord API calls to avoid rate limits.
+  const limit = pLimit(10);
+  const identityCache = new Map();
+  const mensalistaCache = new Map();
+
+  const participants = await Promise.all(
+    participantEntries.map(([userId, voteEntry]) =>
+      limit(async () => {
+        let identity;
+        if (identityCache.has(userId)) {
+          identity = identityCache.get(userId);
+        } else {
+          identity = await resolveUserIdentity({
+            userId,
+            guildId: rawPoll?.guildId || normalizedPoll?.serverId || null,
+            fallbackName: voteEntry?.usuario || null,
+          });
+          identityCache.set(userId, identity);
+        }
+
+        let isMensalista;
+        if (mensalistaCache.has(userId)) {
+          isMensalista = mensalistaCache.get(userId);
+        } else {
+          const mensalistaByWeight = Number(voteEntry?.peso || 1) === 2;
+          const mensalistaByCheck = await isUserMensalista(guild, String(userId)).catch(() => false);
+          isMensalista = Boolean(mensalistaByWeight || mensalistaByCheck);
+          mensalistaCache.set(userId, isMensalista);
+        }
+
+        return {
+          userId: String(userId),
+          username: normalizedPoll?.anonymous ? null : identity.username,
+          displayName: normalizedPoll?.anonymous ? null : identity.displayName,
+          isMensalista,
+          choices: Array.isArray(voteEntry?.reacoes) ? voteEntry.reacoes : [],
+          timestamp: voteEntry?.timestamp || null,
+        };
+      }),
+    ),
+  );
+
+  const uniqueParticipants = new Set(participants.map((participant) => participant.userId));
+  const totalMensalistas = participants.filter((participant) => participant.isMensalista).length;
+
+  return {
+    participants,
+    totalParticipants: uniqueParticipants.size,
+    totalMensalistas,
+  };
+}
+
+async function enrichHistoryParticipants(historyRecord, normalizedPoll) {
+  const participantMap = new Map();
+  const resultados = safeArray(historyRecord?.resultados);
+  const guild = client.guilds?.cache?.get?.(String(historyRecord?.guildId || normalizedPoll?.serverId || '')) || null;
+
+  for (const option of resultados) {
+    const voters = safeArray(option?.votantes);
+    const choiceLabel = option?.emoji || option?.opcao || option?.text || null;
+
+    for (const rawUserId of voters) {
+      const userId = String(rawUserId);
+      if (!participantMap.has(userId)) {
+        participantMap.set(userId, {
+          userId,
+          choices: [],
+          timestamp: null,
+        });
+      }
+
+      if (choiceLabel) {
+        participantMap.get(userId).choices.push(choiceLabel);
+      }
+    }
+  }
+
+  // Limit concurrent external Discord API calls and use simple caches
+  const limit = pLimit(10);
+  const identityCache = new Map();
+  const mensalistaCache = new Map();
+
+  const participants = await Promise.all(
+    Array.from(participantMap.values()).map((participant) =>
+      limit(async () => {
+        let identity;
+        if (identityCache.has(participant.userId)) {
+          identity = identityCache.get(participant.userId);
+        } else {
+          identity = await resolveUserIdentity({
+            userId: participant.userId,
+            guildId: historyRecord?.guildId || normalizedPoll?.serverId || null,
+            fallbackName: null,
+          });
+          identityCache.set(participant.userId, identity);
+        }
+
+        let isMensalista;
+        if (mensalistaCache.has(participant.userId)) {
+          isMensalista = mensalistaCache.get(participant.userId);
+        } else {
+          isMensalista = await isUserMensalista(guild, participant.userId).catch(() => false);
+          mensalistaCache.set(participant.userId, isMensalista);
+        }
+
+        return {
+          userId: participant.userId,
+          username: normalizedPoll?.anonymous ? null : identity.username,
+          displayName: normalizedPoll?.anonymous ? null : identity.displayName,
+          isMensalista: Boolean(isMensalista),
+          choices: participant.choices,
+          timestamp: null,
+        };
+      }),
+    ),
+  );
+
+  const totalParticipants =
+    participants.length > 0
+      ? participants.length
+      : Number(historyRecord?.participantes || normalizedPoll?.totalParticipants || 0) || 0;
+  const totalMensalistas = participants.filter((participant) => participant.isMensalista).length;
+
+  return {
+    participants,
+    totalParticipants,
+    totalMensalistas,
+  };
+}
+
 router.get('/history', validateDashboardToken, async (_req, res) => {
   try {
     return res.json({ success: true, polls: getPollCollections() });
@@ -233,6 +453,31 @@ router.get('/:pollId', validateDashboardToken, async (req, res) => {
 
     if (!poll) {
       return res.status(404).json({ success: false, error: 'Enquete não encontrada' });
+    }
+
+    // Enrich response with participants for active and historical polls
+    try {
+      const activeEntry = findActivePollById(pollId);
+
+      if (activeEntry) {
+        const enrichedActive = await enrichActiveParticipants(activeEntry[1], poll);
+        return res.json({ success: true, poll: { ...poll, ...enrichedActive } });
+      }
+
+      const historyRecord = findHistoryPollById(pollId);
+      if (historyRecord) {
+        const enrichedHistory = await enrichHistoryParticipants(historyRecord, poll);
+        return res.json({ success: true, poll: { ...poll, ...enrichedHistory } });
+      }
+
+      return res.json({
+        success: true,
+        poll: { ...poll, participants: [], totalParticipants: 0, totalMensalistas: 0 },
+      });
+    } catch (err) {
+      // If enrichment fails, fall back to the basic poll payload
+      // but do not fail the whole request
+      console.error('Error enriching poll participants', err);
     }
 
     return res.json({ success: true, poll });

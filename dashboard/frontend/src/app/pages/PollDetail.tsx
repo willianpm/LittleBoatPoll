@@ -7,18 +7,8 @@ import { Progress } from '../components/ui/progress';
 import { closePoll, getPollDetail, type DashboardPoll } from '../lib/dashboard-api';
 import { ArrowLeft, Calendar, Clock, Hash, Trophy } from 'lucide-react';
 import EmojiRenderer from '../components/EmojiRenderer';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from 'recharts';
+import PollParticipants from '../components/PollParticipants';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 type ParsedDescription = {
   intro: string;
@@ -123,13 +113,25 @@ export function PollDetail() {
     value: opt.votes,
   }));
 
-  const barChartData = poll.options.map((opt) => ({
-    name: opt.text,
-    votes: opt.votes,
-  }));
-
   const topOption = [...poll.options].sort((a, b) => b.votes - a.votes)[0] || null;
   const parsedDescription = parsePollDescription(poll.description);
+  const totalParticipants: number | undefined =
+    typeof poll.totalParticipants === 'number'
+      ? poll.totalParticipants
+      : Array.isArray(poll.participants)
+        ? poll.participants.length
+        : undefined;
+  const totalMensalistas: number | undefined =
+    typeof poll.totalMensalistas === 'number'
+      ? poll.totalMensalistas
+      : Array.isArray(poll.participants)
+        ? poll.participants.filter((participant) => participant.isMensalista).length
+        : undefined;
+  const registeredVotes: number | undefined = Array.isArray(poll.participants)
+    ? poll.participants.reduce((sum, p) => sum + (Array.isArray(p.choices) ? p.choices.length : 0), 0)
+    : undefined;
+
+  const renderMetric = (v?: number) => (v === undefined ? 'Desconhecido' : String(v));
 
   async function handleClosePoll() {
     if (!id || !poll || poll.status !== 'active' || isClosing) {
@@ -165,7 +167,7 @@ export function PollDetail() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-3">
               <div className="flex-1">
@@ -236,7 +238,7 @@ export function PollDetail() {
             </div>
 
             <div className="space-y-3 md:space-y-4">
-              {poll.options.map((option, index) => {
+              {poll.options.map((option) => {
                 const percentage = poll.totalVotes > 0 ? Math.round((option.votes / poll.totalVotes) * 100) : 0;
                 const isTop = topOption ? option.id === topOption.id : false;
 
@@ -272,26 +274,42 @@ export function PollDetail() {
               })}
             </div>
           </Card>
+
+          <PollParticipants participants={poll.participants} anonymous={poll.anonymous} />
         </div>
 
         <div className="space-y-4 md:space-y-6">
-          <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
-            <h3 className="mb-4 dark:text-white">Estatísticas</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Total de Votos</span>
-                <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes}</span>
+          <div className="grid grid-cols-1 gap-4">
+            <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+              <h3 className="mb-4 dark:text-white">Participação</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Participantes únicos</span>
+                  <span className="text-lg md:text-xl dark:text-white">{renderMetric(totalParticipants)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+                    Mensalistas participantes
+                  </span>
+                  <span className="text-lg md:text-xl dark:text-white">{renderMetric(totalMensalistas)}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Opções</span>
-                <span className="text-lg md:text-xl dark:text-white">{poll.options.length}</span>
+            </Card>
+
+            <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
+              <h3 className="mb-4 dark:text-white">Votação</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Votos registrados</span>
+                  <span className="text-lg md:text-xl dark:text-white">{renderMetric(registeredVotes)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Votos ponderados</span>
+                  <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-400">Taxa de Participação</span>
-                <span className="text-lg md:text-xl dark:text-white">{poll.totalVotes > 0 ? '68%' : '0%'}</span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
 
           <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
             <h3 className="mb-4 dark:text-white">Ações</h3>
@@ -341,30 +359,6 @@ export function PollDetail() {
           </Card>
         </div>
       </div>
-
-      <Card className="p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
-        <h3 className="mb-4 md:mb-6 dark:text-white">Comparação de Votos</h3>
-        {barChartData.length > 0 ? (
-          <div className="aspect-video max-h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--background)',
-                    border: '1px solid var(--border)',
-                  }}
-                />
-                <Bar dataKey="votes" fill="#5865F2" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">Sem dados suficientes para exibir a comparação.</p>
-        )}
-      </Card>
     </div>
   );
 }
