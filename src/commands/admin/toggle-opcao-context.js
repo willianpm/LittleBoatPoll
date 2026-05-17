@@ -150,7 +150,7 @@ module.exports = {
       await replyToInteraction(
         interaction,
         { content: '❌ Erro ao processar o comando. Detalhes registrados no log.' },
-        { ephemeral: true, edit: interaction.deferred },
+        { ephemeral: true, edit: interaction.deferred && !interaction.replied },
       );
     }
   },
