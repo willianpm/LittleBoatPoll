@@ -76,6 +76,32 @@ function stripCustomEmojiFromText(value) {
   return cleaned;
 }
 
+// Simple concurrency limiter (lightweight pLimit replacement)
+function pLimit(concurrency) {
+  let active = 0;
+  const queue = [];
+
+  const next = () => {
+    if (queue.length === 0 || active >= concurrency) return;
+    active++;
+    const task = queue.shift();
+    Promise.resolve()
+      .then(task.fn)
+      .then((v) => task.resolve(v))
+      .catch((err) => task.reject(err))
+      .finally(() => {
+        active--;
+        next();
+      });
+  };
+
+  return (fn) =>
+    new Promise((resolve, reject) => {
+      queue.push({ fn, resolve, reject });
+      next();
+    });
+}
+
 function normalizeOption(option, index = 0) {
   if (!option) return null;
 
@@ -281,26 +307,46 @@ async function enrichActiveParticipants(rawPoll, normalizedPoll) {
   const guild =
     rawPoll?.guild || client.guilds?.cache?.get?.(String(rawPoll?.guildId || normalizedPoll?.serverId || '')) || null;
 
-  const participants = await Promise.all(
-    participantEntries.map(async ([userId, voteEntry]) => {
-      const identity = await resolveUserIdentity({
-        userId,
-        guildId: rawPoll?.guildId || normalizedPoll?.serverId || null,
-        fallbackName: voteEntry?.usuario || null,
-      });
-      const mensalistaByWeight = Number(voteEntry?.peso || 1) === 2;
-      const mensalistaByCheck = await isUserMensalista(guild, String(userId)).catch(() => false);
-      const isMensalista = Boolean(mensalistaByWeight || mensalistaByCheck);
+  // Limit concurrent external Discord API calls to avoid rate limits.
+  const limit = pLimit(10);
+  const identityCache = new Map();
+  const mensalistaCache = new Map();
 
-      return {
-        userId: String(userId),
-        username: normalizedPoll?.anonymous ? null : identity.username,
-        displayName: normalizedPoll?.anonymous ? null : identity.displayName,
-        isMensalista,
-        choices: Array.isArray(voteEntry?.reacoes) ? voteEntry.reacoes : [],
-        timestamp: voteEntry?.timestamp || null,
-      };
-    }),
+  const participants = await Promise.all(
+    participantEntries.map(([userId, voteEntry]) =>
+      limit(async () => {
+        let identity;
+        if (identityCache.has(userId)) {
+          identity = identityCache.get(userId);
+        } else {
+          identity = await resolveUserIdentity({
+            userId,
+            guildId: rawPoll?.guildId || normalizedPoll?.serverId || null,
+            fallbackName: voteEntry?.usuario || null,
+          });
+          identityCache.set(userId, identity);
+        }
+
+        let isMensalista;
+        if (mensalistaCache.has(userId)) {
+          isMensalista = mensalistaCache.get(userId);
+        } else {
+          const mensalistaByWeight = Number(voteEntry?.peso || 1) === 2;
+          const mensalistaByCheck = await isUserMensalista(guild, String(userId)).catch(() => false);
+          isMensalista = Boolean(mensalistaByWeight || mensalistaByCheck);
+          mensalistaCache.set(userId, isMensalista);
+        }
+
+        return {
+          userId: String(userId),
+          username: normalizedPoll?.anonymous ? null : identity.username,
+          displayName: normalizedPoll?.anonymous ? null : identity.displayName,
+          isMensalista,
+          choices: Array.isArray(voteEntry?.reacoes) ? voteEntry.reacoes : [],
+          timestamp: voteEntry?.timestamp || null,
+        };
+      }),
+    ),
   );
 
   const uniqueParticipants = new Set(participants.map((participant) => participant.userId));
@@ -338,24 +384,44 @@ async function enrichHistoryParticipants(historyRecord, normalizedPoll) {
     }
   }
 
-  const participants = await Promise.all(
-    Array.from(participantMap.values()).map(async (participant) => {
-      const identity = await resolveUserIdentity({
-        userId: participant.userId,
-        guildId: historyRecord?.guildId || normalizedPoll?.serverId || null,
-        fallbackName: null,
-      });
-      const isMensalista = await isUserMensalista(guild, participant.userId).catch(() => false);
+  // Limit concurrent external Discord API calls and use simple caches
+  const limit = pLimit(10);
+  const identityCache = new Map();
+  const mensalistaCache = new Map();
 
-      return {
-        userId: participant.userId,
-        username: normalizedPoll?.anonymous ? null : identity.username,
-        displayName: normalizedPoll?.anonymous ? null : identity.displayName,
-        isMensalista: Boolean(isMensalista),
-        choices: participant.choices,
-        timestamp: null,
-      };
-    }),
+  const participants = await Promise.all(
+    Array.from(participantMap.values()).map((participant) =>
+      limit(async () => {
+        let identity;
+        if (identityCache.has(participant.userId)) {
+          identity = identityCache.get(participant.userId);
+        } else {
+          identity = await resolveUserIdentity({
+            userId: participant.userId,
+            guildId: historyRecord?.guildId || normalizedPoll?.serverId || null,
+            fallbackName: null,
+          });
+          identityCache.set(participant.userId, identity);
+        }
+
+        let isMensalista;
+        if (mensalistaCache.has(participant.userId)) {
+          isMensalista = mensalistaCache.get(participant.userId);
+        } else {
+          isMensalista = await isUserMensalista(guild, participant.userId).catch(() => false);
+          mensalistaCache.set(participant.userId, isMensalista);
+        }
+
+        return {
+          userId: participant.userId,
+          username: normalizedPoll?.anonymous ? null : identity.username,
+          displayName: normalizedPoll?.anonymous ? null : identity.displayName,
+          isMensalista: Boolean(isMensalista),
+          choices: participant.choices,
+          timestamp: null,
+        };
+      }),
+    ),
   );
 
   const totalParticipants =
