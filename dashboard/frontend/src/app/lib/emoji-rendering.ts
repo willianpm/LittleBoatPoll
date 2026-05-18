@@ -27,7 +27,7 @@ function toTwemojiCodepoints(emoji: string) {
   return Array.from(emoji)
     .map((char) => char.codePointAt(0))
     .filter((codepoint): codepoint is number => typeof codepoint === 'number')
-    .map((codepoint) => codepoint.toString(16).padStart(4, '0'))
+    .map((codepoint) => codepoint.toString(16))
     .join('-');
 }
 
