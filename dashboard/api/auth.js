@@ -3,6 +3,7 @@ const express = require('express');
 const { client } = require('../../src/core/client');
 const { isCriador } = require('../../src/utils/permissions');
 const { loadMensalistas, loadCriadores } = require('../../src/utils/file-handler');
+const logger = require('../../src/utils/logger');
 
 const router = express.Router();
 
@@ -10,6 +11,29 @@ const DISCORD_API_BASE = 'https://discord.com/api';
 const DEFAULT_SCOPES = ['identify'];
 const GUILD_EMOJI_CACHE_TTL_MS = 5 * 60 * 1000;
 const guildEmojiCache = new Map();
+
+function getSessionTrace(req) {
+  const sessionId = req?.sessionID;
+  if (!sessionId) return 'unknown';
+  return `${sessionId.slice(0, 4)}...${sessionId.slice(-4)}`;
+}
+
+function hasDashboardCookie(req) {
+  const cookieHeader = req?.headers?.cookie || '';
+  return cookieHeader.includes('dashboard.sid=');
+}
+
+function formatAuthLog(req, message, details = {}) {
+  const ip = req?.ip || 'unknown';
+  const userId = details.userId || req?.session?.dashboardAuth?.userId;
+  const guildId = details.guildId || req?.session?.dashboardAuth?.guildId;
+  const parts = [`ip=${ip}`, `sid=${getSessionTrace(req)}`];
+
+  if (userId) parts.push(`userId=${userId}`);
+  if (guildId) parts.push(`guildId=${guildId}`);
+
+  return `[dashboard-auth] ${message} ${parts.join(' ')}`;
+}
 
 function getOAuthConfig() {
   return {
@@ -293,12 +317,24 @@ function isValidDashboardToken(reqOrToken) {
 async function refreshDashboardAccess(req) {
   const sessionData = getDashboardSession(req);
   if (!sessionData) {
-    return { ok: false, code: 401, error: 'Não autenticado' };
+    const reason = hasDashboardCookie(req) ? 'expired' : 'missing_session';
+
+    if (reason === 'expired') {
+      logger.warn(formatAuthLog(req, 'sessão ausente ou expirada no store'));
+    }
+
+    return { ok: false, code: 401, error: 'Não autenticado', reason };
+  }
+
+  if (!sessionData.userId || !sessionData.guildId) {
+    logger.warn(formatAuthLog(req, 'sessão inválida (dados incompletos)', { userId: sessionData.userId }));
+    return { ok: false, code: 401, error: 'Sessão inválida', reason: 'invalid_session' };
   }
 
   const accessibleGuilds = await getAccessibleGuildEntries(sessionData.userId);
   if (accessibleGuilds.length === 0) {
-    return { ok: false, code: 403, error: 'Usuário autenticado sem permissão para dashboard' };
+    logger.warn(formatAuthLog(req, 'usuário sem permissão para dashboard', { userId: sessionData.userId }));
+    return { ok: false, code: 403, error: 'Usuário autenticado sem permissão para dashboard', reason: 'no_access' };
   }
 
   const resolved =
@@ -314,13 +350,17 @@ async function refreshDashboardAccess(req) {
   };
   req.session.dashboardAuth.guildId = resolved.guild.id;
 
+  if (typeof req.session.touch === 'function') {
+    req.session.touch();
+  }
+
   return { ok: true };
 }
 
 async function validateDashboardToken(req, res, next) {
   const result = await refreshDashboardAccess(req);
   if (!result.ok) {
-    return res.status(result.code).json({ error: result.error });
+    return res.status(result.code).json({ error: result.error, reason: result.reason });
   }
 
   return next();
@@ -341,7 +381,7 @@ router.get('/discord/login', async (req, res) => {
   try {
     await persistSession(req);
   } catch (error) {
-    console.error('[dashboard-auth] erro ao persistir sessão antes do login OAuth:', error.message);
+    logger.error('[dashboard-auth] erro ao persistir sessão antes do login OAuth:', error);
     return res.status(500).json({ error: 'Não foi possível iniciar o login com Discord' });
   }
 
@@ -366,6 +406,7 @@ router.get('/discord/callback', async (req, res) => {
       req.session.dashboardAuth = null;
       req.session.discordOauthState = null;
       await persistSession(req);
+      logger.warn(formatAuthLog(req, 'login negado: usuário sem permissão', { userId: discordUser.id }));
       return res.redirect(buildAuthRedirect('forbidden'));
     }
 
@@ -380,9 +421,11 @@ router.get('/discord/callback', async (req, res) => {
 
     await persistSession(req);
 
+    logger.info(formatAuthLog(req, 'login concluído', { userId: discordUser.id, guildId: resolved.guildId }));
+
     return res.redirect(buildAuthRedirect());
   } catch (error) {
-    console.error('[dashboard-auth] erro no callback OAuth:', error.message);
+    logger.error('[dashboard-auth] erro no callback OAuth:', error);
     return res.redirect(buildAuthRedirect('error'));
   }
 });
@@ -390,7 +433,7 @@ router.get('/discord/callback', async (req, res) => {
 router.get('/me', async (req, res) => {
   const result = await refreshDashboardAccess(req);
   if (!result.ok) {
-    return res.status(result.code).json({ error: result.error, authenticated: false });
+    return res.status(result.code).json({ error: result.error, authenticated: false, reason: result.reason });
   }
 
   return res.json({
@@ -575,6 +618,7 @@ router.get('/guilds/:guildId/group-members', validateDashboardToken, (req, res) 
 });
 
 router.post('/logout', (req, res) => {
+  logger.info(formatAuthLog(req, 'logout solicitado'));
   req.session.destroy(() => {
     res.clearCookie('dashboard.sid');
     res.status(200).json({ success: true });
