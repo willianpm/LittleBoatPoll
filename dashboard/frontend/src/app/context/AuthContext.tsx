@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
@@ -28,10 +28,17 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   error: 'Não foi possível concluir o login com Discord.',
 };
 
+const SESSION_ERROR_MESSAGES: Record<string, string> = {
+  expired: 'Sua sessão expirou. Faça login novamente.',
+  invalid_session: 'Sua sessão expirou. Faça login novamente.',
+  no_access: 'Seu acesso ao dashboard foi revogado.',
+};
+
 type AuthMeResponse = {
   authenticated?: boolean;
   user?: AuthUser;
   error?: string;
+  reason?: string;
 };
 
 async function fetchAuthSession(): Promise<AuthMeResponse> {
@@ -54,6 +61,7 @@ async function fetchAuthSession(): Promise<AuthMeResponse> {
     return {
       authenticated: false,
       error: payload?.error || 'Não autenticado',
+      reason: payload?.reason,
     };
   }
 
@@ -77,24 +85,50 @@ function handleAuthQueryFeedback(search: string) {
   window.history.replaceState({}, '', nextPath);
 }
 
+function resolveSessionErrorMessage(payload: AuthMeResponse, wasAuthenticated: boolean) {
+  if (payload?.reason && SESSION_ERROR_MESSAGES[payload.reason]) {
+    return SESSION_ERROR_MESSAGES[payload.reason];
+  }
+
+  if (wasAuthenticated) {
+    return 'Sua sessão expirou. Faça login novamente.';
+  }
+
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState<AuthStatus>('idle');
   const [user, setUser] = useState<AuthUser | null>(null);
+  const wasAuthenticatedRef = useRef(false);
 
   const refreshAuth = useCallback(async () => {
     setStatus('loading');
 
-    const payload = await fetchAuthSession();
-    if (payload.authenticated && payload.user) {
-      setUser(payload.user);
-      setStatus('authenticated');
-      return true;
+    try {
+      const payload = await fetchAuthSession();
+      if (payload.authenticated && payload.user) {
+        setUser(payload.user);
+        setStatus('authenticated');
+        wasAuthenticatedRef.current = true;
+        return true;
+      }
+
+      const sessionMessage = resolveSessionErrorMessage(payload, wasAuthenticatedRef.current);
+      if (sessionMessage) {
+        toast.error(sessionMessage);
+      }
+    } catch {
+      if (wasAuthenticatedRef.current) {
+        toast.error('Não foi possível validar sua sessão. Tente novamente.');
+      }
     }
 
     setUser(null);
     setStatus('unauthenticated');
+    wasAuthenticatedRef.current = false;
     return false;
   }, []);
 
@@ -112,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
     } finally {
+      wasAuthenticatedRef.current = false;
       setUser(null);
       setStatus('unauthenticated');
       navigate('/login', { replace: true });

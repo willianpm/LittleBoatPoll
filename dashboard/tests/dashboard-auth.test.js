@@ -348,6 +348,7 @@ describe('Dashboard Auth API - group members', () => {
 describe('Dashboard Auth API - /me and /logout', () => {
   it('GET /api/auth/me returns authenticated true for valid session', async () => {
     const app = express();
+    const touch = jest.fn();
     app.use(express.json());
     app.use((req, _res, next) => {
       req.session = {
@@ -357,6 +358,7 @@ describe('Dashboard Auth API - /me and /logout', () => {
           avatar: 'https://example.com/avatar.png',
           guildId: 'guild-1',
         },
+        touch,
       };
       next();
     });
@@ -396,6 +398,7 @@ describe('Dashboard Auth API - /me and /logout', () => {
         guildId: 'guild-1',
       }),
     );
+    expect(touch).toHaveBeenCalledTimes(1);
   });
 
   it('GET /api/auth/me returns authenticated false when no session', async () => {
@@ -411,6 +414,23 @@ describe('Dashboard Auth API - /me and /logout', () => {
     expect(res.statusCode).toBe(401);
     expect(res.body.authenticated).toBe(false);
     expect(res.body.error).toBeTruthy();
+    expect(res.body.reason).toBe('missing_session');
+  });
+
+  it('GET /api/auth/me returns expired reason when cookie exists but session missing', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.headers.cookie = 'dashboard.sid=expired-session';
+      req.session = {}; // sem dashboardAuth
+      next();
+    });
+    app.use('/api/auth', authRouter);
+
+    const res = await request(app).get('/api/auth/me');
+    expect(res.statusCode).toBe(401);
+    expect(res.body.authenticated).toBe(false);
+    expect(res.body.reason).toBe('expired');
   });
 
   it('POST /api/auth/logout clears session and returns success', async () => {

@@ -7,6 +7,27 @@ const { RedisStore } = require('connect-redis');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 
+const DEFAULT_DASHBOARD_SESSION_DAYS = 30;
+const MAX_SAFE_SESSION_DAYS = Math.floor(Number.MAX_SAFE_INTEGER / (24 * 60 * 60 * 1000));
+
+function resolveDashboardSessionDays() {
+  const rawValue = process.env.DASHBOARD_SESSION_MAX_AGE_DAYS;
+  if (!rawValue) {
+    return DEFAULT_DASHBOARD_SESSION_DAYS;
+  }
+
+  const parsed = Number(rawValue);
+  const days = Math.floor(parsed);
+  if (!Number.isFinite(parsed) || days <= 0 || days > MAX_SAFE_SESSION_DAYS) {
+    logger.warn(
+      `DASHBOARD_SESSION_MAX_AGE_DAYS inválido: "${rawValue}". Usando ${DEFAULT_DASHBOARD_SESSION_DAYS} dias.`,
+    );
+    return DEFAULT_DASHBOARD_SESSION_DAYS;
+  }
+
+  return days;
+}
+
 function createExpressApp() {
   const app = express();
   const port = config.PORT;
@@ -14,13 +35,16 @@ function createExpressApp() {
   const isProductionEnv = config.APP_ENV === 'prod';
   const redisUrl = process.env.REDIS_URL;
   const sessionSecret = process.env.DASHBOARD_SESSION_SECRET;
+  const sessionMaxAgeDays = resolveDashboardSessionDays();
+  const sessionMaxAgeMs = sessionMaxAgeDays * 24 * 60 * 60 * 1000;
+  const sessionTtlSeconds = Math.ceil(sessionMaxAgeMs / 1000);
 
   let sessionStore;
   if (redisUrl) {
     const redisClient = createClient({ url: redisUrl });
     redisClient.on('error', (err) => logger.error('Redis client error:', err));
     redisClient.connect().catch((err) => logger.error('Redis connection failed:', err));
-    sessionStore = new RedisStore({ client: redisClient, ttl: 12 * 60 * 60 });
+    sessionStore = new RedisStore({ client: redisClient, ttl: sessionTtlSeconds, disableTouch: false });
     logger.info('Sessão do dashboard utilizando RedisStore.');
   } else if (isProductionEnv) {
     logger.error('Produção requer REDIS_URL configurado para persistência de sessão.');
@@ -46,15 +70,18 @@ function createExpressApp() {
       secret: sessionSecret || 'dashboard-dev-secret-change-me',
       resave: false,
       saveUninitialized: false,
+      rolling: true,
       store: sessionStore,
       cookie: {
         httpOnly: true,
         sameSite: 'lax',
         secure: isProductionEnv ? 'auto' : false,
-        maxAge: 12 * 60 * 60 * 1000,
+        maxAge: sessionMaxAgeMs,
       },
     }),
   );
+
+  logger.info(`Sessão do dashboard: ${sessionMaxAgeDays} dias (rolling).`);
 
   app.get('/api/health', (req, res) => res.send(`Bot Online! [${config.APP_ENV.toUpperCase()}]`));
 

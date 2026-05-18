@@ -57,6 +57,7 @@ DISCORD_CLIENT_ID=your_oauth_client_id
 DISCORD_CLIENT_SECRET=your_oauth_client_secret
 DISCORD_OAUTH_REDIRECT_URI=http://localhost/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=replace_this_secret
+DASHBOARD_SESSION_MAX_AGE_DAYS=30
 DASHBOARD_ALLOWED_GUILD_ID=your_guild_id
 DASHBOARD_FRONTEND_URL=http://localhost
 DASHBOARD_SINGLE_INSTANCE=true

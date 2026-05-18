@@ -55,25 +55,26 @@ Full details and command examples are in [docs/development/GIT-WORKFLOW.md](docs
 
 The environment variables below reflect the current runtime configuration and are the single source of truth. Always use `.env.example` as the canonical template.
 
-| Variable                     | Required         | Default | Description                                                              |
-| ---------------------------- | ---------------- | ------- | ------------------------------------------------------------------------ |
-| `APP_ENV`                    | yes              | `prod`  | `prod` or `staging` (switch between `.env` and `.env.staging`).          |
-| `TOKEN`                      | yes              |         | Discord bot token.                                                       |
-| `CLIENT_ID`                  | yes              |         | Discord bot application ID.                                              |
-| `CLIENT_SECRET`              | no               |         | Bot application secret (legacy/compatibility).                           |
-| `GUILD_ID`                   | no               |         | Default guild ID used in command execution contexts.                     |
-| `REDIS_URL`                  | required in prod |         | Redis URL (session persistence).                                         |
-| `REDIS_PASSWORD`             | no               |         | Redis password, if applicable.                                           |
-| `DISCORD_CLIENT_ID`          | yes              |         | OAuth2 client ID for dashboard login.                                    |
-| `DISCORD_CLIENT_SECRET`      | yes              |         | OAuth2 client secret for dashboard login.                                |
-| `DISCORD_OAUTH_REDIRECT_URI` | yes              |         | OAuth2 callback URL, e.g. `http://localhost/api/auth/discord/callback`.  |
-| `DASHBOARD_SESSION_SECRET`   | yes              |         | Secret for session cookies.                                              |
-| `DASHBOARD_ALLOWED_GUILD_ID` | no               |         | Optional fixed guild ID for dashboard operations.                        |
-| `DASHBOARD_FRONTEND_URL`     | yes              |         | Expected dashboard frontend origin.                                      |
-| `DASHBOARD_SINGLE_INSTANCE`  | recommended      | `true`  | When using in-memory session store; set `false` only with Redis cluster. |
-| `DEPLOY`                     | no               | `false` | Enable deploy startup mode (`node src/core/index.js --deploy`).          |
-| `DEBUG`                      | no               | `false` | Enable debug-level logging.                                              |
-| `PORT`                       | no               | `8000`  | Express server port inside container.                                    |
+| Variable                         | Required         | Default | Description                                                              |
+| -------------------------------- | ---------------- | ------- | ------------------------------------------------------------------------ |
+| `APP_ENV`                        | yes              | `prod`  | `prod` or `staging` (switch between `.env` and `.env.staging`).          |
+| `TOKEN`                          | yes              |         | Discord bot token.                                                       |
+| `CLIENT_ID`                      | yes              |         | Discord bot application ID.                                              |
+| `CLIENT_SECRET`                  | no               |         | Bot application secret (legacy/compatibility).                           |
+| `GUILD_ID`                       | no               |         | Default guild ID used in command execution contexts.                     |
+| `REDIS_URL`                      | required in prod |         | Redis URL (session persistence).                                         |
+| `REDIS_PASSWORD`                 | no               |         | Redis password, if applicable.                                           |
+| `DISCORD_CLIENT_ID`              | yes              |         | OAuth2 client ID for dashboard login.                                    |
+| `DISCORD_CLIENT_SECRET`          | yes              |         | OAuth2 client secret for dashboard login.                                |
+| `DISCORD_OAUTH_REDIRECT_URI`     | yes              |         | OAuth2 callback URL, e.g. `http://localhost/api/auth/discord/callback`.  |
+| `DASHBOARD_SESSION_SECRET`       | yes              |         | Secret for session cookies.                                              |
+| `DASHBOARD_SESSION_MAX_AGE_DAYS` | no               | `30`    | Dashboard session duration in days (cookie + Redis TTL, rolling).        |
+| `DASHBOARD_ALLOWED_GUILD_ID`     | no               |         | Optional fixed guild ID for dashboard operations.                        |
+| `DASHBOARD_FRONTEND_URL`         | yes              |         | Expected dashboard frontend origin.                                      |
+| `DASHBOARD_SINGLE_INSTANCE`      | recommended      | `true`  | When using in-memory session store; set `false` only with Redis cluster. |
+| `DEPLOY`                         | no               | `false` | Enable deploy startup mode (`node src/core/index.js --deploy`).          |
+| `DEBUG`                          | no               | `false` | Enable debug-level logging.                                              |
+| `PORT`                           | no               | `8000`  | Express server port inside container.                                    |
 
 ### Dashboard frontend URL
 
