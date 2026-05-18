@@ -53,3 +53,7 @@ export function shouldRenderUnicodeEmojiAsImage(emoji: string | null | undefined
 
   return isWindowsPlatform();
 }
+
+export function shouldUseTwemojiInPicker() {
+  return isWindowsPlatform();
+}

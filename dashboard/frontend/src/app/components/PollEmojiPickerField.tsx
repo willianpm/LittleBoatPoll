@@ -4,7 +4,11 @@ import { Smile } from 'lucide-react';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import type { UnifiedEmoji } from '../lib/emoji-merge';
-import { getUnicodeEmojiImageUrl, shouldRenderUnicodeEmojiAsImage } from '../lib/emoji-rendering';
+import {
+  getUnicodeEmojiImageUrl,
+  shouldRenderUnicodeEmojiAsImage,
+  shouldUseTwemojiInPicker,
+} from '../lib/emoji-rendering';
 
 type EmojiPickerCustomEntry = {
   id: string;
@@ -94,6 +98,8 @@ export const PollEmojiPickerField = memo(
       '--epr-search-input-height': '38px',
     } as CSSProperties;
 
+    const pickerEmojiStyle = shouldUseTwemojiInPicker() ? EmojiStyle.TWITTER : EmojiStyle.NATIVE;
+
     return (
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
@@ -139,7 +145,7 @@ export const PollEmojiPickerField = memo(
             onEmojiClick={handleEmojiClick}
             searchPlaceholder="Buscar emoji"
             theme={Theme.AUTO}
-            emojiStyle={EmojiStyle.NATIVE}
+            emojiStyle={pickerEmojiStyle}
             lazyLoadEmojis
             skinTonesDisabled
             previewConfig={{ showPreview: false }}
