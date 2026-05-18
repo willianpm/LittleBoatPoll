@@ -8,6 +8,7 @@ const config = require('../utils/config');
 const logger = require('../utils/logger');
 
 const DEFAULT_DASHBOARD_SESSION_DAYS = 30;
+const MAX_SAFE_SESSION_DAYS = Math.floor(Number.MAX_SAFE_INTEGER / (24 * 60 * 60 * 1000));
 
 function resolveDashboardSessionDays() {
   const rawValue = process.env.DASHBOARD_SESSION_MAX_AGE_DAYS;
@@ -16,14 +17,15 @@ function resolveDashboardSessionDays() {
   }
 
   const parsed = Number(rawValue);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  const days = Math.floor(parsed);
+  if (!Number.isFinite(parsed) || days <= 0 || days > MAX_SAFE_SESSION_DAYS) {
     logger.warn(
       `DASHBOARD_SESSION_MAX_AGE_DAYS inválido: "${rawValue}". Usando ${DEFAULT_DASHBOARD_SESSION_DAYS} dias.`,
     );
     return DEFAULT_DASHBOARD_SESSION_DAYS;
   }
 
-  return parsed;
+  return days;
 }
 
 function createExpressApp() {
@@ -34,7 +36,7 @@ function createExpressApp() {
   const redisUrl = process.env.REDIS_URL;
   const sessionSecret = process.env.DASHBOARD_SESSION_SECRET;
   const sessionMaxAgeDays = resolveDashboardSessionDays();
-  const sessionMaxAgeMs = Math.round(sessionMaxAgeDays * 24 * 60 * 60 * 1000);
+  const sessionMaxAgeMs = sessionMaxAgeDays * 24 * 60 * 60 * 1000;
   const sessionTtlSeconds = Math.ceil(sessionMaxAgeMs / 1000);
 
   let sessionStore;

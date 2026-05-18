@@ -20,7 +20,13 @@ function getSessionTrace(req) {
 
 function hasDashboardCookie(req) {
   const cookieHeader = req?.headers?.cookie || '';
-  return cookieHeader.includes('dashboard.sid=');
+  return cookieHeader.split(';').some((cookie) => {
+    const trimmed = cookie.trim();
+    if (!trimmed) return false;
+    const separatorIndex = trimmed.indexOf('=');
+    const name = separatorIndex >= 0 ? trimmed.slice(0, separatorIndex) : trimmed;
+    return name === 'dashboard.sid';
+  });
 }
 
 function formatAuthLog(req, message, details = {}) {

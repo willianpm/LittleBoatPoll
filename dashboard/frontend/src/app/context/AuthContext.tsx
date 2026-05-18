@@ -107,17 +107,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshAuth = useCallback(async () => {
     setStatus('loading');
 
-    const payload = await fetchAuthSession();
-    if (payload.authenticated && payload.user) {
-      setUser(payload.user);
-      setStatus('authenticated');
-      wasAuthenticatedRef.current = true;
-      return true;
-    }
+    try {
+      const payload = await fetchAuthSession();
+      if (payload.authenticated && payload.user) {
+        setUser(payload.user);
+        setStatus('authenticated');
+        wasAuthenticatedRef.current = true;
+        return true;
+      }
 
-    const sessionMessage = resolveSessionErrorMessage(payload, wasAuthenticatedRef.current);
-    if (sessionMessage) {
-      toast.error(sessionMessage);
+      const sessionMessage = resolveSessionErrorMessage(payload, wasAuthenticatedRef.current);
+      if (sessionMessage) {
+        toast.error(sessionMessage);
+      }
+    } catch {
+      if (wasAuthenticatedRef.current) {
+        toast.error('Não foi possível validar sua sessão. Tente novamente.');
+      }
     }
 
     setUser(null);
@@ -140,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
     } finally {
+      wasAuthenticatedRef.current = false;
       setUser(null);
       setStatus('unauthenticated');
       navigate('/login', { replace: true });
