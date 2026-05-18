@@ -135,6 +135,7 @@ jest.mock('emoji-picker-react', () => {
     default: EmojiPicker,
     EmojiStyle: {
       NATIVE: 'native',
+      TWITTER: 'twitter',
     },
     Theme: {
       AUTO: 'auto',

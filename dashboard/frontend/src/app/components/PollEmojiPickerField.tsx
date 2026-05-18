@@ -4,6 +4,11 @@ import { Smile } from 'lucide-react';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import type { UnifiedEmoji } from '../lib/emoji-merge';
+import {
+  getUnicodeEmojiImageUrl,
+  shouldRenderUnicodeEmojiAsImage,
+  shouldUseTwemojiInPicker,
+} from '../lib/emoji-rendering';
 
 type EmojiPickerCustomEntry = {
   id: string;
@@ -33,6 +38,7 @@ export const PollEmojiPickerField = memo(
   }: PollEmojiPickerFieldProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [pickerEmojis, setPickerEmojis] = useState<UnifiedEmoji[]>([]);
+    const [unicodePreviewFailed, setUnicodePreviewFailed] = useState(false);
 
     useEffect(() => {
       if (isOpen) {
@@ -44,6 +50,19 @@ export const PollEmojiPickerField = memo(
     }, [emojis, isOpen]);
 
     const selectedEmoji = useMemo(() => emojis.find((emoji) => emoji.value === value) ?? null, [emojis, value]);
+
+    useEffect(() => {
+      setUnicodePreviewFailed(false);
+    }, [selectedEmoji?.unicode]);
+
+    const unicodeImageUrl = useMemo(
+      () => (selectedEmoji?.unicode ? getUnicodeEmojiImageUrl(selectedEmoji.unicode) : null),
+      [selectedEmoji?.unicode],
+    );
+
+    const shouldRenderUnicodeImage = Boolean(unicodeImageUrl)
+      ? shouldRenderUnicodeEmojiAsImage(selectedEmoji?.unicode ?? null)
+      : false;
 
     const customEmojis = useMemo<EmojiPickerCustomEntry[]>(
       () =>
@@ -79,6 +98,8 @@ export const PollEmojiPickerField = memo(
       '--epr-search-input-height': '38px',
     } as CSSProperties;
 
+    const pickerEmojiStyle = shouldUseTwemojiInPicker() ? EmojiStyle.TWITTER : EmojiStyle.NATIVE;
+
     return (
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
@@ -99,9 +120,21 @@ export const PollEmojiPickerField = memo(
               />
             )}
             {!selectedEmoji?.isCustom && selectedEmoji?.unicode && (
-              <span className="text-base leading-none" aria-hidden="true">
-                {selectedEmoji.unicode}
-              </span>
+              <>
+                {shouldRenderUnicodeImage && unicodeImageUrl && !unicodePreviewFailed ? (
+                  <img
+                    src={unicodeImageUrl}
+                    alt={`Emoji ${selectedEmoji.name}`}
+                    className="size-5 object-contain"
+                    loading="lazy"
+                    onError={() => setUnicodePreviewFailed(true)}
+                  />
+                ) : (
+                  <span className="text-base leading-none" aria-hidden="true">
+                    {selectedEmoji.unicode}
+                  </span>
+                )}
+              </>
             )}
             {!selectedEmoji && <Smile className="size-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />}
           </Button>
@@ -112,7 +145,7 @@ export const PollEmojiPickerField = memo(
             onEmojiClick={handleEmojiClick}
             searchPlaceholder="Buscar emoji"
             theme={Theme.AUTO}
-            emojiStyle={EmojiStyle.NATIVE}
+            emojiStyle={pickerEmojiStyle}
             lazyLoadEmojis
             skinTonesDisabled
             previewConfig={{ showPreview: false }}

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getDiscordEmojiUrlFromEmoji } from '../lib/emoji-merge';
+import { getUnicodeEmojiImageUrl, shouldRenderUnicodeEmojiAsImage } from '../lib/emoji-rendering';
 
 interface Props {
   emoji?: string | null;
@@ -39,8 +40,14 @@ function renderCustomEmojiFallback(className: string, alt: string) {
 }
 
 export function EmojiRenderer({ emoji, emojiId, emojiAnimated, emojiUrl, className = '', alt = '' }: Props) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const [customImageFailed, setCustomImageFailed] = useState(false);
+  const [unicodeImageFailed, setUnicodeImageFailed] = useState(false);
   const fallbackAlt = alt || 'emoji indisponível';
+
+  useEffect(() => {
+    setCustomImageFailed(false);
+    setUnicodeImageFailed(false);
+  }, [emoji, emojiId, emojiAnimated, emojiUrl]);
 
   // Prefer explicit URL/id metadata provided by the API.
   const resolvedEmojiId = emojiId || parseDiscordIdentifier(emoji)?.id || parseLegacyEmojiId(emoji)?.id || null;
@@ -52,14 +59,14 @@ export function EmojiRenderer({ emoji, emojiId, emojiAnimated, emojiUrl, classNa
     (resolvedEmojiId ? getDiscordEmojiUrlFromEmoji({ id: resolvedEmojiId, animated: resolvedAnimated } as any) : null);
 
   if (resolvedCustomEmojiUrl) {
-    if (!imageFailed) {
+    if (!customImageFailed) {
       return (
         <img
           src={resolvedCustomEmojiUrl}
           alt={alt || 'emoji'}
           className={className}
           loading="lazy"
-          onError={() => setImageFailed(true)}
+          onError={() => setCustomImageFailed(true)}
         />
       );
     }
@@ -72,9 +79,15 @@ export function EmojiRenderer({ emoji, emojiId, emojiAnimated, emojiUrl, classNa
   if (parsed) {
     const url = getDiscordEmojiUrlFromEmoji({ id: parsed.id, animated: parsed.animated } as any);
 
-    if (!imageFailed) {
+    if (!customImageFailed) {
       return (
-        <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
+        <img
+          src={url}
+          alt={alt || 'emoji'}
+          className={className}
+          loading="lazy"
+          onError={() => setCustomImageFailed(true)}
+        />
       );
     }
 
@@ -85,13 +98,33 @@ export function EmojiRenderer({ emoji, emojiId, emojiAnimated, emojiUrl, classNa
   if (legacyParsed) {
     const url = getDiscordEmojiUrlFromEmoji({ id: legacyParsed.id, animated: legacyParsed.animated } as any);
 
-    if (!imageFailed) {
+    if (!customImageFailed) {
       return (
-        <img src={url} alt={alt || 'emoji'} className={className} loading="lazy" onError={() => setImageFailed(true)} />
+        <img
+          src={url}
+          alt={alt || 'emoji'}
+          className={className}
+          loading="lazy"
+          onError={() => setCustomImageFailed(true)}
+        />
       );
     }
 
     return renderCustomEmojiFallback(className, fallbackAlt);
+  }
+
+  const unicodeImageUrl = shouldRenderUnicodeEmojiAsImage(emoji) ? getUnicodeEmojiImageUrl(emoji) : null;
+
+  if (unicodeImageUrl && !unicodeImageFailed) {
+    return (
+      <img
+        src={unicodeImageUrl}
+        alt={alt || 'emoji'}
+        className={className}
+        loading="lazy"
+        onError={() => setUnicodeImageFailed(true)}
+      />
+    );
   }
 
   // Fallback to rendering the emoji as text (unicode)
