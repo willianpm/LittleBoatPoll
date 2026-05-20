@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 const VIEWPORT_VAR = '--app-dvh';
+const VIEWPORT_OFFSET_VAR = '--app-vv-offset-top';
 
 function getViewportHeight() {
   if (typeof window === 'undefined') {
@@ -13,6 +14,19 @@ function getViewportHeight() {
   }
 
   return window.innerHeight;
+}
+
+function getViewportOffsetTop() {
+  if (typeof window === 'undefined') {
+    return 0;
+  }
+
+  const offsetTop = window.visualViewport?.offsetTop;
+  if (typeof offsetTop === 'number' && Number.isFinite(offsetTop)) {
+    return offsetTop;
+  }
+
+  return 0;
 }
 
 function setViewportHeightVar(height: number) {
@@ -28,6 +42,19 @@ function setViewportHeightVar(height: number) {
   document.documentElement.style.setProperty(VIEWPORT_VAR, `${nextHeight}px`);
 }
 
+function setViewportOffsetVar(offsetTop: number) {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const nextOffset = Math.max(0, Math.round(offsetTop));
+  if (!Number.isFinite(nextOffset)) {
+    return;
+  }
+
+  document.documentElement.style.setProperty(VIEWPORT_OFFSET_VAR, `${nextOffset}px`);
+}
+
 export function useViewportHeight() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -36,9 +63,35 @@ export function useViewportHeight() {
 
     let frameId: number | null = null;
     let timeoutId: number | null = null;
+    let scrollRoot: HTMLElement | null = null;
+
+    const getScrollRoot = () => {
+      if (scrollRoot?.isConnected) {
+        return scrollRoot;
+      }
+
+      scrollRoot = document.querySelector<HTMLElement>('[data-viewport-scroll-root]');
+      return scrollRoot;
+    };
+
+    const clampScrollPosition = () => {
+      const root = getScrollRoot();
+      if (!root) {
+        return;
+      }
+
+      const maxScrollTop = Math.max(0, root.scrollHeight - root.clientHeight);
+      if (root.scrollTop > maxScrollTop) {
+        root.scrollTop = maxScrollTop;
+      }
+    };
 
     const scheduleUpdate = () => {
-      const update = () => setViewportHeightVar(getViewportHeight());
+      const update = () => {
+        setViewportHeightVar(getViewportHeight());
+        setViewportOffsetVar(getViewportOffsetTop());
+        clampScrollPosition();
+      };
 
       update();
 

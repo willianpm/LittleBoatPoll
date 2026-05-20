@@ -44,7 +44,10 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="h-[var(--app-dvh,100dvh)] overflow-y-auto [scrollbar-gutter:stable_both-edges] bg-gray-50 dark:bg-gray-900">
+    <div
+      data-viewport-scroll-root
+      className="fixed inset-x-0 top-[var(--app-vv-offset-top,0px)] h-[var(--app-dvh,100dvh)] overflow-y-auto [scrollbar-gutter:stable_both-edges] bg-gray-50 dark:bg-gray-900"
+    >
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#5865F2] dark:bg-[#4752C4] text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
