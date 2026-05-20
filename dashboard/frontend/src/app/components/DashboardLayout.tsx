@@ -44,7 +44,10 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="h-dvh overflow-y-auto [scrollbar-gutter:stable_both-edges] bg-gray-50 dark:bg-gray-900">
+    <div
+      data-viewport-scroll-root
+      className="fixed inset-x-0 top-[var(--app-vv-offset-top,0px)] h-[var(--app-dvh,100dvh)] overflow-y-auto [scrollbar-gutter:stable_both-edges] bg-gray-50 dark:bg-gray-900"
+    >
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#5865F2] dark:bg-[#4752C4] text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -84,11 +87,11 @@ export function DashboardLayout() {
       </div>
 
       <div className="lg:mx-auto lg:max-w-[1600px] lg:px-3 lg:py-3">
-        <div className="flex min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] lg:gap-0">
+        <div className="flex min-h-[var(--app-dvh,100dvh)] lg:min-h-[calc(var(--app-dvh,100dvh)-1.5rem)] lg:gap-0">
           {/* Sidebar */}
           <aside
             className={cn(
-              'w-64 shrink-0 bg-[#5865F2] dark:bg-[#4752C4] text-white flex flex-col fixed lg:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out lg:inset-auto lg:left-auto lg:h-[calc(100dvh-1.5rem)] lg:sticky lg:top-3 lg:rounded-2xl lg:shadow-2xl lg:border lg:border-white/10 lg:overflow-hidden',
+              'w-64 shrink-0 bg-[#5865F2] dark:bg-[#4752C4] text-white flex flex-col fixed lg:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out lg:inset-auto lg:left-auto lg:h-[calc(var(--app-dvh,100dvh)-1.5rem)] lg:sticky lg:top-3 lg:rounded-2xl lg:shadow-2xl lg:border lg:border-white/10 lg:overflow-hidden',
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
             )}
           >

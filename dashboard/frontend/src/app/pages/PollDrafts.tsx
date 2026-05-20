@@ -442,8 +442,8 @@ export function PollDrafts() {
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-hidden p-0 dark:bg-gray-800 dark:border-gray-700 sm:max-w-2xl">
-          <div className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden p-6">
+        <DialogContent className="max-h-[calc(var(--app-dvh,100dvh)-2rem)] overflow-hidden p-0 dark:bg-gray-800 dark:border-gray-700 sm:max-w-2xl">
+          <div className="flex max-h-[calc(var(--app-dvh,100dvh)-2rem)] flex-col overflow-hidden p-6">
             <DialogHeader>
               <DialogTitle className="dark:text-white">Editar Rascunho</DialogTitle>
             </DialogHeader>
